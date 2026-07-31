@@ -107,6 +107,7 @@ function Get-UniqueRandomItem {
         [object[]] $Items,
 
         [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
         [System.Collections.Generic.HashSet[string]] $Used,
 
         [switch] $AllowEmptyRepeat
