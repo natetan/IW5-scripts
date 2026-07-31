@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 # Change this path if your Plutonium folder is elsewhere.
 $iw5Folder = Join-Path $env:LOCALAPPDATA "Plutonium\storage\iw5"
@@ -184,11 +184,16 @@ $xboxCount = Get-Random -Minimum 2 -Maximum 4
 $tryhardCount = 4
 $mlgCount = 17 - $tryhardCount - $xboxCount
 
-$categories = @()
-$categories += @(1..$tryhardCount | ForEach-Object { "tryhard" })
-$categories += @(1..$mlgCount | ForEach-Object { "mlg" })
-$categories += @(1..$xboxCount | ForEach-Object { "xbox" })
-$categories = @($categories | Sort-Object { Get-Random })
+# Keep the four clean try-hard aliases at the top of bots.txt.
+# Randomize only the MLG/Xbox names that come after them.
+$categories = @(1..$tryhardCount | ForEach-Object { "tryhard" })
+
+$remainingCategories = @()
+$remainingCategories += @(1..$mlgCount | ForEach-Object { "mlg" })
+$remainingCategories += @(1..$xboxCount | ForEach-Object { "xbox" })
+$remainingCategories = @($remainingCategories | Sort-Object { Get-Random })
+
+$categories += $remainingCategories
 
 $usedTryhardPrefixes = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
 $usedTryhardSuffixes = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
