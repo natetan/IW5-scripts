@@ -61,7 +61,11 @@ WatchPlayerLoadout()
 
         if (
             IsDefined(self.class_num) &&
-            (self.class_num == 13 || self.class_num == 14)
+            (
+                self.class_num == 12 ||
+                self.class_num == 13 || 
+                self.class_num == 14
+            )
         )
         {
             // this is the standard give all perks from the game itself
