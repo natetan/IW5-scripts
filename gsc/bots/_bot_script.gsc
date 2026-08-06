@@ -605,37 +605,63 @@ chooseRandomPrimary()
 	allowOp = ( getdvarint( "bots_loadout_allow_op" ) >= 1 );
 	reasonable = getdvarint( "bots_loadout_reasonable" );
 	rank = self maps\mp\gametypes\_rank::getrankforxp( self getplayerdata( "experience" ) );
-	
+
+	if ( reasonable )
+	{
+		weightedPrimaries = [];
+
+		foreach ( weapon in primaries )
+		{
+			weightedPrimaries[ weightedPrimaries.size ] = weapon;
+		}
+
+		/*
+			Favorites are repeated so they make up roughly half of their
+			respective weapon category without eliminating variety.
+		*/
+		for ( i = 0; i < 7; i++ )
+		{
+			weightedPrimaries[ weightedPrimaries.size ] = "iw5_acr";
+		}
+
+		for ( i = 0; i < 6; i++ )
+		{
+			weightedPrimaries[ weightedPrimaries.size ] = "iw5_mp7";
+		}
+
+		for ( i = 0; i < 5; i++ )
+		{
+			weightedPrimaries[ weightedPrimaries.size ] = "iw5_striker";
+			weightedPrimaries[ weightedPrimaries.size ] = "iw5_sa80";
+		}
+
+		primaries = weightedPrimaries;
+	}
+
 	while ( true )
 	{
 		primary = random( primaries );
-		
-		if ( !allowOp )
+
+		if ( !allowOp && primary == "riotshield" )
 		{
-			if ( primary == "riotshield" )
-			{
-				continue;
-			}
+			continue;
 		}
-		
-		if ( reasonable )
+
+		if ( reasonable && primary == "riotshield" )
 		{
-			if ( primary == "riotshield" )
-			{
-				continue;
-			}
+			continue;
 		}
-		
+
 		if ( !self isitemunlocked( primary ) )
 		{
 			continue;
 		}
-		
+
 		if ( rank < getUnlockLevel( primary ) )
 		{
 			continue;
 		}
-		
+
 		return primary;
 	}
 }
@@ -653,12 +679,37 @@ chooseRandomSecondary()
 	allowOp = ( getdvarint( "bots_loadout_allow_op" ) >= 1 );
 	reasonable = getdvarint( "bots_loadout_reasonable" );
 	rank = self maps\mp\gametypes\_rank::getrankforxp( self getplayerdata( "experience" ) );
-	
+
+	if ( reasonable )
+	{
+		weightedSecondaries = [];
+
+		foreach ( weapon in secondaries )
+		{
+			weightedSecondaries[ weightedSecondaries.size ] = weapon;
+		}
+
+		// MP9 was the most common practical secondary in public matches.
+		for ( i = 0; i < 10; i++ )
+		{
+			weightedSecondaries[ weightedSecondaries.size ] = "iw5_mp9";
+		}
+
+		// Keep useful anti-air launchers represented.
+		for ( i = 0; i < 2; i++ )
+		{
+			weightedSecondaries[ weightedSecondaries.size ] = "stinger";
+			weightedSecondaries[ weightedSecondaries.size ] = "iw5_smaw";
+		}
+
+		secondaries = weightedSecondaries;
+	}
+
 	while ( true )
 	{
 		secondary = random( secondaries );
 		secondaryClass = getweaponclass( secondary );
-		
+
 		if ( !allowOp )
 		{
 			if ( secondary == "iw5_smaw" || secondary == "rpg" || secondary == "m320" || secondary == "xm25" )
@@ -666,32 +717,32 @@ chooseRandomSecondary()
 				continue;
 			}
 		}
-		
+
 		if ( reasonable )
 		{
-			// Handguns are still allowed occasionally, but should be uncommon.
-			if ( secondaryClass == "weapon_pistol" && randomint( 100 ) < 90 )
+			// Handguns remain possible, but should be uncommon.
+			if ( secondaryClass == "weapon_pistol" && randomint( 100 ) < 85 )
 			{
 				continue;
 			}
-			
-			// Keep projectile secondaries focused on practical anti-air choices.
+
+			// Avoid gimmick projectile secondaries in reasonable mode.
 			if ( secondaryClass == "weapon_projectile" && secondary != "stinger" && secondary != "javelin" && secondary != "iw5_smaw" )
 			{
 				continue;
 			}
 		}
-		
+
 		if ( !self isitemunlocked( secondary ) )
 		{
 			continue;
 		}
-		
+
 		if ( rank < getUnlockLevel( secondary ) )
 		{
 			continue;
 		}
-		
+
 		return secondary;
 	}
 }
@@ -699,26 +750,128 @@ chooseRandomSecondary()
 /*
 	Returns a random buff for a weapon
 */
+/*
+	Returns whether a proficiency is valid for the selected weapon class.
+*/
+isBuffAvailableForWeapon( buff, availableBuffs )
+{
+	foreach ( availableBuff in availableBuffs )
+	{
+		if ( availableBuff == buff )
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/*
+	Returns a weighted, realistic weapon proficiency.
+
+	Reasonable mode models common public-match class choices:
+	  AR / SMG / LMG: mostly Attachments, otherwise Focus
+	  Sniper: mostly Speed, then Attachments, then Impact
+	  Shotgun: almost always Damage, rarely Range
+*/
 chooseRandomBuff( weap )
 {
-	buffs = getWeaponProfs( getweaponclass( weap ) );
+	weaponClass = getweaponclass( weap );
+	buffs = getWeaponProfs( weaponClass );
 	rank = self maps\mp\gametypes\_rank::getrankforxp( self getplayerdata( "experience" ) );
-	allowOp = ( getdvarint( "bots_loadout_allow_op" ) >= 1 );
 	reasonable = getdvarint( "bots_loadout_reasonable" );
-	
-	buffs[ buffs.size ] = "specialty_null";
-	
+
 	if ( randomfloatrange( 0, 1 ) >= ( ( rank / level.maxrank ) + 0.1 ) )
 	{
 		return "specialty_null";
 	}
-	
-	while ( true )
+
+	if ( reasonable )
 	{
-		buff = random( buffs );
-		
-		return buff;
+		weightedBuffs = [];
+
+		if ( weaponClass == "weapon_assault" )
+		{
+			for ( i = 0; i < 7; i++ )
+			{
+				weightedBuffs[ weightedBuffs.size ] = "specialty_bling";
+			}
+
+			for ( i = 0; i < 3; i++ )
+			{
+				weightedBuffs[ weightedBuffs.size ] = "specialty_sharp_focus";
+			}
+		}
+		else if ( weaponClass == "weapon_smg" )
+		{
+			for ( i = 0; i < 8; i++ )
+			{
+				weightedBuffs[ weightedBuffs.size ] = "specialty_bling";
+			}
+
+			for ( i = 0; i < 2; i++ )
+			{
+				weightedBuffs[ weightedBuffs.size ] = "specialty_sharp_focus";
+			}
+		}
+		else if ( weaponClass == "weapon_lmg" )
+		{
+			for ( i = 0; i < 7; i++ )
+			{
+				weightedBuffs[ weightedBuffs.size ] = "specialty_bling";
+			}
+
+			for ( i = 0; i < 3; i++ )
+			{
+				weightedBuffs[ weightedBuffs.size ] = "specialty_sharp_focus";
+			}
+		}
+		else if ( weaponClass == "weapon_sniper" )
+		{
+			for ( i = 0; i < 7; i++ )
+			{
+				weightedBuffs[ weightedBuffs.size ] = "specialty_lightweight";
+			}
+
+			for ( i = 0; i < 2; i++ )
+			{
+				weightedBuffs[ weightedBuffs.size ] = "specialty_bling";
+			}
+
+			weightedBuffs[ weightedBuffs.size ] = "specialty_bulletpenetration";
+		}
+		else if ( weaponClass == "weapon_shotgun" )
+		{
+			for ( i = 0; i < 19; i++ )
+			{
+				weightedBuffs[ weightedBuffs.size ] = "specialty_moredamage";
+			}
+
+			weightedBuffs[ weightedBuffs.size ] = "specialty_longerrange";
+		}
+		else
+		{
+			weightedBuffs = buffs;
+		}
+
+		filteredBuffs = [];
+
+		foreach ( buff in weightedBuffs )
+		{
+			if ( isBuffAvailableForWeapon( buff, buffs ) )
+			{
+				filteredBuffs[ filteredBuffs.size ] = buff;
+			}
+		}
+
+		if ( filteredBuffs.size > 0 )
+		{
+			return random( filteredBuffs );
+		}
 	}
+
+	buffs[ buffs.size ] = "specialty_null";
+	return random( buffs );
 }
 
 /*
@@ -747,33 +900,59 @@ getReasonableAttachmentsForGun( gun, availableAttachments )
 {
 	preferred = [];
 	weaponClass = getweaponclass( gun );
-	
+
 	if ( gun == "iw5_rsass" )
 	{
 		preferred[ preferred.size ] = "xmags";
 		preferred[ preferred.size ] = "xmags";
+		preferred[ preferred.size ] = "xmags";
+		preferred[ preferred.size ] = "silencer";
 		preferred[ preferred.size ] = "silencer";
 		preferred[ preferred.size ] = "thermal";
 	}
+	else if ( gun == "iw5_mp9" )
+	{
+		for ( i = 0; i < 6; i++ )
+		{
+			preferred[ preferred.size ] = "xmags";
+		}
+
+		preferred[ preferred.size ] = "silencer";
+		preferred[ preferred.size ] = "akimbo";
+	}
 	else if ( weaponClass == "weapon_assault" )
 	{
-		preferred[ preferred.size ] = "xmags";
-		preferred[ preferred.size ] = "xmags";
-		preferred[ preferred.size ] = "xmags";
-		preferred[ preferred.size ] = "reflex";
-		preferred[ preferred.size ] = "reflex";
+		for ( i = 0; i < 5; i++ )
+		{
+			preferred[ preferred.size ] = "xmags";
+		}
+
+		for ( i = 0; i < 4; i++ )
+		{
+			preferred[ preferred.size ] = "reflex";
+		}
+
+		preferred[ preferred.size ] = "silencer";
+		preferred[ preferred.size ] = "silencer";
+		preferred[ preferred.size ] = "rof";
 		preferred[ preferred.size ] = "eotech";
 	}
 	else if ( weaponClass == "weapon_smg" )
 	{
-		preferred[ preferred.size ] = "xmags";
-		preferred[ preferred.size ] = "xmags";
-		preferred[ preferred.size ] = "xmags";
-		preferred[ preferred.size ] = "silencer";
-		preferred[ preferred.size ] = "silencer";
-		preferred[ preferred.size ] = "rof";
-		preferred[ preferred.size ] = "reflex";
-		preferred[ preferred.size ] = "eotech";
+		for ( i = 0; i < 6; i++ )
+		{
+			preferred[ preferred.size ] = "xmags";
+		}
+
+		for ( i = 0; i < 4; i++ )
+		{
+			preferred[ preferred.size ] = "silencer";
+		}
+
+		for ( i = 0; i < 3; i++ )
+		{
+			preferred[ preferred.size ] = "rof";
+		}
 	}
 	else if ( weaponClass == "weapon_sniper" )
 	{
@@ -785,38 +964,49 @@ getReasonableAttachmentsForGun( gun, availableAttachments )
 	}
 	else if ( weaponClass == "weapon_lmg" )
 	{
+		for ( i = 0; i < 5; i++ )
+		{
+			preferred[ preferred.size ] = "thermal";
+		}
+
+		for ( i = 0; i < 4; i++ )
+		{
+			preferred[ preferred.size ] = "xmags";
+		}
+
+		for ( i = 0; i < 3; i++ )
+		{
+			preferred[ preferred.size ] = "silencer";
+		}
+
 		preferred[ preferred.size ] = "reflex";
-		preferred[ preferred.size ] = "reflex";
-		preferred[ preferred.size ] = "thermal";
-		preferred[ preferred.size ] = "xmags";
-		preferred[ preferred.size ] = "grip";
-		preferred[ preferred.size ] = "grip";
 	}
 	else if ( weaponClass == "weapon_shotgun" )
 	{
-		preferred[ preferred.size ] = "grip";
-		preferred[ preferred.size ] = "grip";
 		preferred[ preferred.size ] = "xmags";
+		preferred[ preferred.size ] = "grip";
 		preferred[ preferred.size ] = "rof";
 		preferred[ preferred.size ] = "silencer";
 	}
 	else if ( weaponClass == "weapon_machine_pistol" )
 	{
-		preferred[ preferred.size ] = "akimbo";
-		preferred[ preferred.size ] = "akimbo";
-		preferred[ preferred.size ] = "xmags";
+		for ( i = 0; i < 5; i++ )
+		{
+			preferred[ preferred.size ] = "xmags";
+		}
+
 		preferred[ preferred.size ] = "silencer";
+		preferred[ preferred.size ] = "akimbo";
 	}
 	else if ( weaponClass == "weapon_pistol" )
 	{
-		preferred[ preferred.size ] = "tactical";
-		preferred[ preferred.size ] = "akimbo";
 		preferred[ preferred.size ] = "xmags";
+		preferred[ preferred.size ] = "tactical";
 		preferred[ preferred.size ] = "silencer";
 	}
-	
+
 	filtered = [];
-	
+
 	foreach ( attachment in preferred )
 	{
 		if ( isAttachmentAvailableForGun( attachment, availableAttachments ) )
@@ -824,7 +1014,7 @@ getReasonableAttachmentsForGun( gun, availableAttachments )
 			filtered[ filtered.size ] = attachment;
 		}
 	}
-	
+
 	return filtered;
 }
 
