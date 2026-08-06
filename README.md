@@ -46,13 +46,21 @@ See [BOTNAMES.md](./BOTNAMES.md) for details.
 
 ```text
 .
-├── dsr/              Custom game mode recipes
-├── gsc/              Gameplay and bot modifications
-├── powershell/       Utility scripts
-├── BOTNAMES.md       Bot name generator documentation
+├── dsr/                         Custom game mode recipes
+├── gsc/                         Gameplay and bot modifications
+│   └── bots/                    Modified Bot Warfare scripts
+├── players/                     Player configuration files (.cfg)
+├── BOTNAMES.md                  Bot name generator documentation
+├── generate_iw5_bot_names.ps1
+├── install_bot_scripts.ps1
+├── install_game_scripts.ps1
 └── README.md
 ```
-## Installing Modified Bot Scripts (PowerShell)
+## Installation
+
+### Bot Warfare Scripts
+
+Updates the modified Bot Warfare GSC files inside `z_svr_bots.iwd`.
 
 Run:
 
@@ -77,7 +85,35 @@ into:
 
 A backup of the original `z_svr_bots.iwd` is created automatically the first time the script is run.
 
-## Installing Modified Bot Scripts (manual)
+---
+
+### Game Scripts
+
+Installs all custom gameplay scripts and player configuration files.
+
+Run:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File ".\install_game_scripts.ps1"
+```
+
+This automatically copies:
+
+```text
+gsc/     -> %LOCALAPPDATA%\Plutonium\storage\iw5\scripts\
+players/ -> %LOCALAPPDATA%\Plutonium\storage\iw5\players\
+admin/   -> %LOCALAPPDATA%\Plutonium\storage\iw5\admin\
+```
+
+This includes:
+
+- Custom gameplay scripts (`fun_mode.gsc`, `mapvotes.gsc`, etc.)
+- Additional script folders (such as `bots/waypoints/`)
+- Player configuration files (`normal.cfg`, `hard.cfg`, etc.)
+
+---
+
+### Manual Bot Warfare Installation
 
 Bot behavior changes belong inside `z_svr_bots.iwd`.
 
@@ -91,6 +127,13 @@ z_svr_bots.iwd
 ```
 
 Do **not** extract and recompress the archive—edit it directly with WinRAR.
+
+## Game Load
+On game load, hit the \` (~) key, and depending on the config you want, type:
+
+```
+exec normal.cfg
+```
 
 ## Philosophy
 
