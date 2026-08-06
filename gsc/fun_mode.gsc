@@ -64,7 +64,10 @@ WatchPlayerLoadout()
             (self.class_num == 13 || self.class_num == 14)
         )
         {
-            self maps\mp\killstreaks\_killstreaks::giveallperks();
+            // this is the standard give all perks from the game itself
+            // self maps\mp\killstreaks\_killstreaks::giveallperks();
+            self GiveFullSpecialistBonus();
+            // self ApplyFullSpecialistState();
         }
     }
 }
@@ -127,6 +130,26 @@ GiveFullSpecialistBonus()
     self GivePerk("specialty_fastermelee", false);
     self GivePerk("specialty_reducedsway", false);
     self GivePerk("specialty_lightweight", false); // Movement-speed boost
+}
+
+/*
+    Marks the player as having earned MW3's full Specialist Bonus.
+
+    Granting the perk flags alone is not sufficient for every system.
+    Some killstreak targeting and challenge logic also appears to rely on
+    the fourth Specialist reward slot being active.
+*/
+ApplyFullSpecialistState()
+{
+    self setplayerdata("killstreaksState", "hasStreak", 4, 1);
+
+    if (
+        IsDefined(self.pers["killstreaks"]) &&
+        IsDefined(self.pers["killstreaks"][4])
+    )
+    {
+        self.pers["killstreaks"][4].available = 1;
+    }
 }
 
 GetProPerkName(perkName)
