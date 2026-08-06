@@ -4,6 +4,8 @@
 	Date: 05/11/2021
 	Tells the bots what to do.
 	Similar to t5's _bot
+
+	Modified by me to have better killstreak targeting
 */
 
 #include common_scripts\utility;
@@ -2350,6 +2352,49 @@ getRocketAmmo()
 	}
 	
 	return answer;
+}
+
+/*
+		Author: Nate (8.05.26)
+
+    Returns the best weapon available for engaging enemy air support.
+
+    Weapon priority:
+      1. Lock-on launcher (Stinger/Javelin)
+      2. Free-fire launcher (SMAW/RPG)
+      3. Any equipped LMG with ammo
+
+    If no suitable anti-air weapon is available, returns undefined so the bot
+    ignores aircraft instead of unrealistically firing at them with pistols,
+    SMGs, or assault rifles.
+*/
+getAntiAirWeapon()
+{
+    // Prefer dedicated launchers.
+    lockOnWeapon = self getLockonAmmo();
+
+    if (isdefined(lockOnWeapon))
+    {
+        return lockOnWeapon;
+    }
+
+    // Fall back to an equipped LMG.
+    weapons = self getweaponslistall();
+
+    for (i = 0; i < weapons.size; i++)
+    {
+        weapon = weapons[i];
+
+        if (
+            getweaponclass(weapon) == "weapon_lmg" &&
+            self getammocount(weapon) > 0
+        )
+        {
+            return weapon;
+        }
+    }
+
+    return undefined;
 }
 
 /*
@@ -5373,96 +5418,148 @@ bot_weapon_think()
 }
 
 /*
-	Bots think when to target vehicles
+    Bots think when to target vehicles.
 */
 bot_target_vehicle_loop()
 {
-	rocketAmmo = self getRocketAmmo();
-	
-	if ( isdefined( rocketAmmo ) && rocketAmmo == "javelin_mp" && self isemped() )
+	antiAirWeapon = self getAntiAirWeapon();
+
+	/*
+			A Javelin cannot function while the bot is EMPed.
+
+			Keep both names temporarily if you are unsure which identifier your
+			build returns. Once confirmed, remove the unused variant.
+	*/
+	if (
+			isdefined(antiAirWeapon) &&
+			(
+					antiAirWeapon == "iw5_javelin_mp" ||
+					antiAirWeapon == "javelin_mp"
+			) &&
+			self isemped()
+	)
 	{
-		return;
+			return;
 	}
-	
+
 	targets = maps\mp\_stinger::gettargetlist();
-	
-	if ( !targets.size )
+
+	if (!targets.size)
 	{
-		return;
+			return;
 	}
-	
+
 	lockOnAmmo = self getLockonAmmo();
 	myEye = self geteye();
 	target = undefined;
-	
-	for ( i = targets.size - 1; i >= 0; i-- )
+
+	for (i = targets.size - 1; i >= 0; i--)
 	{
-		tempTarget = targets[ i ];
-		
-		if ( isplayer( tempTarget ) )
-		{
-			continue;
-		}
-		
-		if ( isdefined( tempTarget.owner ) && tempTarget.owner == self )
-		{
-			continue;
-		}
-		
-		if ( !bullettracepassed( myEye, tempTarget.origin, false, tempTarget ) )
-		{
-			continue;
-		}
-		
-		if ( tempTarget.health <= 0 )
-		{
-			continue;
-		}
-		
-		if ( isdefined( tempTarget.damagetaken ) && isdefined( tempTarget.maxhealth ) )
-		{
-			if ( tempTarget.damagetaken >= tempTarget.maxhealth )
+			tempTarget = targets[i];
+
+			if (isplayer(tempTarget))
 			{
-				continue;
+					continue;
 			}
-		}
-		
-		if ( tempTarget.classname != "script_vehicle" && !isdefined( lockOnAmmo ) )
-		{
-			continue;
-		}
-		
-		target = tempTarget;
+
+			if (isdefined(tempTarget.owner) && tempTarget.owner == self)
+			{
+					continue;
+			}
+
+			if (!bullettracepassed(myEye, tempTarget.origin, false, tempTarget))
+			{
+					continue;
+			}
+
+			if (tempTarget.health <= 0)
+			{
+					continue;
+			}
+
+			if (
+					isdefined(tempTarget.damagetaken) &&
+					isdefined(tempTarget.maxhealth) &&
+					tempTarget.damagetaken >= tempTarget.maxhealth
+			)
+			{
+					continue;
+			}
+
+			/*
+					Preserve the original requirement for non-script vehicles:
+					the bot must have a lock-on launcher.
+			*/
+			if (
+					tempTarget.classname != "script_vehicle" &&
+					!isdefined(lockOnAmmo)
+			)
+			{
+					continue;
+			}
+
+			target = tempTarget;
 	}
-	
+
 	targets = undefined;
-	
-	if ( !isdefined( target ) )
+
+	if (!isdefined(target))
 	{
-		return;
+			return;
 	}
-	
-	if ( target.model != "vehicle_ugv_talon_mp" && target.model != "vehicle_remote_uav" )
+
+	isGroundTarget =
+			target.model == "vehicle_ugv_talon_mp" ||
+			target.model == "vehicle_remote_uav";
+
+	if (!isGroundTarget)
 	{
-		if ( isdefined( self.remotetank ) )
-		{
-			return;
-		}
-		
-		if ( !isdefined( rocketAmmo ) && self BotGetRandom() < 90 )
-		{
-			return;
-		}
+			if (isdefined(self.remotetank))
+			{
+					return;
+			}
+
+			// Do not shoot aircraft with pistols or other ineffective weapons.
+			if (!isdefined(antiAirWeapon))
+			{
+					return;
+			}
 	}
-	
-	self BotNotifyBotEvent( "attack_vehicle", "start", target, rocketAmmo );
-	
-	self SetScriptEnemy( target, ( 0, 0, 0 ) );
-	self bot_attack_vehicle( target );
+
+	/*
+			Talons and remote UAVs may still be attacked with the current weapon.
+			Aircraft use the launcher or LMG selected by getAntiAirWeapon().
+	*/
+	attackWeapon = antiAirWeapon;
+
+	if (!isdefined(attackWeapon))
+	{
+			attackWeapon = self getcurrentweapon();
+	}
+	else
+	{
+			self changeToWeapon(attackWeapon);
+	}
+
+	self BotNotifyBotEvent(
+			"attack_vehicle",
+			"start",
+			target,
+			attackWeapon
+	);
+
+	self SetScriptEnemy(target, (0, 0, 0));
+	self bot_attack_vehicle(target);
 	self ClearScriptEnemy();
-	self notify( "bot_force_check_switch" );
-	
-	self BotNotifyBotEvent( "attack_vehicle", "stop", target, rocketAmmo );
+
+	self notify("bot_force_check_switch");
+
+	self BotNotifyBotEvent(
+			"attack_vehicle",
+			"stop",
+			target,
+			attackWeapon
+	);
 }
 
 /*
