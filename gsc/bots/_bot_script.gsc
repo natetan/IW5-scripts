@@ -1963,7 +1963,11 @@ start_bot_threads()
 	if ( getdvarint( "bots_play_target_other" ) )
 	{
 		self thread bot_target_vehicle();
-		self thread bot_equipment_kill_think();
+
+    // Disabled because bots attack equipment in an awkward,
+    // unrealistic manner by strafing and repeatedly firing at it.
+    // self thread bot_equipment_kill_think();
+		
 		self thread bot_turret_think();
 	}
 	
