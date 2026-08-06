@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Stop"
 
 # Change this path if your Plutonium folder is elsewhere.
 $iw5Folder = Join-Path $env:LOCALAPPDATA "Plutonium\storage\iw5"
@@ -18,19 +18,24 @@ if (-not (Test-Path $winRar)) {
 
 # Short, cleaner names that resemble sweaty/competitive aliases.
 $tryhardPrefixes = @(
-    "Astra", "Blitz", "Cipher", "Cinder", "Crux", "Cryo", "Dusk",
-    "Echo", "Ember", "Fable", "Frost", "Ghost", "Glint", "Havoc", "Hex",
-    "Hollow", "Ion", "Kairo", "Karma", "Lucid", "Lumen", "Mako", "Nero",
-    "Nexus", "Nova", "Nyx", "Onyx", "Orbit", "Phantom", "Pulse", "Raze",
-    "Reign", "Rift", "Rune", "Sever", "Shade", "Solar", "Specter", "Static",
-    "Storm", "Strafe", "Stryke", "Syn", "Vanta", "Vex", "Void", "Volt",
-    "Wraith", "Zen", "Zero"
+
+    "Aero","Aether","Arc","Ash","Axiom","Blight","Bloom","Cascade",
+    "Chrome","Comet","Cryo","Drift","Eclipse","Ember","Flux","Glint",
+    "Glyph","Halo","Hex","Horizon","Ice","Inferno","Jade","Kairo",
+    "Khaos","Lucid","Lux","Mirage","Myst","Nero","Nova","Nyx",
+    "Obsidian","Onyx","Oracle","Origin","Phantom","Prism","Rift",
+    "Rogue","Rune","Shade","Shiver","Silva","Slate","Stryk",
+    "Tempest","Titan","Vale","Vector","Vertex","Vex","Vision",
+    "Wraith","Zephyr"
+
 )
 
 $tryhardSuffixes = @(
-    "a", "al", "an", "ane", "ant", "ar", "ax", "en", "ent", "er",
-    "ex", "ic", "ics", "ion", "is", "ix", "ium", "ive", "or", "ous",
-    "ox", "um", "us", "yn", "yx"
+
+    "ar","as","ath","ax","en","er","es","eus","ex","ian","ic",
+    "id","ik","in","ion","is","ith","ix","or","os","ous","ox",
+    "um","ur","us","yx","yn","yr"
+
 )
 
 # Early-2010s wannabe-MLG styling. Most bots come from this group.
@@ -176,21 +181,22 @@ function New-XboxName {
     return "$adjective$noun$number"
 }
 
-# Build a 17-bot lobby with a controlled mix:
-#   4 try-hard aliases
-#   10-11 wannabe-MLG names
-#   2-3 Xbox-generated-style tags
-$xboxCount = Get-Random -Minimum 2 -Maximum 4
-$tryhardCount = 4
-$mlgCount = 17 - $tryhardCount - $xboxCount
+# Build a 17-bot lobby with a modern controlled mix:
+#   12 clean/try-hard aliases (~71%)
+#   4 wannabe-MLG names (~24%)
+#   1 Xbox-generated-style tag (~6%)
+$tryhardCount = 12
+$mlgCount = 4
+$xboxCount = 1
 
-# Keep the four clean try-hard aliases at the top of bots.txt.
+# Keep the try-hard aliases first so stronger bots can receive the cleaner IGNs.
 # Randomize only the MLG/Xbox names that come after them.
-$categories = @(1..$tryhardCount | ForEach-Object { "tryhard" })
+$categories = @()
+$categories += @(for ($i = 0; $i -lt $tryhardCount; $i++) { "tryhard" })
 
 $remainingCategories = @()
-$remainingCategories += @(1..$mlgCount | ForEach-Object { "mlg" })
-$remainingCategories += @(1..$xboxCount | ForEach-Object { "xbox" })
+$remainingCategories += @(for ($i = 0; $i -lt $mlgCount; $i++) { "mlg" })
+$remainingCategories += @(for ($i = 0; $i -lt $xboxCount; $i++) { "xbox" })
 $remainingCategories = @($remainingCategories | Sort-Object { Get-Random })
 
 $categories += $remainingCategories
