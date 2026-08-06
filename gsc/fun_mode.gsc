@@ -61,7 +61,7 @@ WatchPlayerLoadout()
 
         if (
             IsDefined(self.class_num) &&
-            self.class_num == GetDvarInt("fun_mode_specialist_class_index")
+            (self.class_num == 13 || self.class_num == 14)
         )
         {
             self maps\mp\killstreaks\_killstreaks::giveallperks();
