@@ -4,8 +4,6 @@
 	Date: 05/11/2021
 	Tells the bots what to do.
 	Similar to t5's _bot
-
-	Modified by me to have better killstreak targeting
 */
 
 #include common_scripts\utility;
@@ -643,7 +641,11 @@ chooseRandomPrimary()
 }
 
 /*
-	choose a random secondary
+	Choose a secondary weapon.
+
+	When reasonable loadouts are enabled, bots strongly prefer machine pistols
+	or useful anti-air launchers. Standard handguns remain possible, but are
+	rare, preventing entire lobbies from constantly running pistol-heavy kits.
 */
 chooseRandomSecondary()
 {
@@ -655,6 +657,7 @@ chooseRandomSecondary()
 	while ( true )
 	{
 		secondary = random( secondaries );
+		secondaryClass = getweaponclass( secondary );
 		
 		if ( !allowOp )
 		{
@@ -666,6 +669,17 @@ chooseRandomSecondary()
 		
 		if ( reasonable )
 		{
+			// Handguns are still allowed occasionally, but should be uncommon.
+			if ( secondaryClass == "weapon_pistol" && randomint( 100 ) < 90 )
+			{
+				continue;
+			}
+			
+			// Keep projectile secondaries focused on practical anti-air choices.
+			if ( secondaryClass == "weapon_projectile" && secondary != "stinger" && secondary != "javelin" && secondary != "iw5_smaw" )
+			{
+				continue;
+			}
 		}
 		
 		if ( !self isitemunlocked( secondary ) )
@@ -708,9 +722,119 @@ chooseRandomBuff( weap )
 }
 
 /*
-	chooses random attachements for a gun
+	Returns whether an attachment is supported by the selected weapon.
 */
-chooseRandomAttachmentComboForGun( gun )
+isAttachmentAvailableForGun( attachment, availableAttachments )
+{
+	foreach ( availableAttachment in availableAttachments )
+	{
+		if ( availableAttachment == attachment )
+		{
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+/*
+	Builds a weighted pool of sensible attachments for a weapon.
+
+	Repeated values intentionally make common public-match attachments such as
+	Extended Mags and Red Dot more likely. ACOG and hybrid optics are omitted.
+*/
+getReasonableAttachmentsForGun( gun, availableAttachments )
+{
+	preferred = [];
+	weaponClass = getweaponclass( gun );
+	
+	if ( gun == "iw5_rsass" )
+	{
+		preferred[ preferred.size ] = "xmags";
+		preferred[ preferred.size ] = "xmags";
+		preferred[ preferred.size ] = "silencer";
+		preferred[ preferred.size ] = "thermal";
+	}
+	else if ( weaponClass == "weapon_assault" )
+	{
+		preferred[ preferred.size ] = "xmags";
+		preferred[ preferred.size ] = "xmags";
+		preferred[ preferred.size ] = "xmags";
+		preferred[ preferred.size ] = "reflex";
+		preferred[ preferred.size ] = "reflex";
+		preferred[ preferred.size ] = "eotech";
+	}
+	else if ( weaponClass == "weapon_smg" )
+	{
+		preferred[ preferred.size ] = "xmags";
+		preferred[ preferred.size ] = "xmags";
+		preferred[ preferred.size ] = "xmags";
+		preferred[ preferred.size ] = "silencer";
+		preferred[ preferred.size ] = "silencer";
+		preferred[ preferred.size ] = "rof";
+		preferred[ preferred.size ] = "reflex";
+		preferred[ preferred.size ] = "eotech";
+	}
+	else if ( weaponClass == "weapon_sniper" )
+	{
+		preferred[ preferred.size ] = "thermal";
+		preferred[ preferred.size ] = "thermal";
+		preferred[ preferred.size ] = "xmags";
+		preferred[ preferred.size ] = "xmags";
+		preferred[ preferred.size ] = "silencer";
+	}
+	else if ( weaponClass == "weapon_lmg" )
+	{
+		preferred[ preferred.size ] = "reflex";
+		preferred[ preferred.size ] = "reflex";
+		preferred[ preferred.size ] = "thermal";
+		preferred[ preferred.size ] = "xmags";
+		preferred[ preferred.size ] = "grip";
+		preferred[ preferred.size ] = "grip";
+	}
+	else if ( weaponClass == "weapon_shotgun" )
+	{
+		preferred[ preferred.size ] = "grip";
+		preferred[ preferred.size ] = "grip";
+		preferred[ preferred.size ] = "xmags";
+		preferred[ preferred.size ] = "rof";
+		preferred[ preferred.size ] = "silencer";
+	}
+	else if ( weaponClass == "weapon_machine_pistol" )
+	{
+		preferred[ preferred.size ] = "akimbo";
+		preferred[ preferred.size ] = "akimbo";
+		preferred[ preferred.size ] = "xmags";
+		preferred[ preferred.size ] = "silencer";
+	}
+	else if ( weaponClass == "weapon_pistol" )
+	{
+		preferred[ preferred.size ] = "tactical";
+		preferred[ preferred.size ] = "akimbo";
+		preferred[ preferred.size ] = "xmags";
+		preferred[ preferred.size ] = "silencer";
+	}
+	
+	filtered = [];
+	
+	foreach ( attachment in preferred )
+	{
+		if ( isAttachmentAvailableForGun( attachment, availableAttachments ) )
+		{
+			filtered[ filtered.size ] = attachment;
+		}
+	}
+	
+	return filtered;
+}
+
+/*
+	Chooses attachments for a gun.
+
+	Reasonable mode uses weapon-specific attachment pools and only gives a
+	second attachment when the class has the Attachments proficiency.
+*/
+chooseRandomAttachmentComboForGun( gun, weaponBuff )
 {
 	atts = getAttachmentsForGun( gun );
 	rank = self maps\mp\gametypes\_rank::getrankforxp( self getplayerdata( "experience" ) );
@@ -722,6 +846,46 @@ chooseRandomAttachmentComboForGun( gun )
 		retAtts = [];
 		retAtts[ 0 ] = "none";
 		retAtts[ 1 ] = "none";
+		
+		return retAtts;
+	}
+	
+	if ( reasonable )
+	{
+		reasonableAtts = getReasonableAttachmentsForGun( gun, atts );
+		retAtts = [];
+		retAtts[ 0 ] = "none";
+		retAtts[ 1 ] = "none";
+		
+		if ( reasonableAtts.size <= 0 )
+		{
+			return retAtts;
+		}
+		
+		retAtts[ 0 ] = random( reasonableAtts );
+		
+		if ( weaponBuff != "specialty_bling" )
+		{
+			return retAtts;
+		}
+		
+		for ( attempts = 0; attempts < 20; attempts++ )
+		{
+			att2 = random( reasonableAtts );
+			
+			if ( att2 == retAtts[ 0 ] )
+			{
+				continue;
+			}
+			
+			if ( !isValidAttachmentCombo( retAtts[ 0 ], att2 ) )
+			{
+				continue;
+			}
+			
+			retAtts[ 1 ] = att2;
+			break;
+		}
 		
 		return retAtts;
 	}
@@ -742,10 +906,6 @@ chooseRandomAttachmentComboForGun( gun )
 			{
 				continue;
 			}
-		}
-		
-		if ( reasonable )
-		{
 		}
 		
 		retAtts = [];
@@ -1060,7 +1220,7 @@ setClasses()
 	{
 		primary = chooseRandomPrimary();
 		primaryBuff = chooseRandomBuff( primary );
-		primaryAtts = chooseRandomAttachmentComboForGun( primary );
+		primaryAtts = chooseRandomAttachmentComboForGun( primary, primaryBuff );
 		primaryReticle = chooseRandomReticle();
 		primaryCamo = chooseRandomCamo();
 		
@@ -1079,7 +1239,7 @@ setClasses()
 		}
 		
 		secondaryBuff = chooseRandomBuff( secondary );
-		secondaryAtts = chooseRandomAttachmentComboForGun( secondary );
+		secondaryAtts = chooseRandomAttachmentComboForGun( secondary, secondaryBuff );
 		secondaryReticle = chooseRandomReticle();
 		secondaryCamo = chooseRandomCamo();
 		
@@ -1964,7 +2124,7 @@ start_bot_threads()
 	{
 		self thread bot_target_vehicle();
 
-    // Disabled because bots attack equipment in an awkward,
+		// Disabled because bots attack equipment in an awkward,
     // unrealistic manner by strafing and repeatedly firing at it.
     // self thread bot_equipment_kill_think();
 		
@@ -2356,49 +2516,6 @@ getRocketAmmo()
 	}
 	
 	return answer;
-}
-
-/*
-		Author: Nate (8.05.26)
-
-    Returns the best weapon available for engaging enemy air support.
-
-    Weapon priority:
-      1. Lock-on launcher (Stinger/Javelin)
-      2. Free-fire launcher (SMAW/RPG)
-      3. Any equipped LMG with ammo
-
-    If no suitable anti-air weapon is available, returns undefined so the bot
-    ignores aircraft instead of unrealistically firing at them with pistols,
-    SMGs, or assault rifles.
-*/
-getAntiAirWeapon()
-{
-    // Prefer dedicated launchers.
-    lockOnWeapon = self getLockonAmmo();
-
-    if (isdefined(lockOnWeapon))
-    {
-        return lockOnWeapon;
-    }
-
-    // Fall back to an equipped LMG.
-    weapons = self getweaponslistall();
-
-    for (i = 0; i < weapons.size; i++)
-    {
-        weapon = weapons[i];
-
-        if (
-            getweaponclass(weapon) == "weapon_lmg" &&
-            self getammocount(weapon) > 0
-        )
-        {
-            return weapon;
-        }
-    }
-
-    return undefined;
 }
 
 /*
@@ -5422,148 +5539,96 @@ bot_weapon_think()
 }
 
 /*
-    Bots think when to target vehicles.
+	Bots think when to target vehicles
 */
 bot_target_vehicle_loop()
 {
-	antiAirWeapon = self getAntiAirWeapon();
-
-	/*
-			A Javelin cannot function while the bot is EMPed.
-
-			Keep both names temporarily if you are unsure which identifier your
-			build returns. Once confirmed, remove the unused variant.
-	*/
-	if (
-			isdefined(antiAirWeapon) &&
-			(
-					antiAirWeapon == "iw5_javelin_mp" ||
-					antiAirWeapon == "javelin_mp"
-			) &&
-			self isemped()
-	)
+	rocketAmmo = self getRocketAmmo();
+	
+	if ( isdefined( rocketAmmo ) && rocketAmmo == "javelin_mp" && self isemped() )
 	{
-			return;
+		return;
 	}
-
+	
 	targets = maps\mp\_stinger::gettargetlist();
-
-	if (!targets.size)
+	
+	if ( !targets.size )
 	{
-			return;
+		return;
 	}
-
+	
 	lockOnAmmo = self getLockonAmmo();
 	myEye = self geteye();
 	target = undefined;
-
-	for (i = targets.size - 1; i >= 0; i--)
+	
+	for ( i = targets.size - 1; i >= 0; i-- )
 	{
-			tempTarget = targets[i];
-
-			if (isplayer(tempTarget))
+		tempTarget = targets[ i ];
+		
+		if ( isplayer( tempTarget ) )
+		{
+			continue;
+		}
+		
+		if ( isdefined( tempTarget.owner ) && tempTarget.owner == self )
+		{
+			continue;
+		}
+		
+		if ( !bullettracepassed( myEye, tempTarget.origin, false, tempTarget ) )
+		{
+			continue;
+		}
+		
+		if ( tempTarget.health <= 0 )
+		{
+			continue;
+		}
+		
+		if ( isdefined( tempTarget.damagetaken ) && isdefined( tempTarget.maxhealth ) )
+		{
+			if ( tempTarget.damagetaken >= tempTarget.maxhealth )
 			{
-					continue;
+				continue;
 			}
-
-			if (isdefined(tempTarget.owner) && tempTarget.owner == self)
-			{
-					continue;
-			}
-
-			if (!bullettracepassed(myEye, tempTarget.origin, false, tempTarget))
-			{
-					continue;
-			}
-
-			if (tempTarget.health <= 0)
-			{
-					continue;
-			}
-
-			if (
-					isdefined(tempTarget.damagetaken) &&
-					isdefined(tempTarget.maxhealth) &&
-					tempTarget.damagetaken >= tempTarget.maxhealth
-			)
-			{
-					continue;
-			}
-
-			/*
-					Preserve the original requirement for non-script vehicles:
-					the bot must have a lock-on launcher.
-			*/
-			if (
-					tempTarget.classname != "script_vehicle" &&
-					!isdefined(lockOnAmmo)
-			)
-			{
-					continue;
-			}
-
-			target = tempTarget;
+		}
+		
+		if ( tempTarget.classname != "script_vehicle" && !isdefined( lockOnAmmo ) )
+		{
+			continue;
+		}
+		
+		target = tempTarget;
 	}
-
+	
 	targets = undefined;
-
-	if (!isdefined(target))
+	
+	if ( !isdefined( target ) )
 	{
+		return;
+	}
+	
+	if ( target.model != "vehicle_ugv_talon_mp" && target.model != "vehicle_remote_uav" )
+	{
+		if ( isdefined( self.remotetank ) )
+		{
 			return;
+		}
+		
+		if ( !isdefined( rocketAmmo ) && self BotGetRandom() < 90 )
+		{
+			return;
+		}
 	}
-
-	isGroundTarget =
-			target.model == "vehicle_ugv_talon_mp" ||
-			target.model == "vehicle_remote_uav";
-
-	if (!isGroundTarget)
-	{
-			if (isdefined(self.remotetank))
-			{
-					return;
-			}
-
-			// Do not shoot aircraft with pistols or other ineffective weapons.
-			if (!isdefined(antiAirWeapon))
-			{
-					return;
-			}
-	}
-
-	/*
-			Talons and remote UAVs may still be attacked with the current weapon.
-			Aircraft use the launcher or LMG selected by getAntiAirWeapon().
-	*/
-	attackWeapon = antiAirWeapon;
-
-	if (!isdefined(attackWeapon))
-	{
-			attackWeapon = self getcurrentweapon();
-	}
-	else
-	{
-			self changeToWeapon(attackWeapon);
-	}
-
-	self BotNotifyBotEvent(
-			"attack_vehicle",
-			"start",
-			target,
-			attackWeapon
-	);
-
-	self SetScriptEnemy(target, (0, 0, 0));
-	self bot_attack_vehicle(target);
+	
+	self BotNotifyBotEvent( "attack_vehicle", "start", target, rocketAmmo );
+	
+	self SetScriptEnemy( target, ( 0, 0, 0 ) );
+	self bot_attack_vehicle( target );
 	self ClearScriptEnemy();
-
-	self notify("bot_force_check_switch");
-
-	self BotNotifyBotEvent(
-			"attack_vehicle",
-			"stop",
-			target,
-			attackWeapon
-	);
+	self notify( "bot_force_check_switch" );
+	
+	self BotNotifyBotEvent( "attack_vehicle", "stop", target, rocketAmmo );
 }
 
 /*
