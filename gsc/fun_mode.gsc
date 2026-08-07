@@ -28,6 +28,7 @@ Main()
     SetDvarIfNotInitialized("fun_mode_scavenger_lethal", 1);
     SetDvarIfNotInitialized("fun_mode_scavenger_tactical", 1);
     SetDvarIfNotInitialized("fun_mode_scavenger_launchers", 0);
+    SetDvarIfNotInitialized("fun_mode_scavenger_noobtubes", 1);
     SetDvarIfNotInitialized("fun_mode_scavenger_debug", 0);
 
     /*
@@ -289,6 +290,16 @@ HandleScavengerBagPickupCustom(scrPlayer)
             // Preserve normal MW3 Scavenger behavior for primary firearms.
             refillWeapon = true;
         }
+        else if (IsScavengerNoobTube(weapon))
+        {
+            if (
+                extraScavenger &&
+                GetDvarInt("fun_mode_scavenger_noobtubes")
+            )
+            {
+                refillWeapon = true;
+            }
+        }
         else if (IsScavengerLauncher(weapon))
         {
             if (
@@ -375,6 +386,18 @@ IsScavengerTactical(weapon)
 /*
     Launcher weapon names used by IW5's runtime weapon inventory.
 */
+/*
+    Underbarrel grenade launchers ("noob tubes") can be configured
+    independently from standalone launcher weapons.
+*/
+IsScavengerNoobTube(weapon)
+{
+    return (
+        weapon == "gl_mp" ||
+        weapon == "gp25_mp"
+    );
+}
+
 IsScavengerLauncher(weapon)
 {
     return (
