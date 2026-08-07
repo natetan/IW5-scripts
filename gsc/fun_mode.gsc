@@ -63,6 +63,7 @@ OnPlayerConnect()
         }
 
         player thread WatchPlayerLoadout();
+        player thread WatchScavengerPickupEligibility();
     }
 }
 
@@ -182,6 +183,198 @@ ApplyFullSpecialistState()
 
 
 /*
+    MW3 normally refuses to collect a Scavenger bag when normal firearm ammo
+    is already full, even if one of our optional refill categories still needs
+    ammo (grenades, tacticals, launchers, noob tubes, etc.).
+
+    The bag's pickup eligibility is handled before handleScavengerBagPickup()
+    runs, so the custom refill handler cannot change that decision directly.
+
+    When an enabled extra category needs ammo but all normal primary ammo is
+    full, this watcher leaves one reserve round missing from a primary weapon.
+    That makes the stock Scavenger pickup test consider the player eligible.
+    The next bag immediately restores that round through the normal refill
+    path along with the configured extra ammo.
+
+    This avoids replacing the engine-side bag trigger itself.
+*/
+WatchScavengerPickupEligibility()
+{
+    self endon("disconnect");
+
+    for (;;)
+    {
+        wait 0.25;
+
+        if (!GetDvarInt("fun_mode_scavenger_enable"))
+        {
+            continue;
+        }
+
+        if (!self maps\mp\_utility::_hasperk("specialty_scavenger"))
+        {
+            continue;
+        }
+
+        if (!self NeedsExtraScavengerAmmo())
+        {
+            continue;
+        }
+
+        self EnsureScavengerBagCanBePickedUp();
+    }
+}
+
+/*
+    Returns true when at least one enabled non-standard Scavenger category
+    is below its refillable amount.
+*/
+NeedsExtraScavengerAmmo()
+{
+    if (
+        GetDvarInt("fun_mode_scavenger_lethal") ||
+        GetDvarInt("fun_mode_scavenger_tactical")
+    )
+    {
+        offhands = self GetWeaponsListOffhands();
+
+        foreach (offhand in offhands)
+        {
+            if (
+                GetDvarInt("fun_mode_scavenger_lethal") &&
+                IsScavengerLethal(offhand) &&
+                self GetWeaponAmmoClip(offhand) < 1
+            )
+            {
+                return true;
+            }
+
+            if (
+                GetDvarInt("fun_mode_scavenger_tactical") &&
+                IsScavengerTactical(offhand) &&
+                self GetWeaponAmmoClip(offhand) < 1
+            )
+            {
+                return true;
+            }
+        }
+    }
+
+    weapons = self GetWeaponsListPrimaries();
+
+    foreach (weapon in weapons)
+    {
+        maxAmmo = WeaponMaxAmmo(weapon);
+
+        if (maxAmmo <= 0)
+        {
+            continue;
+        }
+
+        stockAmmo = self GetWeaponAmmoStock(weapon);
+
+        if (
+            GetDvarInt("fun_mode_scavenger_noobtubes") &&
+            IsScavengerNoobTube(weapon) &&
+            stockAmmo < maxAmmo
+        )
+        {
+            return true;
+        }
+
+        if (
+            GetDvarInt("fun_mode_scavenger_launchers") &&
+            IsScavengerLauncher(weapon) &&
+            stockAmmo < maxAmmo
+        )
+        {
+            return true;
+        }
+
+        if (
+            GetDvarInt("fun_mode_scavenger_secondary") &&
+            !maps\mp\_utility::IsCACPrimaryWeapon(weapon) &&
+            !IsScavengerNoobTube(weapon) &&
+            !IsScavengerLauncher(weapon) &&
+            stockAmmo < maxAmmo
+        )
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/*
+    If every ordinary primary is full, remove exactly one reserve round from
+    one primary. We do this only once: after the first round is removed that
+    weapon is already below max, so later watcher passes leave it alone.
+*/
+EnsureScavengerBagCanBePickedUp()
+{
+    weapons = self GetWeaponsListPrimaries();
+
+    foreach (weapon in weapons)
+    {
+        if (!maps\mp\_utility::IsCACPrimaryWeapon(weapon))
+        {
+            continue;
+        }
+
+        maxAmmo = WeaponMaxAmmo(weapon);
+
+        if (maxAmmo <= 0)
+        {
+            continue;
+        }
+
+        stockAmmo = self GetWeaponAmmoStock(weapon);
+
+        // A normal primary already needs ammo, so vanilla pickup eligibility
+        // should already allow the Scavenger bag.
+        if (stockAmmo < maxAmmo)
+        {
+            return;
+        }
+    }
+
+    foreach (weapon in weapons)
+    {
+        if (!maps\mp\_utility::IsCACPrimaryWeapon(weapon))
+        {
+            continue;
+        }
+
+        maxAmmo = WeaponMaxAmmo(weapon);
+
+        if (maxAmmo <= 0)
+        {
+            continue;
+        }
+
+        stockAmmo = self GetWeaponAmmoStock(weapon);
+
+        if (stockAmmo > 0)
+        {
+            self SetWeaponAmmoStock(weapon, stockAmmo - 1);
+
+            if (GetDvarInt("fun_mode_scavenger_debug"))
+            {
+                Print(
+                    "[FUN_MODE] Reserved Scavenger pickup by reducing " +
+                    weapon +
+                    " reserve ammo by 1."
+                );
+            }
+
+            return;
+        }
+    }
+}
+
+
+/*
     Configurable replacement for IW5's stock Scavenger bag pickup handler.
 
     This is based on the game's normal pickup flow instead of listening for
@@ -194,6 +387,7 @@ ApplyFullSpecialistState()
       fun_mode_scavenger_lethal      - Refill lethal equipment
       fun_mode_scavenger_tactical    - Refill tactical equipment
       fun_mode_scavenger_launchers   - Refill launcher ammo
+      fun_mode_scavenger_noobtubes   - Refill underbarrel grenade launchers
       fun_mode_scavenger_debug       - Print pickup/refill diagnostics
 
     Primary firearm ammo keeps the normal MW3 Scavenger behavior.
