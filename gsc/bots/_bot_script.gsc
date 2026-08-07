@@ -19,6 +19,8 @@
 	- Improved killstreak selection:
 	  * Assault bots strongly favor Predator Missiles over Sentry Guns.
 	  * Support bots avoid the Remote Sentry and favor Advanced UAV instead.
+	- Disabled deliberate vehicle/air-support targeting so bots do not pull
+	  launchers or LMGs in exposed combat areas and get themselves killed.
 */
 
 #include common_scripts\utility;
@@ -2378,12 +2380,17 @@ start_bot_threads()
 	// script targeting
 	if ( getdvarint( "bots_play_target_other" ) )
 	{
-		self thread bot_target_vehicle();
+		// Disabled because bots engage enemy air support/vehicles at terrible
+		// times, often switching weapons in exposed areas or during gunfights.
+		// Human players typically find cover before attempting to destroy air.
+		// self thread bot_target_vehicle();
 
 		// Disabled because bots attack equipment in an awkward,
-    // unrealistic manner by strafing and repeatedly firing at it.
-    // self thread bot_equipment_kill_think();
+		// unrealistic manner by strafing and repeatedly firing at it.
+		// self thread bot_equipment_kill_think();
 		
+		// Keep turret interaction/targeting behavior separate from vehicle and
+		// ordinary equipment targeting.
 		self thread bot_turret_think();
 	}
 	
