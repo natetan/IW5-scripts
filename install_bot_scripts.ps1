@@ -1,18 +1,4 @@
-﻿<#
-Run from the repository root:
-
-powershell.exe -ExecutionPolicy Bypass -File ".\install_bot_scripts.ps1"
-
-This updates the modified Bot Warfare GSC files inside:
-
-    %LOCALAPPDATA%\Plutonium\storage\iw5\z_svr_bots.iwd
-
-Files are installed to:
-
-    maps\mp\bots\
-#>
-
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 <#
 Run from the repository root:
