@@ -6,6 +6,21 @@
 	Similar to t5's _bot
 */
 
+/*
+	Modifications by: Nate
+
+	Changes:
+	- More realistic bot loadouts when bots_loadout_reasonable is enabled.
+	- Weighted popular primaries such as the ACR, MP7, Striker, and L86 LSW.
+	- Weighted practical secondaries, especially the MP9.
+	- Curated weapon proficiencies based on common MW3 class setups.
+	- Curated attachment pools to avoid unrealistic combinations such as
+	  ACOG/Hybrid optics on SMGs and other uncommon public-match setups.
+	- Improved killstreak selection:
+	  * Assault bots strongly favor Predator Missiles over Sentry Guns.
+	  * Support bots avoid the Remote Sentry and favor Advanced UAV instead.
+*/
+
 #include common_scripts\utility;
 #include maps\mp\_utility;
 #include maps\mp\gametypes\_hud_util;
@@ -1214,6 +1229,39 @@ chooseRandomKillstreaks( type, perks )
 	allowOp = ( getdvarint( "bots_loadout_allow_op" ) >= 1 );
 	reasonable = getdvarint( "bots_loadout_reasonable" );
 	chooseStreaks = [];
+
+	/*
+		Reasonable mode keeps the normal killstreak pool, but adds extra
+		weight to streaks that were much more common in real MW3 classes.
+	*/
+	if ( reasonable )
+	{
+		weightedStreaks = [];
+
+		foreach ( candidateStreak in allStreaks )
+		{
+			weightedStreaks[ weightedStreaks.size ] = candidateStreak;
+		}
+
+		if ( type == "streaktype_assault" )
+		{
+			// Predator Missile was far more common than the Assault Sentry.
+			for ( i = 0; i < 6; i++ )
+			{
+				weightedStreaks[ weightedStreaks.size ] = "predator_missile";
+			}
+		}
+		else if ( type == "streaktype_support" )
+		{
+			// Advanced UAV was the standard 12-point Support reward.
+			for ( i = 0; i < 6; i++ )
+			{
+				weightedStreaks[ weightedStreaks.size ] = "triple_uav";
+			}
+		}
+
+		allStreaks = weightedStreaks;
+	}
 	
 	availUnlocks = 0;
 	
@@ -1317,12 +1365,30 @@ chooseRandomKillstreaks( type, perks )
 				{
 					continue;
 				}
+
+				if ( reasonable )
+				{
+					// The 12-point Remote Sentry was rarely chosen over Advanced UAV.
+					if ( streak == "remote_mg_turret" )
+					{
+						continue;
+					}
+				}
 			}
 			else
 			{
 				if ( !maps\mp\killstreaks\_killstreaks::isassaultkillstreak( streak ) )
 				{
 					continue;
+				}
+
+				if ( reasonable )
+				{
+					// Assault Sentry remains possible, but is intentionally uncommon.
+					if ( streak == "airdrop_sentry_minigun" && randomint( 100 ) < 85 )
+					{
+						continue;
+					}
 				}
 			}
 		}
