@@ -29,6 +29,7 @@ Main()
     SetDvarIfNotInitialized("fun_mode_scavenger_tactical", 1);
     SetDvarIfNotInitialized("fun_mode_scavenger_launchers", 0);
     SetDvarIfNotInitialized("fun_mode_scavenger_noobtubes", 1);
+    SetDvarIfNotInitialized("fun_mode_scavenger_noobtubes_max", 2);
     SetDvarIfNotInitialized("fun_mode_scavenger_debug", 0);
 
     /*
@@ -79,6 +80,9 @@ WatchPlayerLoadout()
     {
         // Fired after spawning and when changing classes.
         self waittill("changed_kit");
+
+        // A new loadout invalidates any pickup reservation from the old one.
+        self.fun_mode_scavenger_ammo_reserved = false;
 
         self SetClientDvar("player_unlimitedSprint", "1");
 
@@ -218,6 +222,7 @@ WatchScavengerPickupEligibility()
 
         if (!self NeedsExtraScavengerAmmo())
         {
+            self.fun_mode_scavenger_ammo_reserved = false;
             continue;
         }
 
@@ -260,26 +265,34 @@ NeedsExtraScavengerAmmo()
         }
     }
 
+    if (GetDvarInt("fun_mode_scavenger_noobtubes"))
+    {
+        allWeapons = self GetWeaponsListAll();
+
+        foreach (weapon in allWeapons)
+        {
+            if (
+                IsScavengerNoobTube(weapon) &&
+                self GetAmmoCount(weapon) <
+                    GetDvarInt("fun_mode_scavenger_noobtubes_max")
+            )
+            {
+                return true;
+            }
+        }
+    }
+
     weapons = self GetWeaponsListPrimaries();
 
     foreach (weapon in weapons)
     {
+        stockAmmo = self GetWeaponAmmoStock(weapon);
+
         maxAmmo = WeaponMaxAmmo(weapon);
 
         if (maxAmmo <= 0)
         {
             continue;
-        }
-
-        stockAmmo = self GetWeaponAmmoStock(weapon);
-
-        if (
-            GetDvarInt("fun_mode_scavenger_noobtubes") &&
-            IsScavengerNoobTube(weapon) &&
-            stockAmmo < maxAmmo
-        )
-        {
-            return true;
         }
 
         if (
@@ -307,37 +320,22 @@ NeedsExtraScavengerAmmo()
 }
 
 /*
-    If every ordinary primary is full, remove exactly one reserve round from
-    one primary. We do this only once: after the first round is removed that
-    weapon is already below max, so later watcher passes leave it alone.
+    Remove exactly one reserve round from an ordinary primary so the engine's
+    stock bag trigger sees room for firearm ammo. Track the reservation
+    explicitly: WeaponMaxAmmo()/stock comparisons do not reliably mirror the
+    native pickup test for every weapon/attachment combination.
 */
 EnsureScavengerBagCanBePickedUp()
 {
-    weapons = self GetWeaponsListPrimaries();
-
-    foreach (weapon in weapons)
+    if (
+        IsDefined(self.fun_mode_scavenger_ammo_reserved) &&
+        self.fun_mode_scavenger_ammo_reserved
+    )
     {
-        if (!maps\mp\_utility::IsCACPrimaryWeapon(weapon))
-        {
-            continue;
-        }
-
-        maxAmmo = WeaponMaxAmmo(weapon);
-
-        if (maxAmmo <= 0)
-        {
-            continue;
-        }
-
-        stockAmmo = self GetWeaponAmmoStock(weapon);
-
-        // A normal primary already needs ammo, so vanilla pickup eligibility
-        // should already allow the Scavenger bag.
-        if (stockAmmo < maxAmmo)
-        {
-            return;
-        }
+        return;
     }
+
+    weapons = self GetWeaponsListPrimaries();
 
     foreach (weapon in weapons)
     {
@@ -358,6 +356,7 @@ EnsureScavengerBagCanBePickedUp()
         if (stockAmmo > 0)
         {
             self SetWeaponAmmoStock(weapon, stockAmmo - 1);
+            self.fun_mode_scavenger_ammo_reserved = true;
 
             if (GetDvarInt("fun_mode_scavenger_debug"))
             {
@@ -388,6 +387,7 @@ EnsureScavengerBagCanBePickedUp()
       fun_mode_scavenger_tactical    - Refill tactical equipment
       fun_mode_scavenger_launchers   - Refill launcher ammo
       fun_mode_scavenger_noobtubes   - Refill underbarrel grenade launchers
+      fun_mode_scavenger_noobtubes_max - Tube reserve capacity (default 2)
       fun_mode_scavenger_debug       - Print pickup/refill diagnostics
 
     Primary firearm ammo keeps the normal MW3 Scavenger behavior.
@@ -406,6 +406,10 @@ HandleScavengerBagPickupCustom(scrPlayer)
 
     player notify("scavenger_pickup");
     player PlayLocalSound("scavenger_pack_pickup");
+
+    // The normal primary refill below pays back the reserved round. Clearing
+    // this lets another reservation be made if an extra category is still low.
+    player.fun_mode_scavenger_ammo_reserved = false;
 
     extraScavenger = GetDvarInt("fun_mode_scavenger_enable");
 
@@ -468,31 +472,55 @@ HandleScavengerBagPickupCustom(scrPlayer)
     }
 
     /*
-        Primary/secondary/launcher reserve ammunition.
+    Primary/secondary/launcher reserve ammunition.
 
         Normal MW3 primary ammo always refills. Extra categories are enabled
         only through the configurable dvars above.
     */
+    if (extraScavenger && GetDvarInt("fun_mode_scavenger_noobtubes"))
+    {
+        allWeapons = player GetWeaponsListAll();
+
+        foreach (weapon in allWeapons)
+        {
+            if (!IsScavengerNoobTube(weapon))
+            {
+                continue;
+            }
+
+            oldStock = player GetWeaponAmmoStock(weapon);
+            addAmmo = WeaponClipSize(weapon);
+            player SetWeaponAmmoStock(weapon, oldStock + addAmmo);
+
+            if (GetDvarInt("fun_mode_scavenger_debug"))
+            {
+                Print(
+                    "[FUN_MODE] Refilled noob tube " +
+                    weapon +
+                    " +" +
+                    addAmmo +
+                    " reserve ammo"
+                );
+            }
+        }
+    }
+
     weapons = player GetWeaponsListPrimaries();
 
     foreach (weapon in weapons)
     {
         refillWeapon = false;
 
-        if (maps\mp\_utility::IsCACPrimaryWeapon(weapon))
+        if (IsScavengerNoobTube(weapon))
+        {
+            // Alternate-mode tube weapons were already handled via the full
+            // inventory list above.
+            continue;
+        }
+        else if (maps\mp\_utility::IsCACPrimaryWeapon(weapon))
         {
             // Preserve normal MW3 Scavenger behavior for primary firearms.
             refillWeapon = true;
-        }
-        else if (IsScavengerNoobTube(weapon))
-        {
-            if (
-                extraScavenger &&
-                GetDvarInt("fun_mode_scavenger_noobtubes")
-            )
-            {
-                refillWeapon = true;
-            }
         }
         else if (IsScavengerLauncher(weapon))
         {
@@ -588,7 +616,15 @@ IsScavengerNoobTube(weapon)
 {
     return (
         weapon == "gl_mp" ||
-        weapon == "gp25_mp"
+        weapon == "gp25_mp" ||
+        (
+            IsSubStr(weapon, "alt_") &&
+            (
+                IsSubStr(weapon, "_m320") ||
+                IsSubStr(weapon, "_gl") ||
+                IsSubStr(weapon, "_gp25")
+            )
+        )
     );
 }
 
