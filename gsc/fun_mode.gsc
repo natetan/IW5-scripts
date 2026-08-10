@@ -248,7 +248,7 @@ NeedsExtraScavengerAmmo()
             if (
                 GetDvarInt("fun_mode_scavenger_lethal") &&
                 IsScavengerLethal(offhand) &&
-                self GetWeaponAmmoClip(offhand) < 1
+                self GetAmmoCount(offhand) < 1
             )
             {
                 return true;
@@ -257,7 +257,8 @@ NeedsExtraScavengerAmmo()
             if (
                 GetDvarInt("fun_mode_scavenger_tactical") &&
                 IsScavengerTactical(offhand) &&
-                self GetWeaponAmmoClip(offhand) < 1
+                self GetAmmoCount(offhand) <
+                    GetScavengerTacticalMaxAmmo(offhand)
             )
             {
                 return true;
@@ -603,6 +604,23 @@ IsScavengerTactical(weapon)
         weapon == "scrambler_mp" ||
         weapon == "portable_radar_mp"
     );
+}
+
+/*
+    Flashbangs and concussion grenades spawn with a two-item capacity. Other
+    supported tactical equipment is single-use and should not be overfilled.
+*/
+GetScavengerTacticalMaxAmmo(weapon)
+{
+    if (
+        weapon == "flash_grenade_mp" ||
+        weapon == "concussion_grenade_mp"
+    )
+    {
+        return 2;
+    }
+
+    return 1;
 }
 
 /*
