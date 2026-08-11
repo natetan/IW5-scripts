@@ -4,18 +4,29 @@
     Fun Mode - IW5 / Plutonium
 
     Features:
-    - Selected custom classes receive the full Specialist perk set.
-    - Optional MW2-style Scavenger resupply controlled through dvars.
-    - Unlimited sprint experiment remains client-side for human players.
+    - Human players using custom classes 13-15 receive the full Specialist
+      perk set, its Pro perk mappings, and the extra Specialist bonuses.
+    - Requests unlimited sprint client-side for human players.
+    - Replaces the stock Scavenger handler with configurable MW2-style
+      resupply for secondary weapons, lethal equipment, tactical equipment,
+      standalone launchers, and underbarrel grenade launchers.
+    - Makes Scavenger bags collectible when only equipment or launcher ammo
+      needs replenishing, including two-item tactical and tube capacities.
+    - Assists team changes in full 9v9 bot lobbies by temporarily removing a
+      destination-team bot, then restoring the configured fill target so Bot
+      Warfare replaces it on the team the human left.
 
     MW3 custom-class numbers shown in the UI are 1-based.
-    Class 15 maps to internal class index 14.
+    Classes 13-15 map to internal class indices 12-14.
+    Most optional behavior is controlled through the fun_mode_* dvars below.
 */
 
 Main()
 {
     SetDvarIfNotInitialized("fun_mode_enable", 1);
     SetDvarIfNotInitialized("fun_mode_specialist_class_index", 14);
+    SetDvarIfNotInitialized("fun_mode_team_switch_assist", 1);
+    SetDvarIfNotInitialized("fun_mode_team_switch_fill", 18);
 
     /*
         Configurable Scavenger behavior.
@@ -65,7 +76,86 @@ OnPlayerConnect()
 
         player thread WatchPlayerLoadout();
         player thread WatchScavengerPickupEligibility();
+        player thread WatchTeamSwitchMenu();
     }
+}
+
+/*
+    A full 9v9 lobby gives IW5 no free destination-team slot when a human
+    tries to switch. When the human opens the team menu, temporarily lower the
+    fill target and kick one bot from the opposite team. This creates the
+    destination slot. Restoring the fill target after the human switches makes
+    Bot Warfare add a replacement bot to the team the human left.
+*/
+WatchTeamSwitchMenu()
+{
+    self endon("disconnect");
+
+    for (;;)
+    {
+        self waittill("menuresponse", menu, response);
+
+        if (
+            !GetDvarInt("fun_mode_team_switch_assist") ||
+            response != "changeteam" ||
+            !IsDefined(self.pers["team"]) ||
+            (
+                IsDefined(level.fun_mode_team_switch_in_progress) &&
+                level.fun_mode_team_switch_in_progress
+            )
+        )
+        {
+            continue;
+        }
+
+        currentTeam = self.pers["team"];
+
+        if (currentTeam != "allies" && currentTeam != "axis")
+        {
+            continue;
+        }
+
+        destinationTeam = "axis";
+
+        if (currentTeam == "axis")
+        {
+            destinationTeam = "allies";
+        }
+
+        foreach (candidate in level.players)
+        {
+            if (
+                !candidate IsBotPlayer() ||
+                !IsDefined(candidate.pers["team"]) ||
+                candidate.pers["team"] != destinationTeam
+            )
+            {
+                continue;
+            }
+
+            fillTarget = GetDvarInt("fun_mode_team_switch_fill");
+            previousFillKick = GetDvarInt("bots_manage_fill_kick");
+
+            level.fun_mode_team_switch_in_progress = true;
+
+            // Prevent addBots_loop() from observing 18 clients against the
+            // temporary target of 17 and racing us by kicking a second bot.
+            SetDvar("bots_manage_fill_kick", 0);
+            SetDvar("bots_manage_fill", fillTarget - 1);
+            kick(candidate GetEntityNumber(), "EXE_PLAYERKICKED");
+
+            level thread RestoreBotFill(fillTarget, previousFillKick);
+            break;
+        }
+    }
+}
+
+RestoreBotFill(fillTarget, fillKickValue)
+{
+    wait 10;
+    SetDvar("bots_manage_fill", fillTarget);
+    SetDvar("bots_manage_fill_kick", fillKickValue);
+    level.fun_mode_team_switch_in_progress = false;
 }
 
 WatchPlayerLoadout()
