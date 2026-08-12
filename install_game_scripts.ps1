@@ -7,9 +7,12 @@ $iw5 = Join-Path $env:LOCALAPPDATA "Plutonium\storage\iw5"
 $scriptDst = Join-Path $iw5 "scripts"
 $playerDst = Join-Path $iw5 "players"
 $adminDst = Join-Path $iw5 "admin"
+$mapsDst = Join-Path $iw5 "maps"
 
 New-Item -ItemType Directory -Force $scriptDst | Out-Null
 New-Item -ItemType Directory -Force $playerDst | Out-Null
+New-Item -ItemType Directory -Force $adminDst | Out-Null
+New-Item -ItemType Directory -Force $mapsDst | Out-Null
 
 Copy-Item "$repoRoot\gsc\*" `
           $scriptDst `
@@ -26,8 +29,16 @@ Copy-Item "$repoRoot\admin\*" `
           -Recurse `
           -Force
 
+# Preserve the repository's complete IW5 rawfile layout beneath maps,
+# including maps/mp/gametypes, maps/mp/killstreaks, and map-specific scripts.
+Copy-Item "$repoRoot\maps\*" `
+          $mapsDst `
+          -Recurse `
+          -Force
+
 Write-Host ""
 Write-Host "Installed game scripts." -ForegroundColor Green
 Write-Host "Scripts  -> $scriptDst"
 Write-Host "Players  -> $playerDst"
-Write-Host "Players  -> $adminDst"
+Write-Host "Admin    -> $adminDst"
+Write-Host "Maps     -> $mapsDst"
