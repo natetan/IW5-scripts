@@ -2,9 +2,19 @@
 	_bot_chat
 	Author: INeedGames
 	Date: 05/09/2022
-	Does bot chatter.
 
-	Modified by me to make bots less chatty
+	Provides bot text chatter.
+
+	Local modifications:
+	- Replaced the original event-heavy chatter with one sparse, randomized
+	  public-lobby chat loop. The legacy chat functions remain below but are
+	  not started by start_chat_threads().
+	- Added get_realistic_chat_message() with shorter, more natural messages
+	  modeled after modern multiplayer lobbies.
+	- Added a shared match-wide budget of 2-6 messages, an initial delay,
+	  occasional per-bot attempts, and a shared 35-75 second cooldown so bots
+	  do not spam or all respond to the same event.
+	- Kept bots_main_chat as the master enable/frequency multiplier.
 */
 
 #include common_scripts\utility;
@@ -174,11 +184,11 @@ start_realistic_chat()
 }
 
 /*
-	Returns a short complaint/reaction typical of an old public lobby.
+	Returns a short reaction typical of a modern public lobby.
 */
 get_realistic_chat_message()
 {
-	switch ( randomint( 24 ) )
+	switch ( randomint( 60 ) )
 	{
 		case 0:  return "lag";
 		case 1:  return "nice camp";
@@ -203,7 +213,43 @@ get_realistic_chat_message()
 		case 20: return "host advantage";
 		case 21: return "what is this lobby";
 		case 22: return "gg";
-		default: return "unreal";
+		case 23: return "unreal";
+		case 24: return "LMAO final stand abuser";
+		case 25: return "actually unplayable";
+		case 26: return "this team is sooooo fucking buns lmao";
+		case 27: return "are you really just gonna camp all game bro???";
+		case 28: return "bro is allergic to the objective";
+		case 29: return "who let this guy cook";
+		case 30: return "nah that spawn is criminal";
+		case 31: return "aint no way";
+		case 32: return "im getting packet bursted on an ancient game";
+		case 33: return "this lobby is cursed";
+		case 34: return "we got no map control";
+		case 35: return "my teammates are sightseeing";
+		case 36: return "bro has not left that corner once";
+		case 37: return "respectfully get off the headglitch";
+		case 38: return "that stun lasted three business days";
+		case 39: return "why am i spawning in bullets";
+		case 40: return "the matchmaking is cooking me";
+		case 41: return "zero help btw";
+		case 42: return "team please look at the minimap";
+		case 43: return "how are we triple capped";
+		case 44: return "somebody shoot the uav";
+		case 45: return "not the death streak";
+		case 46: return "using final stand is crazy";
+		case 47: return "this game hates me";
+		case 48: return "good shots i guess";
+		case 49: return "okay that was clean";
+		case 50: return "i deserved that ngl";
+		case 51: return "my bad team";
+		case 52: return "we are getting farmed";
+		case 53: return "can one person touch the flag";
+		case 54: return "bro thinks this is ranked";
+		case 55: return "the entire team is in one building";
+		case 56: return "spawn system masterclass";
+		case 57: return "i cannot make this up";
+		case 58: return "what am i watching";
+		default: return "delete assassin from the game";
 	}
 }
 
