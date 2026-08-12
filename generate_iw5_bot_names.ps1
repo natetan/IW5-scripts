@@ -32,9 +32,14 @@ $tryhardPrefixes = @(
 
 $tryhardSuffixes = @(
 
-    "ar","as","ath","ax","en","er","es","eus","ex","ian","ic",
-    "id","ik","in","ion","is","ith","ix","or","os","ous","ox",
-    "um","ur","us","yx","yn","yr"
+	"a","ac","ace","ad","ael","ai","ain","air","ak","al","an",
+	"ane","ant","ar","ard","aris","ark","arn","aro","art","as",
+	"ath","ax","aze","ean","ek","el","eld","em","en","ent","er",
+	"eris","ern","ero","es","et","eus","ex","ian","ias","ic","id",
+	"iel","ik","il","im","in","ion","ir","is","ith","ium","ix",
+	"ize","o","od","on","or","ora","orn","os","ous","ov","ox",
+	"um","un","ur","us","ux","ven","yn","yr","ys","yx",
+	"zen","zer","zeth","zor"
 
 )
 
