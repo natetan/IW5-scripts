@@ -1,1 +1,4 @@
 bots.txt
+
+# Raw IW5 map entity dumps copied from Plutonium storage.
+*.d3dbsp.ents
