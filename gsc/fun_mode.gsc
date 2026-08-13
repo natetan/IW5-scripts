@@ -6,7 +6,7 @@
     Features:
     - Human players using custom classes 13-15 receive the full Specialist
       perk set, its Pro perk mappings, the extra Specialist bonuses, and the
-      Impact weapon proficiency.
+      Impact and shotgun Damage weapon proficiencies.
     - Requests unlimited sprint client-side for human players.
     - Replaces the stock Scavenger handler with configurable MW2-style
       resupply for secondary weapons, lethal equipment, tactical equipment,
@@ -255,8 +255,10 @@ GiveFullSpecialistBonus()
     self GivePerk("specialty_reducedsway", false);
     self GivePerk("specialty_lightweight", false); // Movement-speed boost
 
-    // Fun-mode addition: stack Impact with the class's selected proficiency.
+    // Fun-mode additions: stack Impact and shotgun Damage with the class's
+    // selected proficiency. Unsupported weapon classes ignore these flags.
     self GivePerk("specialty_bulletpenetration", false);
+    self GivePerk("specialty_moredamage", false);
 }
 
 /*
