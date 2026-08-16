@@ -10,9 +10,10 @@
 */
 
 /**
-  I modified this to have "fake votes" for popular maps
-  and then when a solo player votes, there are staggered votes 
-  that follow.
+  Modifications by Nate:
+  - Display 12 randomly selected maps as voting choices.
+  - Add believable seeded votes for popular maps.
+  - After a solo player votes, add staggered votes that follow.
  */
 
 #include maps\mp\gametypes\_hud_util;
@@ -66,9 +67,9 @@ InitDvars()
     SetDvarIfNotInitialized("mapvote_hide_modes", true);
 
     SetDvarIfNotInitialized("mapvote_maps", "Seatown,mp_seatown:Dome,mp_dome:Bakaara,mp_mogadishu:Resistance,mp_paris:Bootleg,mp_bootleg:Hardhat,mp_hardhat:Lockdown,mp_alpha:Village,mp_village:Fallen,mp_lambeth:Mission,mp_bravo:Terminal,mp_terminal_cls:Boardwalk,mp_boardwalk:Highrise,mp_highrise:Karachi,mp_checkpoint:Nuketown,mp_nuked:Ambush,mp_convoy:Rust,mp_rust:Rust Long,mp_rust_long:Killhouse,mp_killhouse:Shipment,mp_shipment:Scrapyard,mp_boneyard:Skidrow,mp_nightshift:Sub Base,mp_subbase:Countdown,mp_countdown:Raid,mp_raid:Favela,mp_favela:Trailer Park,mp_trailerpark:Downpour,mp_farm:Vacant,mp_vacant:Wasteland,mp_brecourt:Salvage,mp_compact");
-    SetDvarIfNotInitialized("mapvote_modes", "Domination,DOM_HC_HUD:Drop Zone,DZ_HC_HUD:Domination,DOM_HC_100hp:Drop Zone,DZ_HC_100hp");
+    SetDvarIfNotInitialized("mapvote_modes", "Domination,DOM_HC_100hp:Drop Zone,DZ_HC_100hp");
     SetDvarIfNotInitialized("mapvote_additional_maps_dvars", "");
-    SetDvarIfNotInitialized("mapvote_limits_maps", 0);
+    SetDvarIfNotInitialized("mapvote_limits_maps", 12);
     SetDvarIfNotInitialized("mapvote_limits_modes", 0);
     SetDvarIfNotInitialized("mapvote_limits_max", 12);
     SetDvarIfNotInitialized("mapvote_sounds_menu_enabled", 1);
