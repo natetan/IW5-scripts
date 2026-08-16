@@ -1,8 +1,31 @@
 // IW5 GSC SOURCE
 // Dumped by https://github.com/xensik/gsc-tool
 
+/*
+    Modifications by: Nate
+
+    Changes:
+    - Preserve naturally earned duplicate Assault and Support rewards instead
+      of replacing an unused copy in its normal killstreak slot.
+    - Duplicate rewards use a backing queue tied to their configured slot. The
+      slot remains available until every stored copy has been used. This avoids
+      mapping the same killstreak weapon to two HUD slots, which can leave the
+      game's streak-use input locked until the player dies.
+    - Keep that queue separate from pers["killstreaks"] so stock airdrop and
+      escort-airdrop watchers never interpret custom backing entries as native
+      slot-zero rewards.
+    - When stacking, archive the older unused copy and put the newly earned
+      copy in its configured slot. IW5's kill-credit logic checks only slots
+      1-3, so queued Assault rewards are refreshed to the current life when
+      promoted and can chain toward later rewards.
+    - Set scr_killstreakStackDuplicates to 0 before map load to restore the
+      original overwrite behavior.
+*/
+
 init()
 {
+    setdvarifuninitialized( "scr_killstreakStackDuplicates", 1 );
+
     precachestring( &"MP_KILLSTREAK_N" );
     precachestring( &"MP_NUKE_ALREADY_INBOUND" );
     precachestring( &"MP_UNAVILABLE_IN_LASTSTAND" );
@@ -224,6 +247,8 @@ initplayerkillstreaks()
 {
     if ( !isdefined( self.streaktype ) )
         return;
+
+    self.pers["stackedkillstreaks"] = [];
 
     if ( self.streaktype == "specialist" )
         self setplayerdata( "killstreaksState", "isSpecialist", 1 );
@@ -672,7 +697,13 @@ updatekillstreaks( keepCurrent )
 {
     if ( !isdefined( keepCurrent ) )
     {
-        self.pers["killstreaks"][self.killstreakindexweapon].available = false;
+        restoredStackedReward = false;
+
+        if ( self.killstreakindexweapon > 0 && self.killstreakindexweapon < 4 )
+            restoredStackedReward = restorestackedkillstreak( self.killstreakindexweapon );
+
+        if ( !restoredStackedReward )
+            self.pers["killstreaks"][self.killstreakindexweapon].available = false;
 
         if ( self.killstreakindexweapon == 0 )
         {
@@ -1120,7 +1151,145 @@ earnkillstreak( var_0, var_1 )
     thread killstreakearned( var_0 );
     self.pers["lastEarnedStreak"] = var_0;
     setstreakcounttonext();
-    givekillstreak( var_0, 1, 1 );
+
+    if ( shouldstackearnedkillstreak( var_0 ) )
+        stackearnedkillstreak( var_0 );
+    else
+        givekillstreak( var_0, 1, 1 );
+}
+
+/*
+    Promotes the newest stored duplicate back into its configured slot after
+    one copy is used. Assault rewards receive the current life ID so their
+    kills can participate in the current Assault streak.
+*/
+restorestackedkillstreak( configuredIndex )
+{
+    if ( !isdefined( self.pers["stackedkillstreaks"] ) )
+        return false;
+
+    queuedIndex = undefined;
+
+    for ( i = 0; i < self.pers["stackedkillstreaks"].size; i++ )
+    {
+        if ( !isdefined( self.pers["stackedkillstreaks"][i] ) )
+            continue;
+
+        if ( self.pers["stackedkillstreaks"][i].configuredindex != configuredIndex )
+            continue;
+
+        queuedIndex = i;
+    }
+
+    if ( !isdefined( queuedIndex ) )
+        return false;
+
+    queuedStreak = self.pers["stackedkillstreaks"][queuedIndex];
+    configuredStreak = self.pers["killstreaks"][configuredIndex];
+    configuredStreak.available = 1;
+    configuredStreak.earned = queuedStreak.earned;
+    configuredStreak.awardxp = queuedStreak.awardxp;
+    configuredStreak.owner = queuedStreak.owner;
+    configuredStreak.kid = queuedStreak.kid;
+    configuredStreak.lifeid = queuedStreak.lifeid;
+    configuredStreak.isgimme = queuedStreak.isgimme;
+
+    if ( self.streaktype == "assault" )
+    {
+        configuredStreak.earned = 1;
+        configuredStreak.lifeid = self.pers["deaths"];
+        configuredStreak.isgimme = 0;
+    }
+
+    self.pers["stackedkillstreaks"][queuedIndex] = undefined;
+    return true;
+}
+
+/*
+    Returns true when a naturally earned Assault or Support reward would
+    overwrite an unused copy in one of the three configured streak slots.
+
+    The older copy is moved to the engine's slot-zero queue before the newly
+    earned copy refreshes the configured slot.
+*/
+shouldstackearnedkillstreak( streakName )
+{
+    if ( !getdvarint( "scr_killstreakStackDuplicates" ) )
+        return false;
+
+    if ( self.streaktype != "assault" && self.streaktype != "support" )
+        return false;
+
+    for ( i = 1; i < 4; i++ )
+    {
+        if ( !isdefined( self.pers["killstreaks"][i] ) )
+            continue;
+
+        if ( !isdefined( self.pers["killstreaks"][i].streakname ) )
+            continue;
+
+        if ( self.pers["killstreaks"][i].streakname != streakName )
+            continue;
+
+        return self.pers["killstreaks"][i].available;
+    }
+
+    return false;
+}
+
+/*
+    Archives the older configured reward in a private backing entry, preserving
+    its metadata, and awards the new copy back into its configured slot.
+
+    The backing entry deliberately is not exposed through HUD slot zero. Two
+    selectable slots holding the same killstreak weapon can prevent IW5's
+    weapon-change tracker from unlocking further streak use.
+*/
+stackearnedkillstreak( streakName )
+{
+    configuredIndex = undefined;
+
+    for ( i = 1; i < 4; i++ )
+    {
+        if ( !isdefined( self.pers["killstreaks"][i] ) )
+            continue;
+
+        if ( !isdefined( self.pers["killstreaks"][i].streakname ) )
+            continue;
+
+        if ( self.pers["killstreaks"][i].streakname == streakName )
+        {
+            configuredIndex = i;
+            break;
+        }
+    }
+
+    if ( !isdefined( configuredIndex ) )
+    {
+        givekillstreak( streakName, 1, 1 );
+        return;
+    }
+
+    configuredStreak = self.pers["killstreaks"][configuredIndex];
+
+    if ( !isdefined( self.pers["stackedkillstreaks"] ) )
+        self.pers["stackedkillstreaks"] = [];
+
+    queueIndex = self.pers["stackedkillstreaks"].size;
+    self.pers["stackedkillstreaks"][queueIndex] = spawnstruct();
+    queuedStreak = self.pers["stackedkillstreaks"][queueIndex];
+    queuedStreak.available = configuredStreak.available;
+    queuedStreak.streakname = configuredStreak.streakname;
+    queuedStreak.earned = configuredStreak.earned;
+    queuedStreak.awardxp = configuredStreak.awardxp;
+    queuedStreak.owner = configuredStreak.owner;
+    queuedStreak.kid = configuredStreak.kid;
+    queuedStreak.lifeid = configuredStreak.lifeid;
+    queuedStreak.isgimme = configuredStreak.isgimme;
+    queuedStreak.isspecialist = configuredStreak.isspecialist;
+    queuedStreak.configuredindex = configuredIndex;
+
+    givekillstreak( streakName, 1, 1 );
 }
 
 givekillstreak( var_0, var_1, var_2, var_3, var_4 )
