@@ -19,8 +19,11 @@
 	- Improved killstreak selection:
 	  * Assault bots strongly favor Predator Missiles over Sentry Guns.
 	  * Support bots avoid the Remote Sentry and favor Advanced UAV instead.
-	- Disabled deliberate vehicle/air-support targeting so bots do not pull
-	  launchers or LMGs in exposed combat areas and get themselves killed.
+	- Disabled deliberate vehicle/air-support targeting because bots would try
+	  to shoot aircraft with pistols or other unsuitable weapons in the middle
+	  of active fights, making their behavior look unnatural.
+	- Disabled deliberate enemy-equipment targeting because bots would become
+	  fixated on equipment, crouch around it, and repeatedly miss their shots.
 */
 
 #include common_scripts\utility;
