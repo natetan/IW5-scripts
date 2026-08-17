@@ -7,12 +7,13 @@
     - Human players using custom classes 13-15 receive the full Specialist
       perk set, its Pro perk mappings, the extra Specialist bonuses, and the
       Impact and shotgun Damage weapon proficiencies.
-    - Requests unlimited sprint client-side for human players.
     - Replaces the stock Scavenger handler with configurable MW2-style
       resupply for secondary weapons, lethal equipment, tactical equipment,
       standalone launchers, and underbarrel grenade launchers.
     - Makes Scavenger bags collectible when only equipment or launcher ammo
       needs replenishing, including two-item tactical and tube capacities.
+    - Globally strengthens Blast Shield so its users take 25 percent of normal
+      explosive damage instead of the stock 45 percent.
     - Assists team changes in full 9v9 bot lobbies by temporarily removing a
       destination-team bot, then restoring the configured fill target so Bot
       Warfare replaces it on the team the human left.
@@ -28,6 +29,7 @@ Main()
     SetDvarIfNotInitialized("fun_mode_specialist_class_index", 14);
     SetDvarIfNotInitialized("fun_mode_team_switch_assist", 1);
     SetDvarIfNotInitialized("fun_mode_team_switch_fill", 18);
+    SetDvarIfNotInitialized("fun_mode_blast_shield_damage", 0.25);
 
     /*
         Configurable Scavenger behavior.
@@ -60,6 +62,9 @@ Init()
     {
         return;
     }
+
+    // Global Blast Shield resistance; IW5's stock value is 0.45.
+    level.blastShieldMod = GetDvarFloat("fun_mode_blast_shield_damage");
 
     level thread OnPlayerConnect();
 }
@@ -163,10 +168,6 @@ WatchPlayerLoadout()
 {
     self endon("disconnect");
 
-    // Client-side, so bots are unaffected.
-    // don't think this actually works
-    self SetClientDvar("player_unlimitedSprint", "1");
-
     for (;;)
     {
         // Fired after spawning and when changing classes.
@@ -174,8 +175,6 @@ WatchPlayerLoadout()
 
         // A new loadout invalidates any pickup reservation from the old one.
         self.fun_mode_scavenger_ammo_reserved = false;
-
-        self SetClientDvar("player_unlimitedSprint", "1");
 
         wait 0.1;
 
