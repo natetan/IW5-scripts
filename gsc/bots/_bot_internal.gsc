@@ -7,7 +7,7 @@
 
 	Custom changes:
 	- Bots that reach an enemy's last-seen position may briefly investigate
-	  one connected waypoint instead of immediately losing object permanence.
+	  up to two connected routes instead of immediately losing object permanence.
 */
 
 #include common_scripts\utility;
@@ -1418,6 +1418,8 @@ createTargetObj( ent, theTime )
 	obj.entity = ent;
 	obj.last_seen_pos = ( 0, 0, 0 );
 	obj.investigation_pos = undefined;
+	obj.investigation_wp = undefined;
+	obj.investigation_step = 0;
 	obj.dist = 0;
 	obj.time = theTime;
 	obj.trace_time = 0;
@@ -1501,6 +1503,8 @@ targetObjUpdateTraced( obj, daDist, ent, theTime, isScriptObj, usingRemote )
 	obj.dist = daDist;
 	obj.last_seen_pos = ent.origin;
 	obj.investigation_pos = undefined;
+	obj.investigation_wp = undefined;
+	obj.investigation_step = 0;
 	obj.trace_time_time = theTime;
 	
 	self updateAimOffset( obj, theTime );
@@ -1515,9 +1519,8 @@ targetObjUpdateNoTrace( obj )
 	obj.trace_time = 0;
 	obj.didlook = false;
 
-	// Once the bot reaches the last place it saw the enemy, check one route
-	// leaving that area. This is deliberately limited to a single connected
-	// waypoint so the bot searches without tracking an unseen enemy through walls.
+	// Once the bot reaches the last place it saw the enemy, check a route
+	// leaving that area without tracking the unseen enemy through walls.
 	if ( !isdefined( obj.investigation_pos ) && obj.no_trace_time >= 1500 && distancesquared( self.origin, obj.last_seen_pos ) <= 192 * 192 )
 	{
 		lastSeenWp = GetNearestWaypointWithSight( obj.last_seen_pos );
@@ -1526,6 +1529,49 @@ targetObjUpdateNoTrace( obj )
 		{
 			investigationWp = random( level.waypoints[ lastSeenWp ].children );
 			obj.investigation_pos = level.waypoints[ investigationWp ].origin;
+			obj.investigation_wp = investigationWp;
+			obj.investigation_step = 1;
+		}
+	}
+	else if ( obj.investigation_step == 1 && distancesquared( self.origin, obj.investigation_pos ) <= 160 * 160 )
+	{
+		// Prefer a different route from the original contact waypoint. If only
+		// one route exists, continue one link farther instead of oscillating.
+		alternates = [];
+		lastSeenWp = GetNearestWaypointWithSight( obj.last_seen_pos );
+
+		if ( isdefined( lastSeenWp ) )
+		{
+			for ( i = 0; i < level.waypoints[ lastSeenWp ].children.size; i++ )
+			{
+				candidate = level.waypoints[ lastSeenWp ].children[ i ];
+
+				if ( candidate != obj.investigation_wp )
+				{
+					alternates[ alternates.size ] = candidate;
+				}
+			}
+		}
+
+		if ( alternates.size <= 0 && isdefined( obj.investigation_wp ) )
+		{
+			for ( i = 0; i < level.waypoints[ obj.investigation_wp ].children.size; i++ )
+			{
+				candidate = level.waypoints[ obj.investigation_wp ].children[ i ];
+
+				if ( !isdefined( lastSeenWp ) || candidate != lastSeenWp )
+				{
+					alternates[ alternates.size ] = candidate;
+				}
+			}
+		}
+
+		obj.investigation_step = 2;
+
+		if ( alternates.size > 0 )
+		{
+			obj.investigation_wp = random( alternates );
+			obj.investigation_pos = level.waypoints[ obj.investigation_wp ].origin;
 		}
 	}
 }

@@ -27,6 +27,12 @@
 	- Expanded bot awareness with persistent death-location memory, bounded
 	  teammate callouts, better sound/radar target selection, and varied contact
 	  investigation routes without granting unseen enemies as direct targets.
+	- Phase-two awareness adds visible contact-direction reactions, coordinated
+	  direct/flank responder roles, and cooldowns for duplicate nearby reports.
+	- Phase-three awareness makes movement and objective-facing favor visible
+	  approach routes, recognizes player-owned explosive deaths, and gives
+	  aggressive, cautious, flanking, and objective-focused bots more distinct
+	  response behavior.
 */
 
 #include common_scripts\utility;
@@ -63,7 +69,10 @@ connected()
 	self.lastkiller = undefined;
 	self.killerlocationtime = 0;
 	self.repeateddeathcount = 0;
-	self.awarenessprofile = randomint( 3 );
+	self.awarenessprofile = randomint( 4 );
+	self.teamcontacttime = 0;
+	self.teamcontactpos = undefined;
+	self.contactaimpos = undefined;
 	self.bot_change_class = true;
 	
 	self thread difficulty();
@@ -1622,7 +1631,7 @@ onKilled( eInflictor, eAttacker, iDamage, sMeansOfDeath, sWeapon, vDir, sHitLoc,
 		return;
 	}
 	
-	if ( !isdefined( eInflictor ) || eInflictor.classname != "player" )
+	if ( !isPersonalAwarenessDamage( eInflictor, sWeapon ) )
 	{
 		return;
 	}
@@ -1688,7 +1697,7 @@ onDamage( eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, vPoin
 		return;
 	}
 	
-	if ( !isdefined( eInflictor ) || eInflictor.classname != "player" )
+	if ( !isPersonalAwarenessDamage( eInflictor, sWeapon ) )
 	{
 		return;
 	}
@@ -1704,6 +1713,25 @@ onDamage( eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, vPoin
 	}
 	
 	self setAttacker( eAttacker );
+}
+
+/*
+	Recognize direct weapons and player-carried explosives while excluding
+	remote killstreak damage from personal revenge/contact memory.
+*/
+isPersonalAwarenessDamage( inflictor, weapon )
+{
+	if ( isdefined( inflictor ) && inflictor.classname == "player" )
+	{
+		return true;
+	}
+
+	if ( !isdefined( weapon ) )
+	{
+		return false;
+	}
+
+	return ( issubstr( weapon, "frag_grenade" ) || issubstr( weapon, "semtex" ) || issubstr( weapon, "throwingknife" ) || issubstr( weapon, "c4" ) || issubstr( weapon, "claymore" ) || issubstr( weapon, "bouncingbetty" ) || issubstr( weapon, "_gl" ) || issubstr( weapon, "rpg" ) || issubstr( weapon, "smaw" ) || issubstr( weapon, "javelin" ) );
 }
 
 /*
@@ -1771,7 +1799,7 @@ bot_cry_for_help( attacker )
 		
 		if ( randomint( 100 ) < 65 )
 		{
-			player thread bot_receive_team_contact( attacker.origin, attacker );
+			player thread bot_receive_team_contact( attacker.origin, attacker, responders );
 			responders++;
 
 			if ( responders >= 2 )
@@ -1813,7 +1841,7 @@ bot_broadcast_death_contact( contactPos, attacker )
 			continue;
 		}
 
-		player thread bot_receive_team_contact( contactPos, attacker );
+		player thread bot_receive_team_contact( contactPos, attacker, responders );
 		responders++;
 
 		if ( responders >= 2 )
@@ -1826,12 +1854,42 @@ bot_broadcast_death_contact( contactPos, attacker )
 /*
 	React to shared information without tracking an unseen enemy through walls.
 */
-bot_receive_team_contact( contactPos, attacker )
+bot_receive_team_contact( contactPos, attacker, responseRole )
 {
 	self endon( "death" );
 	self endon( "disconnect" );
+	theTime = gettime();
 
-	wait randomfloatrange( 0.15, 0.8 );
+	// Collapse repeated reports about the same small area so hectic fights do
+	// not continually replace the bot's current decision.
+	if ( isdefined( self.teamcontactpos ) && theTime - self.teamcontacttime < 4000 && distancesquared( self.teamcontactpos, contactPos ) <= 512 * 512 )
+	{
+		return;
+	}
+
+	self.teamcontacttime = theTime;
+	self.teamcontactpos = contactPos;
+	self thread bot_face_team_contact( contactPos );
+
+	// Aggressive bots react fastest, cautious bots verify longer, flankers take
+	// a middle delay, and objective-focused bots often ignore distant reports.
+	if ( self.awarenessprofile == 3 && ( distancesquared( self.origin, contactPos ) > 900 * 900 || randomint( 100 ) < 50 ) )
+	{
+		return;
+	}
+
+	if ( self.awarenessprofile == 0 )
+	{
+		wait randomfloatrange( 0.05, 0.35 );
+	}
+	else if ( self.awarenessprofile == 1 )
+	{
+		wait randomfloatrange( 0.35, 0.9 );
+	}
+	else
+	{
+		wait randomfloatrange( 0.15, 0.65 );
+	}
 
 	if ( !isalive( self ) )
 	{
@@ -1849,7 +1907,7 @@ bot_receive_team_contact( contactPos, attacker )
 		return;
 	}
 
-	goal = self getAwarenessGoal( contactPos );
+	goal = self getAwarenessGoal( contactPos, responseRole );
 	self SetScriptGoal( goal, 96 );
 
 	if ( self waittill_any_return( "goal", "bad_path", "new_goal" ) != "new_goal" )
@@ -1859,9 +1917,86 @@ bot_receive_team_contact( contactPos, attacker )
 }
 
 /*
+	Briefly show that a bot noticed a nearby report before it chooses a response.
+*/
+bot_face_team_contact( contactPos )
+{
+	self endon( "death" );
+	self endon( "disconnect" );
+
+	wait randomfloatrange( 0.05, 0.25 );
+
+	if ( !isalive( self ) || self hasThreat() || self HasScriptAimPos() )
+	{
+		return;
+	}
+
+	aimPos = contactPos + ( 0, 0, 40 );
+	self.contactaimpos = aimPos;
+	self SetScriptAimPos( aimPos );
+	wait randomfloatrange( 0.4, 0.9 );
+
+	if ( isdefined( self.contactaimpos ) && self.contactaimpos == aimPos && self GetScriptAimPos() == aimPos )
+	{
+		self ClearScriptAimPos();
+		self.contactaimpos = undefined;
+	}
+}
+
+/*
+	Keep non-engaged bots oriented along useful navigation or recent-contact
+	directions instead of allowing arbitrary movement-facing to stare at walls.
+*/
+bot_awareness_facing_think()
+{
+	self endon( "death" );
+	self endon( "disconnect" );
+
+	for ( ;; )
+	{
+		wait randomfloatrange( 1.0, 1.8 );
+
+		if ( !isalive( self ) || self isusingremote() || self hasThreat() || self HasScriptAimPos() )
+		{
+			continue;
+		}
+
+		aimPos = undefined;
+
+		if ( isdefined( self.teamcontactpos ) && gettime() - self.teamcontacttime <= 6000 )
+		{
+			contactAim = self.teamcontactpos + ( 0, 0, 40 );
+
+			if ( bullettracepassed( self geteye(), contactAim, false, undefined ) )
+			{
+				aimPos = contactAim;
+			}
+		}
+
+		if ( !isdefined( aimPos ) && isdefined( self.bot.next_wp ) && self.bot.next_wp >= 0 && self.bot.next_wp < level.waypoints.size )
+		{
+			aimPos = level.waypoints[ self.bot.next_wp ].origin + ( 0, 0, 40 );
+		}
+
+		if ( !isdefined( aimPos ) || distancesquared( self.origin, aimPos ) <= 128 * 128 )
+		{
+			continue;
+		}
+
+		self SetScriptAimPos( aimPos );
+		wait randomfloatrange( 0.45, 0.8 );
+
+		if ( self GetScriptAimPos() == aimPos )
+		{
+			self ClearScriptAimPos();
+		}
+	}
+}
+
+/*
 	Give connected bots different investigation styles: direct, cautious, or flanking.
 */
-getAwarenessGoal( contactPos )
+getAwarenessGoal( contactPos, responseRole )
 {
 	wp = GetNearestWaypointWithSight( contactPos );
 
@@ -1870,13 +2005,20 @@ getAwarenessGoal( contactPos )
 		return contactPos;
 	}
 
-	if ( self.awarenessprofile == 2 && level.waypoints[ wp ].children.size > 0 )
+	// The first responder takes the direct report while the second checks an
+	// adjoining route. Other awareness sources continue using bot personality.
+	if ( isdefined( responseRole ) && responseRole == 0 && self.awarenessprofile != 1 && self.awarenessprofile != 3 )
+	{
+		return contactPos;
+	}
+
+	if ( ( ( isdefined( responseRole ) && responseRole == 1 ) || ( !isdefined( responseRole ) && self.awarenessprofile == 2 ) ) && level.waypoints[ wp ].children.size > 0 )
 	{
 		child = random( level.waypoints[ wp ].children );
 		return level.waypoints[ child ].origin;
 	}
 
-	if ( self.awarenessprofile == 1 )
+	if ( self.awarenessprofile == 1 || self.awarenessprofile == 3 )
 	{
 		return level.waypoints[ wp ].origin;
 	}
@@ -2538,6 +2680,7 @@ start_bot_threads()
 	self thread bot_revenge_think();
 	self thread bot_uav_think();
 	self thread bot_listen_to_steps();
+	self thread bot_awareness_facing_think();
 	self thread follow_target();
 	
 	// camp and follow
@@ -6854,7 +6997,7 @@ BotUseRandomEquipment()
 }
 
 /*
-	Bots will look at a random thing
+	Bots will watch a plausible danger approach while waiting on an objective.
 */
 BotLookAtRandomThing( obj_target )
 {
@@ -6866,57 +7009,103 @@ BotLookAtRandomThing( obj_target )
 		return;
 	}
 	
-	rand = randomint( 100 );
-	
+	aimPos = self getObjectiveDangerAim( obj_target );
+
+	if ( !isdefined( aimPos ) )
+	{
+		return;
+	}
+
+	self SetScriptAimPos( aimPos );
+	wait 2;
+
+	if ( self GetScriptAimPos() == aimPos )
+	{
+		self ClearScriptAimPos();
+	}
+}
+
+/*
+	Choose a visible enemy approach rather than the flag, a wall, or a random angle.
+*/
+getObjectiveDangerAim( obj_target )
+{
+	if ( isdefined( self.teamcontactpos ) && gettime() - self.teamcontacttime <= 6000 )
+	{
+		contactAim = self.teamcontactpos + ( 0, 0, 40 );
+
+		if ( bullettracepassed( self geteye(), contactAim, false, undefined ) )
+		{
+			return contactAim;
+		}
+	}
+
 	nearestEnemy = undefined;
-	
+	nearestEnemyDist = 1024 * 1024;
+
 	for ( i = 0; i < level.players.size; i++ )
 	{
 		player = level.players[ i ];
-		
-		if ( !isdefined( player ) || !isdefined( player.team ) )
+
+		if ( !isdefined( player ) || !isdefined( player.team ) || !isalive( player ) || ( level.teambased && self.team == player.team ) )
 		{
 			continue;
 		}
-		
-		if ( !isalive( player ) )
-		{
-			continue;
-		}
-		
-		if ( level.teambased && self.team == player.team )
-		{
-			continue;
-		}
-		
-		if ( !isdefined( nearestEnemy ) || distancesquared( self.origin, player.origin ) < distancesquared( self.origin, nearestEnemy.origin ) )
+
+		playerDist = distancesquared( self.origin, player.origin );
+
+		if ( playerDist < nearestEnemyDist && bullettracepassed( self geteye(), player gettagorigin( "j_spineupper" ), false, player ) )
 		{
 			nearestEnemy = player;
+			nearestEnemyDist = playerDist;
 		}
 	}
-	
-	origin = ( 0, 0, self getplayerviewheight() );
-	
-	if ( isdefined( nearestEnemy ) && distancesquared( self.origin, nearestEnemy.origin ) < 1024 * 1024 && rand < 40 )
+
+	if ( isdefined( nearestEnemy ) )
 	{
-		origin += ( nearestEnemy.origin[ 0 ], nearestEnemy.origin[ 1 ], self.origin[ 2 ] );
+		return nearestEnemy gettagorigin( "j_spineupper" );
 	}
-	else if ( isdefined( obj_target ) && rand < 50 )
+
+	candidates = [];
+
+	if ( isdefined( obj_target ) )
 	{
-		origin += ( obj_target.origin[ 0 ], obj_target.origin[ 1 ], self.origin[ 2 ] );
+		objWp = GetNearestWaypointWithSight( obj_target.origin );
+
+		if ( isdefined( objWp ) )
+		{
+			for ( i = 0; i < level.waypoints[ objWp ].children.size; i++ )
+			{
+				candidate = level.waypoints[ level.waypoints[ objWp ].children[ i ] ].origin + ( 0, 0, 40 );
+
+				if ( distancesquared( self.origin, candidate ) > 128 * 128 && bullettracepassed( self geteye(), candidate, false, undefined ) )
+				{
+					candidates[ candidates.size ] = candidate;
+				}
+			}
+		}
 	}
-	else if ( rand < 85 )
+
+	if ( candidates.size <= 0 )
 	{
-		origin += self.origin + anglestoforward( ( 0, self.angles[ 1 ] - 180, 0 ) ) * 1024;
+		for ( i = 0; i < level.waypoints.size; i++ )
+		{
+			candidate = level.waypoints[ i ].origin + ( 0, 0, 40 );
+			candidateDist = distancesquared( self.origin, candidate );
+
+			if ( candidateDist >= 256 * 256 && candidateDist <= 1200 * 1200 && bullettracepassed( self geteye(), candidate, false, undefined ) )
+			{
+				candidates[ candidates.size ] = candidate;
+			}
+		}
 	}
-	else
+
+	if ( candidates.size > 0 )
 	{
-		origin += self.origin + anglestoforward( ( 0, randomint( 360 ), 0 ) ) * 1024;
+		return random( candidates );
 	}
-	
-	self SetScriptAimPos( origin );
-	wait 2;
-	self ClearScriptAimPos();
+
+	return undefined;
 }
 
 /*
@@ -7275,6 +7464,7 @@ bot_dom_cap_think_loop()
 	self BotNotifyBotEvent( "dom", "start", "cap", flag );
 	
 	self SetScriptGoal( self.origin, 64 );
+	self thread bot_watch_dom_capture_approaches( flag, myTeam );
 	
 	while ( flag maps\mp\gametypes\dom::getflagteam() != myTeam && self istouching( flag ) )
 	{
@@ -7294,6 +7484,46 @@ bot_dom_cap_think_loop()
 	self ClearScriptGoal();
 	
 	self.bot_lock_goal = false;
+}
+
+/*
+	Keep a capturing bot aimed at visible routes into the flag area. Combat aim
+	still takes precedence, and this thread relinquishes its exact aim position.
+*/
+bot_watch_dom_capture_approaches( flag, myTeam )
+{
+	self endon( "death" );
+	self endon( "disconnect" );
+	ownedAim = undefined;
+
+	while ( isdefined( flag ) && isalive( self ) && flag maps\mp\gametypes\dom::getflagteam() != myTeam && self istouching( flag ) )
+	{
+		if ( self hasThreat() )
+		{
+			if ( isdefined( ownedAim ) && self GetScriptAimPos() == ownedAim )
+			{
+				self ClearScriptAimPos();
+				ownedAim = undefined;
+			}
+		}
+		else if ( !self HasScriptAimPos() || ( isdefined( ownedAim ) && self GetScriptAimPos() == ownedAim ) )
+		{
+			aimPos = self getObjectiveDangerAim( flag );
+
+			if ( isdefined( aimPos ) )
+			{
+				ownedAim = aimPos;
+				self SetScriptAimPos( ownedAim );
+			}
+		}
+
+		wait randomfloatrange( 1.0, 1.8 );
+	}
+
+	if ( isdefined( ownedAim ) && self GetScriptAimPos() == ownedAim )
+	{
+		self ClearScriptAimPos();
+	}
 }
 
 /*
