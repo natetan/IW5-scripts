@@ -4,6 +4,10 @@
 	Date: 05/11/2021
 	The interal workings of the bots.
 	Bots will do the basics, aim, move.
+
+	Custom changes:
+	- Bots that reach an enemy's last-seen position may briefly investigate
+	  one connected waypoint instead of immediately losing object permanence.
 */
 
 #include common_scripts\utility;
@@ -1413,6 +1417,7 @@ createTargetObj( ent, theTime )
 	obj = spawnstruct();
 	obj.entity = ent;
 	obj.last_seen_pos = ( 0, 0, 0 );
+	obj.investigation_pos = undefined;
 	obj.dist = 0;
 	obj.time = theTime;
 	obj.trace_time = 0;
@@ -1495,6 +1500,7 @@ targetObjUpdateTraced( obj, daDist, ent, theTime, isScriptObj, usingRemote )
 	obj.trace_time += int( 50 * timeMulti );
 	obj.dist = daDist;
 	obj.last_seen_pos = ent.origin;
+	obj.investigation_pos = undefined;
 	obj.trace_time_time = theTime;
 	
 	self updateAimOffset( obj, theTime );
@@ -1508,6 +1514,20 @@ targetObjUpdateNoTrace( obj )
 	obj.no_trace_time += 50;
 	obj.trace_time = 0;
 	obj.didlook = false;
+
+	// Once the bot reaches the last place it saw the enemy, check one route
+	// leaving that area. This is deliberately limited to a single connected
+	// waypoint so the bot searches without tracking an unseen enemy through walls.
+	if ( !isdefined( obj.investigation_pos ) && obj.no_trace_time >= 1500 && distancesquared( self.origin, obj.last_seen_pos ) <= 192 * 192 )
+	{
+		lastSeenWp = GetNearestWaypointWithSight( obj.last_seen_pos );
+
+		if ( isdefined( lastSeenWp ) && level.waypoints[ lastSeenWp ].children.size > 0 )
+		{
+			investigationWp = random( level.waypoints[ lastSeenWp ].children );
+			obj.investigation_pos = level.waypoints[ investigationWp ].origin;
+		}
+	}
 }
 
 /*
@@ -2640,7 +2660,14 @@ walk_loop()
 	{
 		if ( hasTarget )
 		{
-			goal = self.bot.target.last_seen_pos;
+			if ( isdefined( self.bot.target.investigation_pos ) )
+			{
+				goal = self.bot.target.investigation_pos;
+			}
+			else
+			{
+				goal = self.bot.target.last_seen_pos;
+			}
 		}
 		
 		self notify( "new_goal_internal" );

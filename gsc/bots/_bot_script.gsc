@@ -24,6 +24,9 @@
 	  of active fights, making their behavior look unnatural.
 	- Disabled deliberate enemy-equipment targeting because bots would become
 	  fixated on equipment, crouch around it, and repeatedly miss their shots.
+	- Expanded bot awareness with persistent death-location memory, bounded
+	  teammate callouts, better sound/radar target selection, and varied contact
+	  investigation routes without granting unseen enemies as direct targets.
 */
 
 #include common_scripts\utility;
@@ -58,6 +61,9 @@ connected()
 	
 	self.killerlocation = undefined;
 	self.lastkiller = undefined;
+	self.killerlocationtime = 0;
+	self.repeateddeathcount = 0;
+	self.awarenessprofile = randomint( 3 );
 	self.bot_change_class = true;
 	
 	self thread difficulty();
@@ -1581,6 +1587,8 @@ setClasses()
 */
 onKilled( eInflictor, eAttacker, iDamage, sMeansOfDeath, sWeapon, vDir, sHitLoc, timeOffset, deathAnimDuration )
 {
+	oldKillerLocation = self.killerlocation;
+	oldKillerLocationTime = self.killerlocationtime;
 	self.killerlocation = undefined;
 	self.lastkiller = undefined;
 	
@@ -1626,6 +1634,18 @@ onKilled( eInflictor, eAttacker, iDamage, sMeansOfDeath, sWeapon, vDir, sHitLoc,
 	
 	self.killerlocation = eAttacker.origin;
 	self.lastkiller = eAttacker;
+	self.killerlocationtime = gettime();
+
+	if ( isdefined( oldKillerLocation ) && self.killerlocationtime - oldKillerLocationTime <= 45000 && distancesquared( oldKillerLocation, self.killerlocation ) <= 512 * 512 )
+	{
+		self.repeateddeathcount++;
+	}
+	else
+	{
+		self.repeateddeathcount = 1;
+	}
+
+	self bot_broadcast_death_contact( self.killerlocation, eAttacker );
 }
 
 /*
@@ -1705,6 +1725,8 @@ bot_cry_for_help( attacker )
 	
 	self.help_time = theTime;
 	
+	responders = 0;
+
 	for ( i = level.players.size - 1; i >= 0; i-- )
 	{
 		player = level.players[ i ];
@@ -1736,22 +1758,130 @@ bot_cry_for_help( attacker )
 		
 		dist = player.pers[ "bots" ][ "skill" ][ "help_dist" ];
 		dist *= dist;
+
+		if ( dist > 1800 * 1800 )
+		{
+			dist = 1800 * 1800;
+		}
 		
 		if ( distancesquared( self.origin, player.origin ) > dist )
 		{
 			continue;
 		}
 		
-		if ( randomint( 100 ) < 50 )
+		if ( randomint( 100 ) < 65 )
 		{
-			self setAttacker( attacker );
-			
-			if ( randomint( 100 ) > 70 )
+			player thread bot_receive_team_contact( attacker.origin, attacker );
+			responders++;
+
+			if ( responders >= 2 )
 			{
 				break;
 			}
 		}
 	}
+}
+
+/*
+	Share a bot's death location with a small number of nearby teammates.
+*/
+bot_broadcast_death_contact( contactPos, attacker )
+{
+	if ( !level.teambased )
+	{
+		return;
+	}
+
+	responders = 0;
+
+	for ( i = level.players.size - 1; i >= 0; i-- )
+	{
+		player = level.players[ i ];
+
+		if ( !player is_bot() || player == self || !isdefined( player.team ) || player.team != self.team || !isalive( player ) )
+		{
+			continue;
+		}
+
+		if ( distancesquared( player.origin, self.origin ) > 1800 * 1800 )
+		{
+			continue;
+		}
+
+		if ( randomint( 100 ) >= 70 )
+		{
+			continue;
+		}
+
+		player thread bot_receive_team_contact( contactPos, attacker );
+		responders++;
+
+		if ( responders >= 2 )
+		{
+			break;
+		}
+	}
+}
+
+/*
+	React to shared information without tracking an unseen enemy through walls.
+*/
+bot_receive_team_contact( contactPos, attacker )
+{
+	self endon( "death" );
+	self endon( "disconnect" );
+
+	wait randomfloatrange( 0.15, 0.8 );
+
+	if ( !isalive( self ) )
+	{
+		return;
+	}
+
+	if ( isdefined( attacker ) && isreallyalive( attacker ) && bullettracepassed( self geteye(), attacker gettagorigin( "j_spineupper" ), false, attacker ) )
+	{
+		self setAttacker( attacker );
+		return;
+	}
+
+	if ( self HasScriptGoal() || self.bot_lock_goal || self hasThreat() )
+	{
+		return;
+	}
+
+	goal = self getAwarenessGoal( contactPos );
+	self SetScriptGoal( goal, 96 );
+
+	if ( self waittill_any_return( "goal", "bad_path", "new_goal" ) != "new_goal" )
+	{
+		self ClearScriptGoal();
+	}
+}
+
+/*
+	Give connected bots different investigation styles: direct, cautious, or flanking.
+*/
+getAwarenessGoal( contactPos )
+{
+	wp = GetNearestWaypointWithSight( contactPos );
+
+	if ( !isdefined( wp ) )
+	{
+		return contactPos;
+	}
+
+	if ( self.awarenessprofile == 2 && level.waypoints[ wp ].children.size > 0 )
+	{
+		child = random( level.waypoints[ wp ].children );
+		return level.waypoints[ child ].origin;
+	}
+
+	if ( self.awarenessprofile == 1 )
+	{
+		return level.waypoints[ wp ].origin;
+	}
+
+	return contactPos;
 }
 
 /*
@@ -4562,6 +4692,7 @@ bot_listen_to_steps_loop()
 	dist *= dist;
 	
 	heard = undefined;
+	heardDist = 2147483647;
 	
 	for ( i = level.players.size - 1 ; i >= 0; i-- )
 	{
@@ -4592,7 +4723,9 @@ bot_listen_to_steps_loop()
 			continue;
 		}
 		
-		if ( distancesquared( player.origin, self.origin ) > dist )
+		playerDist = distancesquared( player.origin, self.origin );
+
+		if ( playerDist > dist )
 		{
 			continue;
 		}
@@ -4602,8 +4735,11 @@ bot_listen_to_steps_loop()
 			continue;
 		}
 		
-		heard = player;
-		break;
+		if ( playerDist < heardDist )
+		{
+			heard = player;
+			heardDist = playerDist;
+		}
 	}
 	
 	hasHeartbeat = ( issubstr( self getcurrentweapon(), "_heartbeat" ) && ( ( !self isemped() && !self isnuked() ) || self _hasperk( "specialty_spygame" ) ) );
@@ -4611,6 +4747,8 @@ bot_listen_to_steps_loop()
 	
 	if ( !isdefined( heard ) && hasHeartbeat )
 	{
+		heartbeatBestDist = 2147483647;
+
 		for ( i = level.players.size - 1 ; i >= 0; i-- )
 		{
 			player = level.players[ i ];
@@ -4640,7 +4778,9 @@ bot_listen_to_steps_loop()
 				continue;
 			}
 			
-			if ( distancesquared( player.origin, self.origin ) > heartbeatDist )
+			playerDist = distancesquared( player.origin, self.origin );
+
+			if ( playerDist > heartbeatDist )
 			{
 				continue;
 			}
@@ -4650,8 +4790,11 @@ bot_listen_to_steps_loop()
 				continue;
 			}
 			
-			heard = player;
-			break;
+			if ( playerDist < heartbeatBestDist )
+			{
+				heard = player;
+				heartbeatBestDist = playerDist;
+			}
 		}
 	}
 	
@@ -4681,7 +4824,7 @@ bot_listen_to_steps_loop()
 		return;
 	}
 	
-	self SetScriptGoal( heard.origin, 64 );
+	self SetScriptGoal( self getAwarenessGoal( heard.origin ), 64 );
 	
 	if ( self waittill_any_return( "goal", "bad_path", "new_goal" ) != "new_goal" )
 	{
@@ -4741,6 +4884,8 @@ bot_uav_think_loop()
 	
 	dist = self.pers[ "bots" ][ "skill" ][ "help_dist" ];
 	dist *= dist * 8;
+	radarTarget = undefined;
+	radarTargetDist = 2147483647;
 	
 	for ( i = level.players.size - 1; i >= 0; i-- )
 	{
@@ -4780,30 +4925,38 @@ bot_uav_think_loop()
 		
 		if ( ( !issubstr( player getcurrentweapon(), "_silencer" ) && player.bots_firing ) || ( hasRadar && !player _hasperk( "specialty_coldblooded" ) ) || player maps\mp\perks\_perkfunctions::ispainted() || player.bot_isinradar || player isjuggernaut() || isdefined( player.uavremotemarkedby ) )
 		{
-			self BotNotifyBotEvent( "uav_target", "start", player );
-			
-			distSq = self.pers[ "bots" ][ "skill" ][ "help_dist" ] * self.pers[ "bots" ][ "skill" ][ "help_dist" ];
-			
-			if ( distFromPlayer < distSq && bullettracepassed( self geteye(), player gettagorigin( "j_spineupper" ), false, player ) )
+			if ( distFromPlayer < radarTargetDist )
 			{
-				self setAttacker( player );
+				radarTarget = player;
+				radarTargetDist = distFromPlayer;
 			}
-			
-			if ( !self HasScriptGoal() && !self.bot_lock_goal )
-			{
-				self SetScriptGoal( player.origin, 128 );
-				self thread stop_go_target_on_death( player );
-				
-				if ( self waittill_any_return( "goal", "bad_path", "new_goal" ) != "new_goal" )
-				{
-					self ClearScriptGoal();
-				}
-				
-				self BotNotifyBotEvent( "uav_target", "stop", player );
-			}
-			
-			break;
 		}
+	}
+
+	if ( !isdefined( radarTarget ) )
+	{
+		return;
+	}
+
+	self BotNotifyBotEvent( "uav_target", "start", radarTarget );
+	distSq = self.pers[ "bots" ][ "skill" ][ "help_dist" ] * self.pers[ "bots" ][ "skill" ][ "help_dist" ];
+
+	if ( radarTargetDist < distSq && bullettracepassed( self geteye(), radarTarget gettagorigin( "j_spineupper" ), false, radarTarget ) )
+	{
+		self setAttacker( radarTarget );
+	}
+
+	if ( !self HasScriptGoal() && !self.bot_lock_goal )
+	{
+		self SetScriptGoal( self getAwarenessGoal( radarTarget.origin ), 128 );
+		self thread stop_go_target_on_death( radarTarget );
+
+		if ( self waittill_any_return( "goal", "bad_path", "new_goal" ) != "new_goal" )
+		{
+			self ClearScriptGoal();
+		}
+
+		self BotNotifyBotEvent( "uav_target", "stop", radarTarget );
 	}
 }
 
@@ -4855,24 +5008,41 @@ bot_revenge_think()
 	}
 	
 	loc = self.killerlocation;
-	
-	for ( ;; )
+	revengeChance = 45 + self.repeateddeathcount * 15;
+
+	if ( self.awarenessprofile == 0 )
+	{
+		revengeChance += 15;
+	}
+	else if ( self.awarenessprofile == 1 )
+	{
+		revengeChance -= 10;
+	}
+
+	if ( revengeChance > 90 )
+	{
+		revengeChance = 90;
+	}
+
+	if ( randomint( 100 ) >= revengeChance )
+	{
+		return;
+	}
+
+	// Give active objectives several chances to finish instead of permanently
+	// discarding the remembered death location on the first busy check.
+	for ( attempts = 0; attempts < 5; attempts++ )
 	{
 		wait( randomintrange( 1, 5 ) );
 		
 		if ( self HasScriptGoal() || self.bot_lock_goal )
 		{
-			return;
-		}
-		
-		if ( randomint( 100 ) < 75 )
-		{
-			return;
+			continue;
 		}
 		
 		self BotNotifyBotEvent( "revenge", "start", loc, self.lastkiller );
 		
-		self SetScriptGoal( loc, 64 );
+		self SetScriptGoal( self getAwarenessGoal( loc ), 96 );
 		
 		if ( self waittill_any_return( "goal", "bad_path", "new_goal" ) != "new_goal" )
 		{
@@ -4880,6 +5050,7 @@ bot_revenge_think()
 		}
 		
 		self BotNotifyBotEvent( "revenge", "stop", loc, self.lastkiller );
+		return;
 	}
 }
 
