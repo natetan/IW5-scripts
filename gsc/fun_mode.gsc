@@ -14,6 +14,8 @@
       needs replenishing, including two-item tactical and tube capacities.
     - Globally strengthens Blast Shield so its users take 25 percent of normal
       explosive damage instead of the stock 45 percent.
+    - Disables MW3's post-spawn killstreak damage cap for more lethal,
+      MW2-style player-controlled streaks.
     - Assists team changes in full 9v9 bot lobbies by temporarily removing a
       destination-team bot, then restoring the configured fill target so Bot
       Warfare replaces it on the team the human left.
@@ -65,6 +67,14 @@ Init()
 
     // Global Blast Shield resistance; IW5's stock value is 0.45.
     level.blastShieldMod = GetDvarFloat("fun_mode_blast_shield_damage");
+
+    /*
+        Disable MW3's post-spawn killstreak damage cap. This restores the
+        more lethal MW2-style experience for player-controlled streaks such
+        as the Reaper and Osprey Gunner. Temporary targeting protection from
+        spawn Blind Eye remains handled separately by the stock game.
+    */
+    level.killstreakSpawnShield = 0;
 
     level thread OnPlayerConnect();
 }
@@ -190,8 +200,54 @@ WatchPlayerLoadout()
             // this is the standard give all perks from the game itself
             // self maps\mp\killstreaks\_killstreaks::giveallperks();
             self GiveFullSpecialistBonus();
+            self thread RestoreFunModeBlindEyeAfterSpawnProtection();
             // self ApplyFullSpecialistState();
         }
+    }
+}
+
+/*
+    Classes without Blind Eye receive it temporarily during IW5's spawn
+    protection. When that timer expires, giveBlindEyeAfterSpawn() unsets the
+    perk without knowing that fun mode also granted it permanently. Wait for
+    that cleanup, then restore Blind Eye if it was removed.
+*/
+RestoreFunModeBlindEyeAfterSpawnProtection()
+{
+    self endon("death");
+    self endon("disconnect");
+
+    // Yield once so the stock spawn-protection thread can publish its state.
+    wait 0.05;
+
+    while (
+        (
+            IsDefined(self.spawnPerk) &&
+            self.spawnPerk
+        ) ||
+        (
+            IsDefined(self.avoidKillstreakOnSpawnTimer) &&
+            self.avoidKillstreakOnSpawnTimer > 0
+        )
+    )
+    {
+        wait 0.05;
+    }
+
+    // Let giveBlindEyeAfterSpawn() finish its final _unsetPerk() call.
+    wait 0.1;
+
+    if (
+        IsDefined(self.class_num) &&
+        (
+            self.class_num == 12 ||
+            self.class_num == 13 ||
+            self.class_num == 14
+        ) &&
+        !self maps\mp\_utility::_hasperk("specialty_blindeye")
+    )
+    {
+        self GivePerk("specialty_blindeye", false);
     }
 }
 
