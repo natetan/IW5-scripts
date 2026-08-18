@@ -12,6 +12,8 @@
       standalone launchers, and underbarrel grenade launchers.
     - Makes Scavenger bags collectible when only equipment or launcher ammo
       needs replenishing, including two-item tactical and tube capacities.
+	- Re-arms the C4 offhand weapon before a Scavenger refill so newly thrown
+	  charges enter IW5's normal ownership, damage, and detonator tracking.
     - Globally strengthens Blast Shield so its users take 25 percent of normal
       explosive damage instead of the stock 45 percent.
     - Disables MW3's post-spawn killstreak damage cap for more lethal,
@@ -608,6 +610,19 @@ HandleScavengerBagPickupCustom(scrPlayer)
         }
 
         oldAmmo = player GetWeaponAmmoClip(offhand);
+
+		/*
+			C4 is not handled like an ordinary grenade after it is thrown. IW5's
+			stock weapon script registers the new missile in player.c4array and
+			attaches its activation, bullet-damage, and detonation threads when the
+			offhand weapon fires. Re-giving the valid C4 weapon before restoring its
+			clip refreshes that offhand state instead of only changing an ammo count.
+		*/
+		if (offhand == "c4_mp" && oldAmmo <= 0)
+		{
+			player GiveWeapon(offhand);
+		}
+
         player SetWeaponAmmoClip(offhand, oldAmmo + 1);
 
         if (GetDvarInt("fun_mode_scavenger_debug"))
