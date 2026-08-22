@@ -14,6 +14,8 @@
       needs replenishing, including two-item tactical and tube capacities.
 	- Re-arms the C4 offhand weapon before a Scavenger refill so newly thrown
 	  charges enter IW5's normal ownership, damage, and detonator tracking.
+    - Guards Recon Drone range checks against maps with missing or malformed
+      remote-UAV height metadata, preventing a per-frame runtime-error loop.
     - Globally strengthens Blast Shield so its users take 25 percent of normal
       explosive damage instead of the stock 45 percent.
     - Disables MW3's post-spawn killstreak damage cap for more lethal,
@@ -58,6 +60,58 @@ Main()
         maps\mp\gametypes\_weapons::handleScavengerBagPickup,
         ::HandleScavengerBagPickupCustom
     );
+
+	ReplaceFunc(
+		maps\mp\killstreaks\_remoteuav::remoteuav_in_range,
+		::RemoteUavInRangeGuarded
+	);
+}
+
+/*
+	Preserve IW5's stock Recon Drone range behavior while tolerating maps that
+	do not provide a usable remote_uav_range or airstrikeheight value.
+*/
+RemoteUavInRangeGuarded()
+{
+	inHeliProximity = (
+		IsDefined(self.inheliproximity) &&
+		self.inheliproximity
+	);
+
+	if (IsDefined(self.rangetrigger))
+	{
+		if (!self IsTouching(self.rangetrigger) && !inHeliProximity)
+		{
+			return 1;
+		}
+
+		return 0;
+	}
+
+	maxDistance = 12800;
+
+	if (IsDefined(self.maxdistance))
+	{
+		maxDistance = self.maxdistance;
+	}
+
+	withinHeight = true;
+
+	if (IsDefined(self.maxheight))
+	{
+		withinHeight = self.origin[2] < self.maxheight;
+	}
+
+	if (
+		Distance2D(self.origin, level.mapcenter) < maxDistance &&
+		withinHeight &&
+		!inHeliProximity
+	)
+	{
+		return 1;
+	}
+
+	return 0;
 }
 
 Init()
