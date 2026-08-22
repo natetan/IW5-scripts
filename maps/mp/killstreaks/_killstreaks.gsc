@@ -18,6 +18,8 @@
       copy in its configured slot. IW5's kill-credit logic checks only slots
       1-3, so queued Assault rewards are refreshed to the current life when
       promoted and can chain toward later rewards.
+    - Reset exhausted backing queues and reuse their first free entry so a
+      second stacking cycle cannot inherit stale sparse-array size metadata.
     - Set scr_killstreakStackDuplicates to 0 before map load to restore the
       original overwrite behavior.
 */
@@ -249,6 +251,7 @@ initplayerkillstreaks()
         return;
 
     self.pers["stackedkillstreaks"] = [];
+	self.pers["stackedkillstreakcount"] = 0;
 
     if ( self.streaktype == "specialist" )
         self setplayerdata( "killstreaksState", "isSpecialist", 1 );
@@ -1202,6 +1205,18 @@ restorestackedkillstreak( configuredIndex )
     }
 
     self.pers["stackedkillstreaks"][queuedIndex] = undefined;
+
+	if ( !isdefined( self.pers["stackedkillstreakcount"] ) )
+		self.pers["stackedkillstreakcount"] = 1;
+
+	self.pers["stackedkillstreakcount"]--;
+
+	if ( self.pers["stackedkillstreakcount"] <= 0 )
+	{
+		self.pers["stackedkillstreaks"] = [];
+		self.pers["stackedkillstreakcount"] = 0;
+	}
+
     return true;
 }
 
@@ -1275,8 +1290,18 @@ stackearnedkillstreak( streakName )
     if ( !isdefined( self.pers["stackedkillstreaks"] ) )
         self.pers["stackedkillstreaks"] = [];
 
-    queueIndex = self.pers["stackedkillstreaks"].size;
+	if ( !isdefined( self.pers["stackedkillstreakcount"] ) )
+		self.pers["stackedkillstreakcount"] = 0;
+
+	// Do not append using array.size: consumed GSC entries are undefined rather
+	// than removed, and a fully exhausted sparse array can retain stale sizing.
+	queueIndex = 0;
+
+	while ( isdefined( self.pers["stackedkillstreaks"][queueIndex] ) )
+		queueIndex++;
+
     self.pers["stackedkillstreaks"][queueIndex] = spawnstruct();
+	self.pers["stackedkillstreakcount"]++;
     queuedStreak = self.pers["stackedkillstreaks"][queueIndex];
     queuedStreak.available = configuredStreak.available;
     queuedStreak.streakname = configuredStreak.streakname;
