@@ -22,6 +22,11 @@
       below normal health, followed by non-regenerating overhealth up to a
       configurable percentage of their normal maximum. A progressively
       stronger yellow Ballistic Vest-style vignette indicates overhealth.
+    - Preserves Juiced's stock 25-percent movement boost when Fun Mode grants
+      the full Specialist Lightweight bonus during the same spawn sequence.
+    - Gives all players brief, escalating kill momentum: consecutive kills
+      refresh the timer and raise movement speed to a conservative cap, then
+      momentum decays one stack at a time instead of disappearing at once.
     - Disables MW3's post-spawn killstreak damage cap for more lethal,
       MW2-style player-controlled streaks.
     - Assists team changes in full 9v9 bot lobbies by temporarily removing a
@@ -44,6 +49,12 @@ Main()
     SetDvarIfNotInitialized("fun_mode_quick_fix_heal_percent", 0.25);
     SetDvarIfNotInitialized("fun_mode_quick_fix_overheal_percent", 0.10);
     SetDvarIfNotInitialized("fun_mode_quick_fix_max_percent", 2.00);
+    SetDvarIfNotInitialized("fun_mode_kill_momentum_enable", 1);
+    SetDvarIfNotInitialized("fun_mode_kill_momentum_duration", 1.50);
+    SetDvarIfNotInitialized("fun_mode_kill_momentum_start", 1.20);
+    SetDvarIfNotInitialized("fun_mode_kill_momentum_step", 0.025);
+    SetDvarIfNotInitialized("fun_mode_kill_momentum_max", 1.30);
+    SetDvarIfNotInitialized("fun_mode_kill_momentum_max_stacks", 5);
 
     /*
         Configurable Scavenger behavior.
@@ -151,6 +162,8 @@ OnPlayerConnect()
 
         player thread WatchQuickFix();
         player thread WatchQuickFixSpawns();
+        player thread WatchKillMomentum();
+        player thread WatchKillMomentumSpawns();
 
         if (player IsBotPlayer())
         {
@@ -492,10 +505,178 @@ WatchPlayerLoadout()
             // this is the standard give all perks from the game itself
             // self maps\mp\killstreaks\_killstreaks::giveallperks();
             self GiveFullSpecialistBonus();
+            self RestoreJuicedMovementAfterSpecialist();
+            self ApplyActiveKillMomentumSpeed();
             self thread RestoreFunModeBlindEyeAfterSpawnProtection();
             // self ApplyFullSpecialistState();
         }
     }
+}
+
+WatchKillMomentumSpawns()
+{
+    self endon("disconnect");
+
+    for (;;)
+    {
+        self waittill("spawned_player");
+        self.fun_mode_kill_momentum_stacks = 0;
+        self.fun_mode_kill_momentum_speed = undefined;
+        self notify("fun_mode_kill_momentum_refresh");
+    }
+}
+
+GetFunModeBaseMoveSpeed()
+{
+    if (IsDefined(self.isjuiced) && self.isjuiced)
+    {
+        return 1.25;
+    }
+
+    if (
+        IsDefined(self.isJuggernaut) &&
+        self.isJuggernaut &&
+        IsDefined(self.juggMoveSpeedScaler)
+    )
+    {
+        return self.juggMoveSpeedScaler;
+    }
+
+    if (self maps\mp\_utility::_hasPerk("specialty_lightweight"))
+    {
+        return maps\mp\_utility::lightweightScalar();
+    }
+
+    return 1.0;
+}
+
+RestoreFunModeBaseMoveSpeed()
+{
+    self.moveSpeedScaler = self GetFunModeBaseMoveSpeed();
+    self maps\mp\gametypes\_weapons::updateMoveSpeedScale();
+}
+
+ApplyActiveKillMomentumSpeed()
+{
+    if (!IsDefined(self.fun_mode_kill_momentum_speed))
+    {
+        return;
+    }
+
+    speed = self.fun_mode_kill_momentum_speed;
+    baseSpeed = self GetFunModeBaseMoveSpeed();
+
+    if (speed < baseSpeed)
+    {
+        speed = baseSpeed;
+    }
+
+    self.moveSpeedScaler = speed;
+    self maps\mp\gametypes\_weapons::updateMoveSpeedScale();
+}
+
+WatchKillMomentum()
+{
+    self endon("disconnect");
+
+    for (;;)
+    {
+        self waittill("killed_enemy");
+
+        if (!GetDvarInt("fun_mode_kill_momentum_enable") || !IsAlive(self))
+        {
+            continue;
+        }
+
+        if (!IsDefined(self.fun_mode_kill_momentum_stacks))
+        {
+            self.fun_mode_kill_momentum_stacks = 0;
+        }
+
+        self.fun_mode_kill_momentum_stacks++;
+
+        maximumStacks = GetDvarInt("fun_mode_kill_momentum_max_stacks");
+
+        if (maximumStacks < 1)
+        {
+            maximumStacks = 1;
+        }
+
+        if (self.fun_mode_kill_momentum_stacks > maximumStacks)
+        {
+            self.fun_mode_kill_momentum_stacks = maximumStacks;
+        }
+
+        self UpdateKillMomentumSpeedFromStacks();
+        self ApplyActiveKillMomentumSpeed();
+        self notify("fun_mode_kill_momentum_refresh");
+        self thread DecayKillMomentumAfterDelay();
+    }
+}
+
+UpdateKillMomentumSpeedFromStacks()
+{
+    speed = GetDvarFloat("fun_mode_kill_momentum_start") +
+        (
+            (self.fun_mode_kill_momentum_stacks - 1) *
+            GetDvarFloat("fun_mode_kill_momentum_step")
+        );
+    maximumSpeed = GetDvarFloat("fun_mode_kill_momentum_max");
+
+    if (speed > maximumSpeed)
+    {
+        speed = maximumSpeed;
+    }
+
+    self.fun_mode_kill_momentum_speed = speed;
+}
+
+DecayKillMomentumAfterDelay()
+{
+    self endon("disconnect");
+    self endon("death");
+    self endon("fun_mode_kill_momentum_refresh");
+
+    duration = GetDvarFloat("fun_mode_kill_momentum_duration");
+
+    if (duration < 0.05)
+    {
+        duration = 0.05;
+    }
+
+    for (;;)
+    {
+        wait duration;
+
+        self.fun_mode_kill_momentum_stacks--;
+
+        if (self.fun_mode_kill_momentum_stacks <= 0)
+        {
+            self.fun_mode_kill_momentum_stacks = 0;
+            self.fun_mode_kill_momentum_speed = undefined;
+            self RestoreFunModeBaseMoveSpeed();
+            return;
+        }
+
+        self UpdateKillMomentumSpeedFromStacks();
+        self ApplyActiveKillMomentumSpeed();
+    }
+}
+
+/*
+    Lightweight and Juiced both assign moveSpeedScaler rather than composing
+    their bonuses. Fun Mode grants Lightweight after changed_kit, which can
+    overwrite an already-active Juiced deathstreak from 1.25 back to 1.10.
+*/
+RestoreJuicedMovementAfterSpecialist()
+{
+    if (!IsDefined(self.isjuiced) || !self.isjuiced)
+    {
+        return;
+    }
+
+    self.moveSpeedScaler = 1.25;
+    self maps\mp\gametypes\_weapons::updateMoveSpeedScale();
 }
 
 /*
