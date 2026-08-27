@@ -27,6 +27,8 @@
     - Gives all players brief, escalating kill momentum: consecutive kills
       refresh the timer and raise movement speed to a conservative cap, then
       momentum decays one stack at a time instead of disappearing at once.
+    - Rewards every third kill after genuinely earning Specialist on Fun Mode
+      classes with a refreshable five-second UAV for the player's team.
     - Disables MW3's post-spawn killstreak damage cap for more lethal,
       MW2-style player-controlled streaks.
     - Assists team changes in full 9v9 bot lobbies by temporarily removing a
@@ -55,6 +57,9 @@ Main()
     SetDvarIfNotInitialized("fun_mode_kill_momentum_step", 0.025);
     SetDvarIfNotInitialized("fun_mode_kill_momentum_max", 1.30);
     SetDvarIfNotInitialized("fun_mode_kill_momentum_max_stacks", 5);
+    SetDvarIfNotInitialized("fun_mode_post_specialist_enable", 1);
+    SetDvarIfNotInitialized("fun_mode_post_specialist_kills", 3);
+    SetDvarIfNotInitialized("fun_mode_post_specialist_uav_duration", 5);
 
     /*
         Configurable Scavenger behavior.
@@ -151,6 +156,9 @@ Init()
     */
     level.killstreakSpawnShield = 0;
 
+    level.fun_mode_temporary_uav_expires = [];
+    level.fun_mode_temporary_uav_running = [];
+
     level thread OnPlayerConnect();
 }
 
@@ -173,6 +181,185 @@ OnPlayerConnect()
         player thread WatchPlayerLoadout();
         player thread WatchScavengerPickupEligibility();
         player thread WatchTeamSwitchMenu();
+        player thread WatchPostSpecialistRewards();
+        player thread WatchPostSpecialistSpawns();
+    }
+}
+
+WatchPostSpecialistSpawns()
+{
+    self endon("disconnect");
+
+    for (;;)
+    {
+        self waittill("spawned_player");
+        self.fun_mode_real_specialist_bonus_seen = false;
+        self.fun_mode_post_specialist_kills = 0;
+    }
+}
+
+HasEarnedRealSpecialistBonus()
+{
+    if (
+        !IsDefined(self.class_num) ||
+        (
+            self.class_num != 12 &&
+            self.class_num != 13 &&
+            self.class_num != 14
+        ) ||
+        !IsDefined(self.streaktype) ||
+        self.streaktype != "specialist" ||
+        !IsDefined(self.adrenaline) ||
+        !IsDefined(self.pers["killstreaks"]) ||
+        !IsDefined(self.pers["killstreaks"][4]) ||
+        !IsDefined(self.pers["killstreaks"][4].streakname) ||
+        self.pers["killstreaks"][4].streakname != "all_perks_bonus" ||
+        !IsDefined(self.pers["killstreaks"][4].available) ||
+        !self.pers["killstreaks"][4].available
+    )
+    {
+        return false;
+    }
+
+    bonusCost = 8;
+
+    if (self maps\mp\_utility::_hasperk("specialty_hardline"))
+    {
+        bonusCost--;
+    }
+
+    return self.adrenaline >= bonusCost;
+}
+
+GrantTemporaryTeamUAV(duration)
+{
+    if (
+        !IsDefined(self.pers["team"]) ||
+        (self.pers["team"] != "allies" && self.pers["team"] != "axis")
+    )
+    {
+        return;
+    }
+
+    team = self.pers["team"];
+    expiresAt = GetTime() + Int(duration * 1000);
+
+    if (
+        !IsDefined(level.fun_mode_temporary_uav_expires[team]) ||
+        expiresAt > level.fun_mode_temporary_uav_expires[team]
+    )
+    {
+        level.fun_mode_temporary_uav_expires[team] = expiresAt;
+    }
+
+    if (
+        IsDefined(level.fun_mode_temporary_uav_running[team]) &&
+        level.fun_mode_temporary_uav_running[team]
+    )
+    {
+        return;
+    }
+
+    level.fun_mode_temporary_uav_running[team] = true;
+    level thread RunTemporaryTeamUAV(team);
+}
+
+/*
+    Register a hidden model as a real standard UAV. The stock UAV tracker then
+    owns radar visibility, sweep timing, Counter-UAV interaction, and stacking
+    with earned UAVs. Only this model and its active-UAV count are removed.
+*/
+RunTemporaryTeamUAV(team)
+{
+    level endon("game_ended");
+
+    uav = Spawn("script_model", (0, 0, 0));
+    uav.team = team;
+    uav.value = 1;
+    uav.uavtype = "standard";
+    uav maps\mp\killstreaks\_uav::addUAVModel();
+    uav maps\mp\killstreaks\_uav::addActiveUAV();
+    level notify("uav_update");
+
+    while (
+        IsDefined(level.fun_mode_temporary_uav_expires[team]) &&
+        GetTime() < level.fun_mode_temporary_uav_expires[team]
+    )
+    {
+        wait 0.05;
+    }
+
+    uav maps\mp\killstreaks\_uav::removeActiveUAV();
+
+    remainingModels = [];
+
+    foreach (model in level.uavmodels[team])
+    {
+        if (!IsDefined(model) || model == uav)
+        {
+            continue;
+        }
+
+        remainingModels[remainingModels.size] = model;
+    }
+
+    level.uavmodels[team] = remainingModels;
+    uav Delete();
+    level.fun_mode_temporary_uav_running[team] = false;
+    level notify("uav_update");
+}
+
+WatchPostSpecialistRewards()
+{
+    self endon("disconnect");
+
+    for (;;)
+    {
+        self waittill("killed_enemy");
+
+        if (
+            !GetDvarInt("fun_mode_post_specialist_enable") ||
+            !IsAlive(self) ||
+            !self HasEarnedRealSpecialistBonus()
+        )
+        {
+            self.fun_mode_real_specialist_bonus_seen = false;
+            self.fun_mode_post_specialist_kills = 0;
+            continue;
+        }
+
+        if (
+            !IsDefined(self.fun_mode_real_specialist_bonus_seen) ||
+            !self.fun_mode_real_specialist_bonus_seen
+        )
+        {
+            self.fun_mode_real_specialist_bonus_seen = true;
+            self.fun_mode_post_specialist_kills = 0;
+            continue;
+        }
+
+        self.fun_mode_post_specialist_kills++;
+        killsRequired = GetDvarInt("fun_mode_post_specialist_kills");
+
+        if (killsRequired < 1)
+        {
+            killsRequired = 1;
+        }
+
+        if (self.fun_mode_post_specialist_kills < killsRequired)
+        {
+            continue;
+        }
+
+        self.fun_mode_post_specialist_kills = 0;
+        duration = GetDvarFloat("fun_mode_post_specialist_uav_duration");
+
+        if (duration <= 0)
+        {
+            continue;
+        }
+
+        self GrantTemporaryTeamUAV(duration);
     }
 }
 
