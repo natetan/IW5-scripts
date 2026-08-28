@@ -21,6 +21,8 @@
       remote-UAV height metadata, preventing a per-frame runtime-error loop.
     - Guards destructible map objects against missing sound aliases so a
       broken destruction sound cannot generate a script runtime error.
+    - Restores stock missile-attractor defaults when helicopter initialization
+      leaves them undefined, preventing Osprey creation runtime errors.
     - Globally strengthens Blast Shield so its users take 25 percent of normal
       explosive damage instead of the stock 45 percent.
     - Gives all players two-stage Quick Fix healing: a strong recovery burst
@@ -66,6 +68,21 @@ Main()
     SetDvarIfNotInitialized("fun_mode_post_specialist_enable", 1);
     SetDvarIfNotInitialized("fun_mode_post_specialist_kills", 3);
     SetDvarIfNotInitialized("fun_mode_post_specialist_uav_duration", 5);
+
+    /*
+        _escortairdrop::createAirship passes these values directly to
+        Missile_CreateAttractorEnt(). Some map or mod initialization paths
+        leave them undefined even though an Osprey can still be requested.
+    */
+    if (!IsDefined(level.heli_attract_strength))
+    {
+        level.heli_attract_strength = 1000.0;
+    }
+
+    if (!IsDefined(level.heli_attract_range))
+    {
+        level.heli_attract_range = 4096.0;
+    }
 
     /*
         Configurable Scavenger behavior.
