@@ -7,6 +7,8 @@
 	  and Concussion Grenades instead of its stock equipment combination.
 	- Its special USP uses Extended Mags and a Tactical Knife, exercising IW5's
 	  normally restricted second attachment slot on a true secondary weapon.
+	- Ordinary secondary weapons automatically receive Extended Mags as a bonus
+	  second attachment when the weapon and selected attachment support it.
 */
 
 #include common_scripts\utility;
@@ -929,6 +931,8 @@ giveLoadout( team, class, allowCopycat, setPrimarySpawnWeapon )
 			loadoutSecondaryAttachment2 = "none";
 	}
 
+	loadoutSecondaryAttachment2 = addExtendedMagsToSecondary( loadoutSecondary, loadoutSecondaryAttachment, loadoutSecondaryAttachment2, loadoutPerk2 );
+
 	self.loadoutPrimary = loadoutPrimary;
 	self.loadoutPrimaryCamo = int(tableLookup( "mp/camoTable.csv", 1, loadoutPrimaryCamo, 0 ));
 	self.loadoutSecondary = loadoutSecondary;
@@ -1521,6 +1525,58 @@ tryDetach( placement )
 		}
 	}
 	return;
+}
+
+secondarySupportsAttachment( weaponName, attachmentName )
+{
+	row = tableLookupRowNum( "mp/statStable.csv", 4, weaponName );
+
+	if ( row < 0 || tableLookupByRow( "mp/statStable.csv", row, 4 ) != weaponName )
+		return false;
+
+	for ( i = 0; i < 10; i++ )
+	{
+		availableAttachment = tableLookupByRow( "mp/statStable.csv", row, i + 11 );
+
+		if ( availableAttachment == "" )
+			break;
+
+		if ( availableAttachment == attachmentName )
+			return true;
+	}
+
+	return false;
+}
+
+secondaryAttachmentsAreCompatible( attachment1, attachment2 )
+{
+	if ( attachment1 == "none" || attachment2 == "none" )
+		return true;
+
+	comboColumn = tableLookupRowNum( "mp/attachmentCombos.csv", 0, attachment1 );
+
+	if ( comboColumn < 0 )
+		return false;
+
+	return tableLookup( "mp/attachmentCombos.csv", 0, attachment2, comboColumn ) != "no";
+}
+
+addExtendedMagsToSecondary( weaponName, attachment1, attachment2, perk2 )
+{
+	if ( weaponName == "none" || perk2 == "specialty_twoprimaries" )
+		return attachment2;
+
+	// Preserve explicit two-attachment loadouts such as the Recon Juggernaut USP.
+	if ( attachment2 != "none" || attachment1 == "xmags" )
+		return attachment2;
+
+	if ( !secondarySupportsAttachment( weaponName, "xmags" ) )
+		return attachment2;
+
+	if ( !secondaryAttachmentsAreCompatible( attachment1, "xmags" ) )
+		return attachment2;
+
+	return "xmags";
 }
 
 buildWeaponName( baseName, attachment1, attachment2, camo, reticle )

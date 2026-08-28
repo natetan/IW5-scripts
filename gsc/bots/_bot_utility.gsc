@@ -9,6 +9,7 @@
 	  Concussion Grenades while retaining the streak's built-in moving radar.
 	- Mirrors Extended Mags plus a Tactical Knife on its special USP, including the
 	  narrow exception that permits its normally restricted second attachment.
+	- Mirrors automatic, compatibility-checked Extended Mags on bot secondaries.
 */
 
 #include common_scripts\utility;
@@ -3140,6 +3141,8 @@ botGiveLoadout( team, class, allowCopycat, setPrimarySpawnWeapon ) // setPrimary
 			loadoutSecondaryAttachment2 = "none";
 		}
 	}
+
+	loadoutSecondaryAttachment2 = maps\mp\gametypes\_class::addExtendedMagsToSecondary( loadoutSecondary, loadoutSecondaryAttachment, loadoutSecondaryAttachment2, loadoutPerk2 );
 	
 	self.loadoutprimary = loadoutPrimary;
 	self.loadoutprimarycamo = int( tablelookup( "mp/camoTable.csv", 1, loadoutPrimaryCamo, 0 ) );
