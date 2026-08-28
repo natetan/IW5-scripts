@@ -33,6 +33,12 @@ Optional gameplay enhancements for custom classes, including:
 - Additional hidden Specialist bonuses
 - Experimental gameplay features
 
+### 🛠️ In-Match Class Editing
+
+[LastDemon99's IW5 EditClassMenu](https://github.com/LastDemon99/IW5-Mods/tree/main/EditClassMenu) adds a full class editor to the in-game menu. It can edit weapons, compatible attachments, proficiencies, perks, equipment, streaks, camos, and reticles without returning to the main multiplayer menus.
+
+This is especially useful while prestiging for fun: attachments and camos can be selected without waiting for their normal progression unlocks, while weapon levels can still be earned naturally.
+
 ### 🏷️ Bot Name Generator
 PowerShell script that automatically:
 
@@ -128,10 +134,58 @@ z_svr_bots.iwd
 
 Do **not** extract and recompress the archive—edit it directly with WinRAR.
 
+---
+
+### EditClassMenu Mod
+
+Download EditClassMenu from the official project:
+
+- [Source and documentation](https://github.com/LastDemon99/IW5-Mods/tree/main/EditClassMenu)
+- [Packaged EditClassMenu v1.0 download](https://github.com/LastDemon99/IW5-Mods/releases/download/edit-class-v1.0/EditClassMenu.rar)
+
+Extract the downloaded archive into:
+
+```text
+%LOCALAPPDATA%\Plutonium\storage\iw5\
+```
+
+The resulting layout should include:
+
+```text
+storage\iw5\
+├── mods\
+│   └── lb_server\
+└── z_editClassMenu.iwd
+```
+
+Launch Plutonium IW5 and enter this in the console:
+
+```text
+loadmod lb_server
+```
+
+After the mod reloads the game, start a normal private match. The in-game menu will contain an **EDIT CLASS** option. Changes are written to the saved custom classes, allowing them to persist outside the current life or match.
+
+Back up the following directory before initially testing the mod because it modifies persistent class data:
+
+```text
+%LOCALAPPDATA%\Plutonium\storage\iw5\players\
+```
+
+EditClassMenu and Survival Reimagined are separate `fs_game` mods. Use `loadmod lb_server` for regular multiplayer with the class editor and `loadmod survival` when playing Survival Reimagined; they are not loaded simultaneously.
+
 ## Game Load
-On game load, hit the \` (~) key, and depending on the config you want, type:
+
+For a regular game without EditClassMenu, hit the \` (~) key and, depending on the config you want, type:
 
 ```
+exec normal.cfg
+```
+
+When using EditClassMenu, load the mod first. After the game reloads, execute the desired configuration:
+
+```text
+loadmod lb_server
 exec normal.cfg
 ```
 
