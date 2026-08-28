@@ -19,6 +19,8 @@
 	  charges enter IW5's normal ownership, damage, and detonator tracking.
     - Guards Recon Drone range checks against maps with missing or malformed
       remote-UAV height metadata, preventing a per-frame runtime-error loop.
+    - Guards destructible map objects against missing sound aliases so a
+      broken destruction sound cannot generate a script runtime error.
     - Globally strengthens Blast Shield so its users take 25 percent of normal
       explosive damage instead of the stock 45 percent.
     - Gives all players two-stage Quick Fix healing: a strong recovery burst
@@ -93,6 +95,58 @@ Main()
 		maps\mp\killstreaks\_remoteuav::remoteuav_in_range,
 		::RemoteUavInRangeGuarded
 	);
+
+    ReplaceFunc(
+        common_scripts\_destructible::play_sound,
+        ::DestructiblePlaySoundGuarded
+    );
+}
+
+/*
+    Some map destructible definitions reference an undefined, empty, or
+    unavailable sound alias. The stock helper passes it directly to
+    PlaySound(), which raises a runtime error. Preserve its positioned sound
+    entity and cleanup behavior, but ignore aliases the current map did not
+    load.
+*/
+DestructiblePlaySoundGuarded(soundAlias, tagName)
+{
+    if (
+        !IsDefined(soundAlias) ||
+        soundAlias == "" ||
+        !SoundExists(soundAlias)
+    )
+    {
+        return;
+    }
+
+    if (IsDefined(tagName))
+    {
+        soundOrigin = Spawn("script_origin", self GetTagOrigin(tagName));
+        soundOrigin Hide();
+        soundOrigin LinkTo(
+            self,
+            tagName,
+            (0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0)
+        );
+    }
+    else
+    {
+        soundOrigin = Spawn("script_origin", (0.0, 0.0, 0.0));
+        soundOrigin Hide();
+        soundOrigin.origin = self.origin;
+        soundOrigin.angles = self.angles;
+        soundOrigin LinkTo(self);
+    }
+
+    soundOrigin PlaySound(soundAlias);
+    wait 5.0;
+
+    if (IsDefined(soundOrigin))
+    {
+        soundOrigin Delete();
+    }
 }
 
 /*
