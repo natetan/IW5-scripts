@@ -7,6 +7,9 @@
     - Human players using custom classes 13-15 receive the full Specialist
       perk set, its Pro perk mappings, the extra Specialist bonuses, and the
       Impact and shotgun Damage weapon proficiencies.
+    - In Survival Reimagined, where custom classes and changed-kit events are
+      disabled, human survivors receive that same Fun Mode bonus after the
+      Survival mod finishes rebuilding their spawn loadout.
     - Replaces the stock Scavenger handler with configurable MW2-style
       resupply for secondary weapons, lethal equipment, tactical equipment,
       standalone launchers, and underbarrel grenade launchers.
@@ -44,6 +47,7 @@ Main()
 {
     SetDvarIfNotInitialized("fun_mode_enable", 1);
     SetDvarIfNotInitialized("fun_mode_specialist_class_index", 14);
+    SetDvarIfNotInitialized("fun_mode_survival_specialist_bonus", 1);
     SetDvarIfNotInitialized("fun_mode_team_switch_assist", 1);
     SetDvarIfNotInitialized("fun_mode_team_switch_fill", 18);
     SetDvarIfNotInitialized("fun_mode_blast_shield_damage", 0.25);
@@ -179,10 +183,52 @@ OnPlayerConnect()
         }
 
         player thread WatchPlayerLoadout();
+        player thread WatchSurvivalFunModeSpawns();
         player thread WatchScavengerPickupEligibility();
         player thread WatchTeamSwitchMenu();
         player thread WatchPostSpecialistRewards();
         player thread WatchPostSpecialistSpawns();
+    }
+}
+
+IsSurvivalMode()
+{
+    return IsDefined(level.gameType) && level.gameType == "survival";
+}
+
+/*
+    Survival Reimagined disables custom classes and replaces the stock class
+    initializer. Its survivor handler clears and rebuilds perks on every spawn,
+    so apply the Fun Mode bundle afterward instead of waiting for changed_kit.
+*/
+WatchSurvivalFunModeSpawns()
+{
+    self endon("disconnect");
+
+    if (!IsSurvivalMode())
+    {
+        return;
+    }
+
+    for (;;)
+    {
+        self waittill("spawned_player");
+        wait 0.25;
+
+        if (
+            !GetDvarInt("fun_mode_survival_specialist_bonus") ||
+            !IsAlive(self) ||
+            !IsDefined(self.pers["team"]) ||
+            self.pers["team"] != "allies"
+        )
+        {
+            continue;
+        }
+
+        self GiveFullSpecialistBonus();
+        self RestoreJuicedMovementAfterSpecialist();
+        self ApplyActiveKillMomentumSpeed();
+        self thread RestoreFunModeBlindEyeAfterSpawnProtection();
     }
 }
 
@@ -669,6 +715,11 @@ RestoreBotFill(fillTarget, fillKickValue)
 WatchPlayerLoadout()
 {
     self endon("disconnect");
+
+    if (IsSurvivalMode())
+    {
+        return;
+    }
 
     for (;;)
     {
