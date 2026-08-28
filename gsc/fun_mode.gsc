@@ -1237,10 +1237,12 @@ NeedsExtraScavengerAmmo()
 }
 
 /*
-    Remove exactly one reserve round from an ordinary primary so the engine's
-    stock bag trigger sees room for firearm ammo. Track the reservation
-    explicitly: WeaponMaxAmmo()/stock comparisons do not reliably mirror the
-    native pickup test for every weapon/attachment combination.
+    Remove exactly one reserve round from an ordinary firearm so the engine's
+    stock bag trigger sees room for ammo. Prefer a normal Create-a-Class
+    primary, then fall back to special firearms such as the Recon
+    Juggernaut's USP when its Riot Shield has no reserve ammunition. Track the
+    reservation explicitly: WeaponMaxAmmo()/stock comparisons do not reliably
+    mirror the native pickup test for every weapon/attachment combination.
 */
 EnsureScavengerBagCanBePickedUp()
 {
@@ -1254,6 +1256,7 @@ EnsureScavengerBagCanBePickedUp()
 
     weapons = self GetWeaponsListPrimaries();
 
+    // Preserve the established behavior for normal multiplayer loadouts.
     foreach (weapon in weapons)
     {
         if (!maps\mp\_utility::IsCACPrimaryWeapon(weapon))
@@ -1286,6 +1289,51 @@ EnsureScavengerBagCanBePickedUp()
 
             return;
         }
+    }
+
+    /*
+        Juggernaut weapon variants are not classified as CAC primaries. The
+        Recon loadout therefore reaches this fallback with a shield and its
+        special USP; skip inventory items without conventional firearm ammo
+        and reserve one pistol round for the native bag trigger.
+    */
+    foreach (weapon in weapons)
+    {
+        if (
+            IsScavengerNoobTube(weapon) ||
+            IsScavengerLauncher(weapon)
+        )
+        {
+            continue;
+        }
+
+        maxAmmo = WeaponMaxAmmo(weapon);
+
+        if (maxAmmo <= 0)
+        {
+            continue;
+        }
+
+        stockAmmo = self GetWeaponAmmoStock(weapon);
+
+        if (stockAmmo <= 0)
+        {
+            continue;
+        }
+
+        self SetWeaponAmmoStock(weapon, stockAmmo - 1);
+        self.fun_mode_scavenger_ammo_reserved = true;
+
+        if (GetDvarInt("fun_mode_scavenger_debug"))
+        {
+            Print(
+                "[FUN_MODE] Reserved Scavenger pickup using special weapon " +
+                weapon +
+                " reserve ammo."
+            );
+        }
+
+        return;
     }
 }
 
