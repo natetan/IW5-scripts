@@ -7,6 +7,8 @@
 	Custom changes:
 	- Mirrors the human Support/Recon Juggernaut loadout change to Semtex and
 	  Concussion Grenades while retaining the streak's built-in moving radar.
+	- Mirrors Extended Mags plus a Tactical Knife on its special USP, including the
+	  narrow exception that permits its normally restricted second attachment.
 */
 
 #include common_scripts\utility;
@@ -2940,8 +2942,8 @@ botGiveLoadout( team, class, allowCopycat, setPrimarySpawnWeapon ) // setPrimary
 		loadoutPrimaryCamo = "none";
 		loadoutPrimaryReticle = "none";
 		loadoutSecondary = "iw5_usp45jugg";
-		loadoutSecondaryAttachment = "none";
-		loadoutSecondaryAttachment2 = "none";
+		loadoutSecondaryAttachment = "xmags";
+		loadoutSecondaryAttachment2 = "tactical";
 		loadoutSecondaryBuff = "specialty_null";
 		loadoutSecondaryCamo = "none";
 		loadoutSecondaryReticle = "none";
@@ -3133,7 +3135,7 @@ botGiveLoadout( team, class, allowCopycat, setPrimarySpawnWeapon ) // setPrimary
 			loadoutSecondaryBuff = "specialty_null";
 		}
 		
-		if ( loadoutSecondaryAttachment2 != "none" && ( loadoutSecondaryBuff != "specialty_bling" || loadoutPerk2 != "specialty_twoprimaries" ) )
+		if ( loadoutSecondaryAttachment2 != "none" && loadoutSecondary != "iw5_usp45jugg" && ( loadoutSecondaryBuff != "specialty_bling" || loadoutPerk2 != "specialty_twoprimaries" ) )
 		{
 			loadoutSecondaryAttachment2 = "none";
 		}

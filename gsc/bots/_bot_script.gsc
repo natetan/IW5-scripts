@@ -33,6 +33,8 @@
 	  approach routes, recognizes player-owned explosive deaths, and gives
 	  aggressive, cautious, flanking, and objective-focused bots more distinct
 	  response behavior.
+	- Guards awareness aim cleanup against other bot threads clearing the aim
+	  position during a timed facing reaction.
 */
 
 #include common_scripts\utility;
@@ -1936,7 +1938,14 @@ bot_face_team_contact( contactPos )
 	self SetScriptAimPos( aimPos );
 	wait randomfloatrange( 0.4, 0.9 );
 
-	if ( isdefined( self.contactaimpos ) && self.contactaimpos == aimPos && self GetScriptAimPos() == aimPos )
+	currentAimPos = self GetScriptAimPos();
+
+	if (
+		isdefined( self.contactaimpos ) &&
+		self.contactaimpos == aimPos &&
+		isdefined( currentAimPos ) &&
+		currentAimPos == aimPos
+	)
 	{
 		self ClearScriptAimPos();
 		self.contactaimpos = undefined;
@@ -1986,7 +1995,9 @@ bot_awareness_facing_think()
 		self SetScriptAimPos( aimPos );
 		wait randomfloatrange( 0.45, 0.8 );
 
-		if ( self GetScriptAimPos() == aimPos )
+		currentAimPos = self GetScriptAimPos();
+
+		if ( isdefined( currentAimPos ) && currentAimPos == aimPos )
 		{
 			self ClearScriptAimPos();
 		}

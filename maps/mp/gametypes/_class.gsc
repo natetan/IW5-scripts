@@ -5,6 +5,8 @@
 	Custom changes:
 	- Support/Recon Juggernaut keeps its built-in moving radar but uses Semtex
 	  and Concussion Grenades instead of its stock equipment combination.
+	- Its special USP uses Extended Mags and a Tactical Knife, exercising IW5's
+	  normally restricted second attachment slot on a true secondary weapon.
 */
 
 #include common_scripts\utility;
@@ -781,8 +783,8 @@ giveLoadout( team, class, allowCopycat, setPrimarySpawnWeapon )
 		loadoutPrimaryCamo = "none";
 		loadoutPrimaryReticle = "none";
 		loadoutSecondary = "iw5_usp45jugg";
-		loadoutSecondaryAttachment = "none";
-		loadoutSecondaryAttachment2 = "none";
+		loadoutSecondaryAttachment = "xmags";
+		loadoutSecondaryAttachment2 = "tactical";
 		loadoutSecondaryBuff = "specialty_null";
 		loadoutSecondaryCamo = "none";
 		loadoutSecondaryReticle = "none";
@@ -923,7 +925,7 @@ giveLoadout( team, class, allowCopycat, setPrimarySpawnWeapon )
 		if ( loadoutSecondaryBuff != "specialty_null" && loadoutPerk2 != "specialty_twoprimaries" )
 			loadoutSecondaryBuff = "specialty_null";
 
-		if ( loadoutSecondaryAttachment2 != "none" && ( loadoutSecondaryBuff != "specialty_bling" || loadoutPerk2 != "specialty_twoprimaries" ) )
+		if ( loadoutSecondaryAttachment2 != "none" && loadoutSecondary != "iw5_usp45jugg" && ( loadoutSecondaryBuff != "specialty_bling" || loadoutPerk2 != "specialty_twoprimaries" ) )
 			loadoutSecondaryAttachment2 = "none";
 	}
 
