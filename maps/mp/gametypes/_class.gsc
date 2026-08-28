@@ -1,6 +1,12 @@
 // IW5 PC GSC
 // Decompiled by https://github.com/xensik/gsc-tool
 
+/*
+	Custom changes:
+	- Support/Recon Juggernaut keeps its built-in moving radar but uses Semtex
+	  and Concussion Grenades instead of its stock equipment combination.
+*/
+
 #include common_scripts\utility;
 #include maps\mp\_utility;
 
@@ -780,12 +786,12 @@ giveLoadout( team, class, allowCopycat, setPrimarySpawnWeapon )
 		loadoutSecondaryBuff = "specialty_null";
 		loadoutSecondaryCamo = "none";
 		loadoutSecondaryReticle = "none";
-		loadoutEquipment = "specialty_portable_radar";
+		loadoutEquipment = "semtex_mp";
 		loadoutPerk1 = "specialty_scavenger";
 		loadoutPerk2 = "specialty_coldblooded";
 		loadoutPerk3 = "specialty_detectexplosive";
 		loadoutStreakType = getLoadoutStreakTypeFromStreakType( self.streakType );
-		loadoutOffhand = "smoke_grenade_mp";
+		loadoutOffhand = "concussion_grenade_mp";
 		loadoutDeathStreak = "specialty_null";
 	}
 	else

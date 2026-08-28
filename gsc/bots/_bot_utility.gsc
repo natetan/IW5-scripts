@@ -3,6 +3,10 @@
 	Author: INeedGames
 	Date: 05/07/2021
 	The shared functions for bots
+
+	Custom changes:
+	- Mirrors the human Support/Recon Juggernaut loadout change to Semtex and
+	  Concussion Grenades while retaining the streak's built-in moving radar.
 */
 
 #include common_scripts\utility;
@@ -2941,12 +2945,12 @@ botGiveLoadout( team, class, allowCopycat, setPrimarySpawnWeapon ) // setPrimary
 		loadoutSecondaryBuff = "specialty_null";
 		loadoutSecondaryCamo = "none";
 		loadoutSecondaryReticle = "none";
-		loadoutEquipment = "specialty_portable_radar";
+		loadoutEquipment = "semtex_mp";
 		loadoutPerk1 = "specialty_scavenger";
 		loadoutPerk2 = "specialty_coldblooded";
 		loadoutPerk3 = "specialty_detectexplosive";
 		loadoutStreakType = maps\mp\gametypes\_class::getloadoutstreaktypefromstreaktype( self.streaktype );
-		loadoutOffhand = "smoke_grenade_mp";
+		loadoutOffhand = "concussion_grenade_mp";
 		loadoutDeathStreak = "specialty_null";
 	}
 	else
