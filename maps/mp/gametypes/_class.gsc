@@ -9,6 +9,9 @@
 	  normally restricted second attachment slot on a true secondary weapon.
 	- Ordinary secondary weapons automatically receive Extended Mags as a bonus
 	  second attachment when the weapon and selected attachment support it.
+	- Human players' primary weapons also receive Extended Mags when supported
+	  and the loadout contains no more than one explicit attachment. Bot primary
+	  loadouts and explicit two-attachment setups remain unchanged.
 */
 
 #include common_scripts\utility;
@@ -931,6 +934,7 @@ giveLoadout( team, class, allowCopycat, setPrimarySpawnWeapon )
 			loadoutSecondaryAttachment2 = "none";
 	}
 
+	loadoutPrimaryAttachment2 = self addExtendedMagsToHumanPrimary( loadoutPrimary, loadoutPrimaryAttachment, loadoutPrimaryAttachment2 );
 	loadoutSecondaryAttachment2 = addExtendedMagsToSecondary( loadoutSecondary, loadoutSecondaryAttachment, loadoutSecondaryAttachment2, loadoutPerk2 );
 
 	self.loadoutPrimary = loadoutPrimary;
@@ -1527,7 +1531,7 @@ tryDetach( placement )
 	return;
 }
 
-secondarySupportsAttachment( weaponName, attachmentName )
+weaponSupportsAttachment( weaponName, attachmentName )
 {
 	row = tableLookupRowNum( "mp/statStable.csv", 4, weaponName );
 
@@ -1548,7 +1552,7 @@ secondarySupportsAttachment( weaponName, attachmentName )
 	return false;
 }
 
-secondaryAttachmentsAreCompatible( attachment1, attachment2 )
+attachmentsAreCompatible( attachment1, attachment2 )
 {
 	if ( attachment1 == "none" || attachment2 == "none" )
 		return true;
@@ -1570,10 +1574,31 @@ addExtendedMagsToSecondary( weaponName, attachment1, attachment2, perk2 )
 	if ( attachment2 != "none" || attachment1 == "xmags" )
 		return attachment2;
 
-	if ( !secondarySupportsAttachment( weaponName, "xmags" ) )
+	if ( !weaponSupportsAttachment( weaponName, "xmags" ) )
 		return attachment2;
 
-	if ( !secondaryAttachmentsAreCompatible( attachment1, "xmags" ) )
+	if ( !attachmentsAreCompatible( attachment1, "xmags" ) )
+		return attachment2;
+
+	return "xmags";
+}
+
+addExtendedMagsToHumanPrimary( weaponName, attachment1, attachment2 )
+{
+	if (
+		isDefined( self.pers["isBot"] ) && self.pers["isBot"] ||
+		isDefined( self.pers["isBotWarfare"] ) && self.pers["isBotWarfare"]
+	)
+		return attachment2;
+
+	// Preserve an explicit two-attachment setup and avoid adding xmags twice.
+	if ( weaponName == "none" || attachment2 != "none" || attachment1 == "xmags" )
+		return attachment2;
+
+	if ( !weaponSupportsAttachment( weaponName, "xmags" ) )
+		return attachment2;
+
+	if ( !attachmentsAreCompatible( attachment1, "xmags" ) )
 		return attachment2;
 
 	return "xmags";
