@@ -20,6 +20,9 @@
       promoted and can chain toward later rewards.
     - Reset exhausted backing queues and reuse their first free entry so a
       second stacking cycle cannot inherit stale sparse-array size metadata.
+    - Defer post-spawn streak restoration until the end of the frame so mods
+      such as lb_server can finish their second giveLoadout() pass without
+      subsequently stripping the retained streak weapons.
     - Set scr_killstreakStackDuplicates to 0 before map load to restore the
       original overwrite behavior.
 */
@@ -211,6 +214,14 @@ onplayerspawned()
     for (;;)
     {
         self waittill( "spawned_player" );
+
+        /*
+            EditClassMenu/lb_server responds to this same spawn notification
+            by cloning the class and calling giveLoadout() again. That begins
+            with takeAllWeapons(), creating an order-dependent race with our
+            retained-streak restoration. Let all spawn listeners finish first.
+        */
+        waittillframeend;
 
         thread killstreakusewaiter();
         thread waitforchangeteam();

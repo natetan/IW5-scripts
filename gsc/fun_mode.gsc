@@ -25,6 +25,8 @@
       leaves them undefined, preventing Osprey creation runtime errors.
     - Globally strengthens Blast Shield so its users take 25 percent of normal
       explosive damage instead of the stock 45 percent.
+    - Doubles Javelin damage against players while preserving its stock blast
+      radius and all damage modifiers applied earlier in IW5's damage path.
     - Gives all players two-stage Quick Fix healing: a strong recovery burst
       below normal health, followed by non-regenerating overhealth up to a
       configurable percentage of their normal maximum. A progressively
@@ -55,6 +57,7 @@ Main()
     SetDvarIfNotInitialized("fun_mode_team_switch_assist", 1);
     SetDvarIfNotInitialized("fun_mode_team_switch_fill", 18);
     SetDvarIfNotInitialized("fun_mode_blast_shield_damage", 0.25);
+    SetDvarIfNotInitialized("fun_mode_javelin_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_quick_fix_enable", 1);
     SetDvarIfNotInitialized("fun_mode_quick_fix_heal_percent", 0.25);
     SetDvarIfNotInitialized("fun_mode_quick_fix_overheal_percent", 0.10);
@@ -231,10 +234,53 @@ Init()
     */
     level.killstreakSpawnShield = 0;
 
+    /*
+        Chain IW5's game-mode damage modifier instead of replacing the full
+        player-damage callback. This remains compatible with Bot Warfare and
+        preserves stock match-rule damage scaling and vampirism behavior.
+    */
+    level.fun_mode_previous_modify_player_damage = level.modifyPlayerDamage;
+    level.modifyPlayerDamage = ::ModifyPlayerDamageForFunMode;
+
     level.fun_mode_temporary_uav_expires = [];
     level.fun_mode_temporary_uav_running = [];
 
     level thread OnPlayerConnect();
+}
+
+ModifyPlayerDamageForFunMode(
+    victim,
+    attacker,
+    damage,
+    meansOfDeath,
+    weapon,
+    point,
+    direction,
+    hitLocation
+)
+{
+    if (IsDefined(level.fun_mode_previous_modify_player_damage))
+    {
+        damage = [[level.fun_mode_previous_modify_player_damage]](
+            victim,
+            attacker,
+            damage,
+            meansOfDeath,
+            weapon,
+            point,
+            direction,
+            hitLocation
+        );
+    }
+
+    if (weapon == "javelin_mp")
+    {
+        damage = Int(
+            damage * GetDvarFloat("fun_mode_javelin_damage_multiplier")
+        );
+    }
+
+    return damage;
 }
 
 OnPlayerConnect()
