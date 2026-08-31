@@ -27,6 +27,8 @@
       explosive damage instead of the stock 45 percent.
     - Doubles Javelin damage against players while preserving its stock blast
       radius and all damage modifiers applied earlier in IW5's damage path.
+    - Doubles player damage from the SPAS-12, KSG 12, Model 1887, and AA-12,
+      including variants containing compatible attachments, camos, and reticles.
     - Gives all players two-stage Quick Fix healing: a strong recovery burst
       below normal health, followed by non-regenerating overhealth up to a
       configurable percentage of their normal maximum. A progressively
@@ -58,6 +60,7 @@ Main()
     SetDvarIfNotInitialized("fun_mode_team_switch_fill", 18);
     SetDvarIfNotInitialized("fun_mode_blast_shield_damage", 0.25);
     SetDvarIfNotInitialized("fun_mode_javelin_damage_multiplier", 2.0);
+    SetDvarIfNotInitialized("fun_mode_shotgun_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_quick_fix_enable", 1);
     SetDvarIfNotInitialized("fun_mode_quick_fix_heal_percent", 0.25);
     SetDvarIfNotInitialized("fun_mode_quick_fix_overheal_percent", 0.10);
@@ -280,7 +283,36 @@ ModifyPlayerDamageForFunMode(
         );
     }
 
+    if (
+        IsFunModeBuffedShotgun(weapon) &&
+        (
+            meansOfDeath == "MOD_PISTOL_BULLET" ||
+            meansOfDeath == "MOD_RIFLE_BULLET"
+        )
+    )
+    {
+        damage = Int(
+            damage *
+            GetDvarFloat("fun_mode_shotgun_damage_multiplier")
+        );
+    }
+
     return damage;
+}
+
+IsFunModeBuffedShotgun(weapon)
+{
+    if (!IsDefined(weapon))
+    {
+        return false;
+    }
+
+    return (
+        IsSubStr(weapon, "iw5_spas12_mp") ||
+        IsSubStr(weapon, "iw5_ksg_mp") ||
+        IsSubStr(weapon, "iw5_1887_mp") ||
+        IsSubStr(weapon, "iw5_aa12_mp")
+    );
 }
 
 OnPlayerConnect()
