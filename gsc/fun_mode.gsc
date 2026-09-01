@@ -35,6 +35,8 @@
       stronger yellow Ballistic Vest-style vignette indicates overhealth.
     - Preserves Juiced's stock 25-percent movement boost when Fun Mode grants
       the full Specialist Lightweight bonus during the same spawn sequence.
+    - Raises the Barrett and AS50's 80-percent movement speed to the standard
+      sniper-rifle 90-percent tier while composing with other speed bonuses.
     - Gives all players brief, escalating kill momentum: consecutive kills
       refresh the timer and raise movement speed to a conservative cap, then
       momentum decays one stack at a time instead of disappearing at once.
@@ -71,6 +73,8 @@ Main()
     SetDvarIfNotInitialized("fun_mode_kill_momentum_step", 0.025);
     SetDvarIfNotInitialized("fun_mode_kill_momentum_max", 1.30);
     SetDvarIfNotInitialized("fun_mode_kill_momentum_max_stacks", 5);
+    SetDvarIfNotInitialized("fun_mode_heavy_sniper_speed_enable", 1);
+    SetDvarIfNotInitialized("fun_mode_heavy_sniper_speed_multiplier", 1.125);
     SetDvarIfNotInitialized("fun_mode_post_specialist_enable", 1);
     SetDvarIfNotInitialized("fun_mode_post_specialist_kills", 3);
     SetDvarIfNotInitialized("fun_mode_post_specialist_uav_duration", 5);
@@ -337,6 +341,7 @@ OnPlayerConnect()
         player thread WatchQuickFixSpawns();
         player thread WatchKillMomentum();
         player thread WatchKillMomentumSpawns();
+        player thread WatchHeavySniperMovement();
 
         if (player IsBotPlayer())
         {
@@ -927,26 +932,74 @@ WatchKillMomentumSpawns()
 
 GetFunModeBaseMoveSpeed()
 {
+    speed = 1.0;
+
     if (IsDefined(self.isjuiced) && self.isjuiced)
     {
-        return 1.25;
+        speed = 1.25;
     }
-
-    if (
+    else if (
         IsDefined(self.isJuggernaut) &&
         self.isJuggernaut &&
         IsDefined(self.juggMoveSpeedScaler)
     )
     {
-        return self.juggMoveSpeedScaler;
+        speed = self.juggMoveSpeedScaler;
     }
-
-    if (self maps\mp\_utility::_hasPerk("specialty_lightweight"))
+    else if (self maps\mp\_utility::_hasPerk("specialty_lightweight"))
     {
-        return maps\mp\_utility::lightweightScalar();
+        speed = maps\mp\_utility::lightweightScalar();
     }
 
-    return 1.0;
+    return speed * (self GetHeavySniperMoveSpeedMultiplier());
+}
+
+GetHeavySniperMoveSpeedMultiplier()
+{
+    if (
+        !GetDvarInt("fun_mode_heavy_sniper_speed_enable") ||
+        !IsDefined(self.primaryWeapon) ||
+        (
+            !IsSubStr(self.primaryWeapon, "iw5_barrett_mp") &&
+            !IsSubStr(self.primaryWeapon, "iw5_as50_mp")
+        )
+    )
+    {
+        return 1.0;
+    }
+
+    multiplier = GetDvarFloat("fun_mode_heavy_sniper_speed_multiplier");
+
+    if (multiplier < 1.0)
+    {
+        multiplier = 1.0;
+    }
+
+    return multiplier;
+}
+
+/*
+    Barrett/AS50 use a stock 0.80 movement scalar while the L118A, Dragunov,
+    and MSR use 0.90. Multiplying by 0.90 / 0.80 (1.125) closes only that gap.
+    Reapply after every loadout so class initialization cannot overwrite it.
+*/
+WatchHeavySniperMovement()
+{
+    self endon("disconnect");
+
+    for (;;)
+    {
+        self waittill("changed_kit");
+        wait 0.15;
+
+        if (!IsAlive(self))
+        {
+            continue;
+        }
+
+        self RestoreFunModeBaseMoveSpeed();
+        self ApplyActiveKillMomentumSpeed();
+    }
 }
 
 RestoreFunModeBaseMoveSpeed()
@@ -962,7 +1015,7 @@ ApplyActiveKillMomentumSpeed()
         return;
     }
 
-    speed = self.fun_mode_kill_momentum_speed;
+    speed = self.fun_mode_kill_momentum_speed * (self GetHeavySniperMoveSpeedMultiplier());
     baseSpeed = self GetFunModeBaseMoveSpeed();
 
     if (speed < baseSpeed)
@@ -1074,7 +1127,7 @@ RestoreJuicedMovementAfterSpecialist()
         return;
     }
 
-    self.moveSpeedScaler = 1.25;
+    self.moveSpeedScaler = self GetFunModeBaseMoveSpeed();
     self maps\mp\gametypes\_weapons::updateMoveSpeedScale();
 }
 

@@ -7,8 +7,9 @@
 	  and Concussion Grenades instead of its stock equipment combination.
 	- Its special USP uses Extended Mags and a Tactical Knife, exercising IW5's
 	  normally restricted second attachment slot on a true secondary weapon.
-	- Ordinary secondary weapons automatically receive Extended Mags as a bonus
-	  second attachment when the weapon and selected attachment support it.
+	- Ordinary secondary weapons, including primaries carried through Overkill,
+	  automatically receive Extended Mags as a bonus second attachment when the
+	  weapon and selected attachment support it.
 	- Human players' primary weapons also receive Extended Mags when supported
 	  and the loadout contains no more than one explicit attachment. Bot primary
 	  loadouts and explicit two-attachment setups remain unchanged.
@@ -1567,7 +1568,7 @@ attachmentsAreCompatible( attachment1, attachment2 )
 
 addExtendedMagsToSecondary( weaponName, attachment1, attachment2, perk2 )
 {
-	if ( weaponName == "none" || perk2 == "specialty_twoprimaries" )
+	if ( weaponName == "none" )
 		return attachment2;
 
 	// Preserve explicit two-attachment loadouts such as the Recon Juggernaut USP.
