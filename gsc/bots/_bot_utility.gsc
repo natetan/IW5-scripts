@@ -5,6 +5,8 @@
 	The shared functions for bots
 
 	Custom changes:
+	- Mirrors the human Assault Juggernaut ACR/MP9 Red Dot plus Extended Mags
+	  loadout and its Semtex/Concussion equipment.
 	- Mirrors the human Support/Recon Juggernaut loadout change to Semtex and
 	  Concussion Grenades while retaining the streak's built-in moving radar.
 	- Mirrors Extended Mags plus a Tactical Knife on its special USP, including the
@@ -2914,24 +2916,24 @@ botGiveLoadout( team, class, allowCopycat, setPrimarySpawnWeapon ) // setPrimary
 	}
 	else if ( class == "juggernaut" )
 	{
-		loadoutPrimary = "iw5_m60jugg";
-		loadoutPrimaryAttachment = "none";
-		loadoutPrimaryAttachment2 = "none";
+		loadoutPrimary = "iw5_acr";
+		loadoutPrimaryAttachment = "reflex";
+		loadoutPrimaryAttachment2 = "xmags";
 		loadoutPrimaryBuff = "specialty_null";
 		loadoutPrimaryCamo = "none";
 		loadoutPrimaryReticle = "none";
-		loadoutSecondary = "iw5_mp412jugg";
-		loadoutSecondaryAttachment = "none";
-		loadoutSecondaryAttachment2 = "none";
+		loadoutSecondary = "iw5_mp9";
+		loadoutSecondaryAttachment = "reflex";
+		loadoutSecondaryAttachment2 = "xmags";
 		loadoutSecondaryBuff = "specialty_null";
 		loadoutSecondaryCamo = "none";
 		loadoutSecondaryReticle = "none";
-		loadoutEquipment = "frag_grenade_mp";
+		loadoutEquipment = "semtex_mp";
 		loadoutPerk1 = "specialty_scavenger";
 		loadoutPerk2 = "specialty_quickdraw";
 		loadoutPerk3 = "specialty_detectexplosive";
 		loadoutStreakType = maps\mp\gametypes\_class::getloadoutstreaktypefromstreaktype( self.streaktype );
-		loadoutOffhand = "smoke_grenade_mp";
+		loadoutOffhand = "concussion_grenade_mp";
 		loadoutDeathStreak = "specialty_null";
 	}
 	else if ( class == "juggernaut_recon" )
