@@ -7,6 +7,8 @@
     - Human players using custom classes 13-15 receive the full Specialist
       perk set, its Pro perk mappings, the extra Specialist bonuses, and the
       Impact and shotgun Damage weapon proficiencies.
+    - Gives every human player the Range proficiency whenever either equipped
+      loadout weapon is a shotgun, including Overkill secondary shotguns.
     - In Survival Reimagined, where custom classes and changed-kit events are
       disabled, human survivors receive that same Fun Mode bonus after the
       Survival mod finishes rebuilding their spawn loadout.
@@ -897,6 +899,8 @@ WatchPlayerLoadout()
 
         wait 0.1;
 
+        self ApplyShotgunRangeProficiency();
+
         if (
             IsDefined(self.class_num) &&
             (
@@ -914,6 +918,31 @@ WatchPlayerLoadout()
             self thread RestoreFunModeBlindEyeAfterSpawnProtection();
             // self ApplyFullSpecialistState();
         }
+    }
+}
+
+ApplyShotgunRangeProficiency()
+{
+    hasShotgun = false;
+
+    if (
+        IsDefined(self.primaryWeapon) &&
+        WeaponClass(self.primaryWeapon) == "shotgun"
+    )
+    {
+        hasShotgun = true;
+    }
+    else if (
+        IsDefined(self.secondaryWeapon) &&
+        WeaponClass(self.secondaryWeapon) == "shotgun"
+    )
+    {
+        hasShotgun = true;
+    }
+
+    if (hasShotgun)
+    {
+        self GivePerk("specialty_longerrange", false);
     }
 }
 
@@ -1230,7 +1259,6 @@ GiveFullSpecialistBonus()
 
     self GivePerk("specialty_marksman", false);
     self GivePerk("specialty_sharp_focus", false);
-    self GivePerk("specialty_longerrange", false);
     self GivePerk("specialty_fastermelee", false);
     self GivePerk("specialty_reducedsway", false);
     self GivePerk("specialty_lightweight", false); // Movement-speed boost
