@@ -3,3 +3,8 @@ bot_name_history.txt
 
 # Raw IW5 map entity dumps copied from Plutonium storage.
 *.d3dbsp.ents
+
+# Dedicated-server secrets and machine-local launch/config overrides.
+*.local.bat
+*.local.cfg
+server-key*.txt

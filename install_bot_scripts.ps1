@@ -1,48 +1,37 @@
-﻿$ErrorActionPreference = "Stop"
+[CmdletBinding()]
+param(
+    [string] $ServerRoot = "C:\gameserver\IW5",
+    [switch] $ClientOnly,
+    [switch] $ServerOnly
+)
+
+$ErrorActionPreference = "Stop"
 
 <#
-Run from the repository root:
+Updates maps\mp\bots inside z_svr_bots.iwd in both the local Plutonium
+storage folder and the dedicated server by default.
 
-powershell.exe -ExecutionPolicy Bypass -File ".\install_bot_scripts.ps1"
+If the dedicated server does not have z_svr_bots.iwd yet, the current client
+archive is copied there before it is updated.
 
-Copies every .gsc file directly inside:
-
-    .\gsc\bots\
-
-into:
-
-    %LOCALAPPDATA%\Plutonium\storage\iw5\z_svr_bots.iwd
-    └── maps\mp\bots\
+Examples:
+    .\install_bot_scripts.ps1
+    .\install_bot_scripts.ps1 -ClientOnly
+    .\install_bot_scripts.ps1 -ServerOnly -ServerRoot "D:\servers\IW5"
 
 Close WinRAR and Plutonium before running.
 #>
 
 $repoRoot = $PSScriptRoot
 $sourceBotsFolder = Join-Path $repoRoot "gsc\bots"
+. (Join-Path $repoRoot "iw5_targets.ps1")
 
-$iw5Folder = Join-Path $env:LOCALAPPDATA "Plutonium\storage\iw5"
-$iwdPath = Join-Path $iw5Folder "z_svr_bots.iwd"
-$backupPath = Join-Path $iw5Folder "z_svr_bots.backup.iwd"
+$clientRoot = Join-Path $env:LOCALAPPDATA "Plutonium\storage\iw5"
+$clientIwdPath = Join-Path $clientRoot "z_svr_bots.iwd"
+$winRar = Get-WinRarPath
 
-$winRarCandidates = @(
-    "C:\Program Files\WinRAR\WinRAR.exe",
-    "C:\Program Files (x86)\WinRAR\WinRAR.exe"
-)
-
-$winRar = $winRarCandidates |
-    Where-Object { Test-Path -LiteralPath $_ } |
-    Select-Object -First 1
-
-if (-not $winRar) {
-    throw "Could not find WinRAR.exe."
-}
-
-if (-not (Test-Path -LiteralPath $sourceBotsFolder)) {
+if (-not (Test-Path -LiteralPath $sourceBotsFolder -PathType Container)) {
     throw "Could not find source folder: $sourceBotsFolder"
-}
-
-if (-not (Test-Path -LiteralPath $iwdPath)) {
-    throw "Could not find z_svr_bots.iwd at: $iwdPath"
 }
 
 if (Get-Process -Name "WinRAR" -ErrorAction SilentlyContinue) {
@@ -51,18 +40,11 @@ if (Get-Process -Name "WinRAR" -ErrorAction SilentlyContinue) {
 
 $botFiles = @(
     Get-ChildItem -LiteralPath $sourceBotsFolder -File -Filter "*.gsc" |
-    Sort-Object Name
+        Sort-Object Name
 )
 
 if ($botFiles.Count -eq 0) {
     throw "No .gsc files were found in: $sourceBotsFolder"
-}
-
-if (-not (Test-Path -LiteralPath $backupPath)) {
-    Copy-Item -LiteralPath $iwdPath -Destination $backupPath
-    Write-Host "Created backup:" -ForegroundColor DarkGray
-    Write-Host "  $backupPath" -ForegroundColor DarkGray
-    Write-Host ""
 }
 
 function Invoke-WinRar {
@@ -83,45 +65,71 @@ function Invoke-WinRar {
     }
 }
 
-Write-Host "Installing Bot Warfare scripts:" -ForegroundColor Cyan
+$targets = @(Get-Iw5Targets `
+    -ServerRoot $ServerRoot `
+    -ClientOnly:$ClientOnly `
+    -ServerOnly:$ServerOnly)
 
-foreach ($file in $botFiles) {
-    $archivePath = "maps\mp\bots\$($file.Name)"
-
-    Write-Host "  $archivePath"
-
-    # Remove the existing archive entry, if present.
-    $deleteProcess = Start-Process `
-        -FilePath $winRar `
-        -ArgumentList @(
-            "d",
-            "`"$iwdPath`"",
-            "`"$archivePath`""
-        ) `
-        -Wait `
-        -PassThru `
-        -WindowStyle Hidden
-
-    # WinRAR exit code 10 means no matching file existed, which is harmless.
-    if ($deleteProcess.ExitCode -ne 0 -and $deleteProcess.ExitCode -ne 10) {
-        throw "WinRAR failed while deleting $archivePath (exit code $($deleteProcess.ExitCode))."
+foreach ($target in $targets) {
+    if (-not (Test-Path -LiteralPath $target.Root -PathType Container)) {
+        throw "$($target.Name) root does not exist: $($target.Root)"
     }
 
-    # -ep strips the local source path.
-    # -ap explicitly sets the destination folder inside the archive.
-    Invoke-WinRar -Arguments @(
-        "a",
-        "-ep",
-        "-o+",
-        "-apmaps\mp\bots",
-        "`"$iwdPath`"",
-        "`"$($file.FullName)`""
-    )
+    $iwdPath = Join-Path $target.Root "z_svr_bots.iwd"
+    $backupPath = Join-Path $target.Root "z_svr_bots.backup.iwd"
+
+    if (-not (Test-Path -LiteralPath $iwdPath -PathType Leaf)) {
+        if ($target.Root -eq $clientRoot) {
+            throw "Could not find z_svr_bots.iwd at: $iwdPath"
+        }
+
+        if (-not (Test-Path -LiteralPath $clientIwdPath -PathType Leaf)) {
+            throw "Cannot seed the server archive because the client archive is missing: $clientIwdPath"
+        }
+
+        Copy-Item -LiteralPath $clientIwdPath -Destination $iwdPath
+        Write-Host "Seeded Bot Warfare archive:" -ForegroundColor DarkGray
+        Write-Host "  $iwdPath" -ForegroundColor DarkGray
+    }
+
+    if (-not (Test-Path -LiteralPath $backupPath -PathType Leaf)) {
+        Copy-Item -LiteralPath $iwdPath -Destination $backupPath
+        Write-Host "Created backup:" -ForegroundColor DarkGray
+        Write-Host "  $backupPath" -ForegroundColor DarkGray
+    }
+
+    Write-Host ""
+    Write-Host "Installing Bot Warfare scripts to $($target.Name):" -ForegroundColor Cyan
+
+    foreach ($file in $botFiles) {
+        $archivePath = "maps\mp\bots\$($file.Name)"
+        Write-Host "  $archivePath"
+
+        $deleteProcess = Start-Process `
+            -FilePath $winRar `
+            -ArgumentList @("d", "`"$iwdPath`"", "`"$archivePath`"") `
+            -Wait `
+            -PassThru `
+            -WindowStyle Hidden
+
+        # WinRAR exit code 10 means no matching file existed, which is harmless.
+        if ($deleteProcess.ExitCode -ne 0 -and $deleteProcess.ExitCode -ne 10) {
+            throw "WinRAR failed while deleting $archivePath (exit code $($deleteProcess.ExitCode))."
+        }
+
+        Invoke-WinRar -Arguments @(
+            "a",
+            "-ep",
+            "-o+",
+            "-apmaps\mp\bots",
+            "`"$iwdPath`"",
+            "`"$($file.FullName)`""
+        )
+    }
+
+    Write-Host "Updated: $iwdPath" -ForegroundColor Green
 }
 
 Write-Host ""
-Write-Host "Successfully updated:" -ForegroundColor Green
-Write-Host "  $iwdPath" -ForegroundColor Green
-Write-Host ""
-Write-Host "Installed $($botFiles.Count) bot script(s) into maps\mp\bots\." -ForegroundColor Green
+Write-Host "Installed $($botFiles.Count) bot script(s) to $($targets.Count) target(s)." -ForegroundColor Green
 Write-Host "Restart Plutonium or load a new map before testing."

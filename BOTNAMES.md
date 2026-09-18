@@ -10,6 +10,15 @@ This project uses a PowerShell script to generate random bot names for Bot Warfa
 powershell.exe -ExecutionPolicy Bypass -File ".\generate_iw5_bot_names.ps1"
 ```
 
+By default, the generated names are written into `z_svr_bots.iwd` for both
+the local Plutonium client and `C:\gameserver\IW5`. To update only one target,
+use `-ClientOnly` or `-ServerOnly`. A different dedicated path can be supplied
+with `-ServerRoot`:
+
+```powershell
+.\generate_iw5_bot_names.ps1 -ServerOnly -ServerRoot "D:\servers\IW5"
+```
+
 2. The script will:
    - Generate 17 unique bot names.
    - Save a local `bots.txt` beside the PowerShell script so the generated names can be reviewed.
@@ -49,11 +58,15 @@ z_svr_bots.iwd
 
 Each generated lobby contains:
 
-- **Bots 1–3:** Competitive "try-hard" names (e.g. `Voidix`, `Solaris`, `Fatalyx`)
-- **Bots 4–6:** Mostly Xbox Live sweaty names (e.g. `xXRapidSniperXx`)
-- **Remaining bots:** Mostly Xbox-generated gamertags (e.g. `FlyingOtter27`, `MuscledCupid12`)
+- **6 constructed competitive aliases**
+- **2 stylized competitive aliases**
+- **5 general gaming names**
+- **1 gamer/name hybrid**
+- **2 early-2010s wannabe-MLG names**
+- **1 Xbox-generated-style gamertag**
 
-Every launch generates a fresh set of names.
+The competitive aliases appear first and the remaining styles are shuffled.
+Every launch generates a fresh set of 17 unique names.
 
 ---
 

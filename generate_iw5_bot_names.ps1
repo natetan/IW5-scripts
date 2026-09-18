@@ -1,26 +1,23 @@
+[CmdletBinding()]
+param(
+    [string] $ServerRoot = "C:\gameserver\IW5",
+    [switch] $ClientOnly,
+    [switch] $ServerOnly
+)
+
 $ErrorActionPreference = "Stop"
 
 # Plutonium accepts player names between 3 and 16 characters, inclusive.
 $minimumBotNameLength = 3
 $maximumBotNameLength = 16
 
-# Change this path if your Plutonium folder is elsewhere.
-$iw5Folder = Join-Path $env:LOCALAPPDATA "Plutonium\storage\iw5"
-$iwdPath = Join-Path $iw5Folder "z_svr_bots.iwd"
 $scriptDirectory = Split-Path -Parent $PSCommandPath
 $historyFile = Join-Path $scriptDirectory "bot_name_history.txt"
+. (Join-Path $scriptDirectory "iw5_targets.ps1")
+$clientRoot = Join-Path $env:LOCALAPPDATA "Plutonium\storage\iw5"
+$clientIwdPath = Join-Path $clientRoot "z_svr_bots.iwd"
 
-# WinRAR command-line executable.
-# Update this if WinRAR is installed elsewhere.
-$winRar = "C:\Program Files\WinRAR\WinRAR.exe"
-
-if (-not (Test-Path $iwdPath)) {
-    throw "Could not find z_svr_bots.iwd at: $iwdPath"
-}
-
-if (-not (Test-Path $winRar)) {
-    throw "Could not find WinRAR at: $winRar"
-}
+$winRar = Get-WinRarPath
 
 # Short, cleaner names that resemble sweaty/competitive aliases.
 $tryhardPrefixes = @(
@@ -453,12 +450,40 @@ New-Item -ItemType Directory -Force -Path $tempFolder | Out-Null
 Write-Host "Generated bot names ($tryhardCount constructed try-hard, $stylizedTryhardCount stylized try-hard, $generalCount general, $personalGamerCount gamer-name, $mlgCount wannabe-MLG, $xboxCount Xbox-style):"
 $names | ForEach-Object { Write-Host "  $_" }
 
-# Delete the old bots.txt from the archive, then add the new one at archive root.
-& $winRar d -ibck $iwdPath "bots.txt" | Out-Null
-& $winRar a -ibck -ep $iwdPath $botsFile | Out-Null
+$targets = @(Get-Iw5Targets `
+    -ServerRoot $ServerRoot `
+    -ClientOnly:$ClientOnly `
+    -ServerOnly:$ServerOnly)
 
-if ($LASTEXITCODE -ne 0) {
-    throw "WinRAR failed to update the IWD."
+foreach ($target in $targets) {
+    if (-not (Test-Path -LiteralPath $target.Root -PathType Container)) {
+        throw "$($target.Name) root does not exist: $($target.Root)"
+    }
+
+    $iwdPath = Join-Path $target.Root "z_svr_bots.iwd"
+
+    if (-not (Test-Path -LiteralPath $iwdPath -PathType Leaf)) {
+        if ($target.Root -eq $clientRoot) {
+            throw "Could not find z_svr_bots.iwd at: $iwdPath"
+        }
+
+        if (-not (Test-Path -LiteralPath $clientIwdPath -PathType Leaf)) {
+            throw "Cannot seed the server archive because the client archive is missing: $clientIwdPath"
+        }
+
+        Copy-Item -LiteralPath $clientIwdPath -Destination $iwdPath
+        Write-Host "Seeded Bot Warfare archive: $iwdPath" -ForegroundColor DarkGray
+    }
+
+    # Delete the old bots.txt from the archive, then add the new one at archive root.
+    & $winRar d -ibck $iwdPath "bots.txt" | Out-Null
+    & $winRar a -ibck -ep $iwdPath $botsFile | Out-Null
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "WinRAR failed to update: $iwdPath"
+    }
+
+    Write-Host "Updated: $iwdPath"
 }
 
 # Avoid repeating names from the previous four full lobbies. Keep this local
@@ -483,5 +508,5 @@ foreach ($historyName in @($names) + @($recentNameList)) {
 )
 
 Write-Host ""
-Write-Host "Updated: $iwdPath"
+Write-Host "Updated bot names in $($targets.Count) target(s)."
 Write-Host "You can now launch Plutonium."
