@@ -644,13 +644,17 @@ ListenForEndVote()
     modeDsr = level.mapvote["modes"]["by_name"][level.mapvote["modes"]["by_index"][mostVotedModeIndex]];
     mapName = level.mapvote["maps"]["by_name"][level.mapvote["maps"]["by_index"][mostVotedMapIndex]];
 
-    // Rust does not support Drop Zone in Plutonium IW5.
-    if (mapName == "mp_rust" && modeDsr == "DZ_HC_HUD")
+    // Rust variants do not support Drop Zone in Plutonium IW5. Match the
+    // recipe family instead of one filename so renamed DZ recipes stay safe.
+    if (
+        (mapName == "mp_rust" || mapName == "mp_rust_long") &&
+        IsSubStr(modeDsr, "DZ_")
+    )
     {
         modeName = "Domination";
-        modeDsr = "DOM_HC_HUD";
+        modeDsr = "DOM_HC_100hp";
 
-        Print("[MAPVOTE] Rust does not support Drop Zone; forcing DOM_HC_HUD.");
+        Print("[MAPVOTE] Rust does not support Drop Zone; forcing DOM_HC_100hp.");
     }
 
     if (GetDvarInt("mapvote_debug"))
