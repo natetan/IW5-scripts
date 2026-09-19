@@ -211,6 +211,25 @@ The public server name is managed with the Plutonium server key configuration,
 not `normal.cfg`. Restart the dedicated server after changing it. If the browser
 still shows an older name, allow a few minutes for the listing to refresh.
 
+### Restricting Fun Mode Super Classes
+
+In private matches, custom classes 13–15 always receive their automatic Fun
+Mode bonuses. Dedicated servers instead use a GUID allowlist. The allowlist is
+empty by default, so nobody receives those bonuses on a dedicated server until
+the server owner is configured. While connected, run `status` in the dedicated
+server console and copy the GUID shown for your player. Add this outside the
+installer-managed block in the server's local `admin\server.cfg`:
+
+```cfg
+set fun_mode_super_class_guids "YOUR_GUID"
+```
+
+Restart the server afterward. For multiple trusted players, separate GUIDs
+with commas and no spaces. Keep the actual GUID in the local server config
+rather than committing it to the repository. On a dedicated server, unlisted
+players may select classes 13–15, but they receive only their ordinary class
+loadout.
+
 ---
 
 ### Manual Bot Warfare Installation

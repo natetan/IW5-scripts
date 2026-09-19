@@ -52,6 +52,10 @@
 
     MW3 custom-class numbers shown in the UI are 1-based.
     Classes 13-15 map to internal class indices 12-14.
+    In private matches, classes 13-15 always receive their automatic
+    super-class bonuses. On dedicated servers, those bonuses are restricted
+    to GUIDs listed in fun_mode_super_class_guids; an empty allowlist grants
+    them to nobody.
     Most optional behavior is controlled through the fun_mode_* dvars below.
 */
 
@@ -59,6 +63,7 @@ Main()
 {
     SetDvarIfNotInitialized("fun_mode_enable", 1);
     SetDvarIfNotInitialized("fun_mode_specialist_class_index", 14);
+    SetDvarIfNotInitialized("fun_mode_super_class_guids", "");
     SetDvarIfNotInitialized("fun_mode_survival_specialist_bonus", 1);
     SetDvarIfNotInitialized("fun_mode_team_switch_assist", 1);
     SetDvarIfNotInitialized("fun_mode_team_switch_fill", 18);
@@ -362,6 +367,46 @@ OnPlayerConnect()
 IsSurvivalMode()
 {
     return IsDefined(level.gameType) && level.gameType == "survival";
+}
+
+IsFunModeSuperClass()
+{
+    return (
+        IsDefined(self.class_num) &&
+        (
+            self.class_num == 12 ||
+            self.class_num == 13 ||
+            self.class_num == 14
+        )
+    );
+}
+
+IsFunModeSuperClassOwner()
+{
+    if (!self IsFunModeSuperClass())
+    {
+        return false;
+    }
+
+    // Private matches retain the original Fun Mode behavior. Only dedicated
+    // servers require an explicit player allowlist.
+    if (!GetDvarInt("dedicated"))
+    {
+        return true;
+    }
+
+    playerGuid = self GetGuid() + "";
+    allowedGuids = StrTok(GetDvar("fun_mode_super_class_guids"), ",");
+
+    foreach (allowedGuid in allowedGuids)
+    {
+        if (allowedGuid == playerGuid)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 /*
@@ -901,14 +946,7 @@ WatchPlayerLoadout()
 
         self ApplyShotgunRangeProficiency();
 
-        if (
-            IsDefined(self.class_num) &&
-            (
-                self.class_num == 12 ||
-                self.class_num == 13 || 
-                self.class_num == 14
-            )
-        )
+        if (self IsFunModeSuperClassOwner())
         {
             // this is the standard give all perks from the game itself
             // self maps\mp\killstreaks\_killstreaks::giveallperks();
@@ -1192,12 +1230,7 @@ RestoreFunModeBlindEyeAfterSpawnProtection()
     wait 0.1;
 
     if (
-        IsDefined(self.class_num) &&
-        (
-            self.class_num == 12 ||
-            self.class_num == 13 ||
-            self.class_num == 14
-        ) &&
+        self IsFunModeSuperClassOwner() &&
         !self maps\mp\_utility::_hasperk("specialty_blindeye")
     )
     {
