@@ -27,8 +27,9 @@
       leaves them undefined, preventing Osprey creation runtime errors.
     - Globally strengthens Blast Shield so its users take 25 percent of normal
       explosive damage instead of the stock 45 percent.
-    - Triples Javelin damage against players while preserving its stock blast
-      radius and all damage modifiers applied earlier in IW5's damage path.
+    - Multiplies Javelin damage by ten against players while preserving its
+      stock blast radius and earlier damage modifiers. Also doubles damage
+      from bolt-action sniper rifles and the CM901, and triples MP412 damage.
     - Doubles player damage from the SPAS-12, KSG 12, Model 1887, and AA-12,
       including variants containing compatible attachments, camos, and reticles.
     - Gives all players two-stage Quick Fix healing: a strong recovery burst
@@ -68,8 +69,11 @@ Main()
     SetDvarIfNotInitialized("fun_mode_team_switch_assist", 1);
     SetDvarIfNotInitialized("fun_mode_team_switch_fill", 18);
     SetDvarIfNotInitialized("fun_mode_blast_shield_damage", 0.25);
-    SetDvarIfNotInitialized("fun_mode_javelin_damage_multiplier", 3.0);
+    SetDvarIfNotInitialized("fun_mode_javelin_damage_multiplier", 10.0);
     SetDvarIfNotInitialized("fun_mode_shotgun_damage_multiplier", 2.0);
+    SetDvarIfNotInitialized("fun_mode_bolt_sniper_damage_multiplier", 2.0);
+    SetDvarIfNotInitialized("fun_mode_mp412_damage_multiplier", 3.0);
+    SetDvarIfNotInitialized("fun_mode_cm901_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_quick_fix_enable", 1);
     SetDvarIfNotInitialized("fun_mode_quick_fix_heal_percent", 0.25);
     SetDvarIfNotInitialized("fun_mode_quick_fix_overheal_percent", 0.10);
@@ -321,6 +325,34 @@ GetFunModeWeaponDamageMultiplier(weapon, meansOfDeath)
         meansOfDeath == "MOD_PISTOL_BULLET" ||
         meansOfDeath == "MOD_RIFLE_BULLET"
     );
+
+    if (
+        isBulletDamage &&
+        (
+            IsSubStr(weapon, "iw5_cheytac_mp") ||
+            IsSubStr(weapon, "iw5_l96a1_mp") ||
+            IsSubStr(weapon, "iw5_msr_mp")
+        )
+    )
+    {
+        return GetDvarFloat("fun_mode_bolt_sniper_damage_multiplier");
+    }
+
+    if (
+        isBulletDamage &&
+        IsSubStr(weapon, "iw5_mp412_mp")
+    )
+    {
+        return GetDvarFloat("fun_mode_mp412_damage_multiplier");
+    }
+
+    if (
+        isBulletDamage &&
+        IsSubStr(weapon, "iw5_cm901_mp")
+    )
+    {
+        return GetDvarFloat("fun_mode_cm901_damage_multiplier");
+    }
 
     if (
         isBulletDamage &&
