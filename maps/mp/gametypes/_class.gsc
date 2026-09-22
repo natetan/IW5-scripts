@@ -8,8 +8,8 @@
 	  M60/MP412 and Frag/Smoke loadout.
 	- Support/Recon Juggernaut keeps its built-in moving radar but uses Semtex
 	  and Concussion Grenades instead of its stock equipment combination.
-	- Its special USP uses Extended Mags and a Tactical Knife, exercising IW5's
-	  normally restricted second attachment slot on a true secondary weapon.
+	- Its Five-Seven uses a Tactical Knife and receives Extended Mags from the
+	  automatic secondary-attachment bonus below.
 	- Ordinary secondary weapons, including primaries carried through Overkill,
 	  automatically receive Extended Mags as a bonus second attachment when the
 	  weapon and selected attachment support it.
@@ -791,9 +791,9 @@ giveLoadout( team, class, allowCopycat, setPrimarySpawnWeapon )
 		loadoutPrimaryBuff = "specialty_null";
 		loadoutPrimaryCamo = "none";
 		loadoutPrimaryReticle = "none";
-		loadoutSecondary = "iw5_usp45jugg";
-		loadoutSecondaryAttachment = "xmags";
-		loadoutSecondaryAttachment2 = "tactical";
+		loadoutSecondary = "iw5_fnfiveseven";
+		loadoutSecondaryAttachment = "tactical";
+		loadoutSecondaryAttachment2 = "none";
 		loadoutSecondaryBuff = "specialty_null";
 		loadoutSecondaryCamo = "none";
 		loadoutSecondaryReticle = "none";
@@ -1574,7 +1574,7 @@ addExtendedMagsToSecondary( weaponName, attachment1, attachment2, perk2 )
 	if ( weaponName == "none" )
 		return attachment2;
 
-	// Preserve explicit two-attachment loadouts such as the Recon Juggernaut USP.
+	// Preserve explicit two-attachment loadouts and avoid adding xmags twice.
 	if ( attachment2 != "none" || attachment1 == "xmags" )
 		return attachment2;
 
