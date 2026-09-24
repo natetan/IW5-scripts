@@ -35,6 +35,8 @@
       round to each pistol when the killing weapon is an Akimbo variant.
     - Reloads one Javelin missile after a Javelin kill, including delayed kills
       that occur after the player has switched back to another weapon.
+    - Triples underbarrel grenade-launcher damage and restores one tube round
+      after a kill, capped by the configured Scavenger tube capacity.
     - After genuinely earning the full Specialist Bonus, every firearm kill
       restores 25 percent of that weapon's magazine, rounded to the nearest
       whole round and capped at its normal clip capacity.
@@ -80,6 +82,7 @@ Main()
     SetDvarIfNotInitialized("fun_mode_team_switch_fill", 18);
     SetDvarIfNotInitialized("fun_mode_blast_shield_damage", 0.25);
     SetDvarIfNotInitialized("fun_mode_javelin_damage_multiplier", 10.0);
+    SetDvarIfNotInitialized("fun_mode_noobtube_damage_multiplier", 3.0);
     SetDvarIfNotInitialized("fun_mode_shotgun_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_bolt_sniper_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_as50_damage_multiplier", 2.0);
@@ -88,6 +91,7 @@ Main()
     SetDvarIfNotInitialized("fun_mode_desert_eagle_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_pistol_kill_refill_enable", 1);
     SetDvarIfNotInitialized("fun_mode_javelin_kill_refill_enable", 1);
+    SetDvarIfNotInitialized("fun_mode_noobtube_kill_refill_enable", 1);
     SetDvarIfNotInitialized("fun_mode_specialist_mag_refill_enable", 1);
     SetDvarIfNotInitialized("fun_mode_specialist_mag_refill_percent", 0.25);
     SetDvarIfNotInitialized("fun_mode_aa12_kill_refill_enable", 1);
@@ -348,6 +352,11 @@ GetFunModeWeaponDamageMultiplier(weapon, meansOfDeath)
         return GetDvarFloat("fun_mode_javelin_damage_multiplier");
     }
 
+    if (IsScavengerNoobTube(weapon))
+    {
+        return GetDvarFloat("fun_mode_noobtube_damage_multiplier");
+    }
+
     isBulletDamage = (
         meansOfDeath == "MOD_PISTOL_BULLET" ||
         meansOfDeath == "MOD_RIFLE_BULLET"
@@ -464,6 +473,14 @@ WatchKillAmmoRefills()
         }
 
         if (
+            GetDvarInt("fun_mode_noobtube_kill_refill_enable") &&
+            IsScavengerNoobTube(weapon)
+        )
+        {
+            self RefillOwnedNoobTubeAmmo(1);
+        }
+
+        if (
             GetDvarInt("fun_mode_pistol_kill_refill_enable") &&
             (
                 IsSubStr(weapon, "iw5_mp412_mp") ||
@@ -554,6 +571,43 @@ RefillWeaponClipByRounds(weapon, refillAmount)
     if (newClipAmmo > clipAmmo)
     {
         self SetWeaponAmmoClip(weapon, newClipAmmo);
+    }
+}
+
+RefillOwnedNoobTubeAmmo(refillAmount)
+{
+    if (refillAmount <= 0)
+    {
+        return;
+    }
+
+    maxAmmo = GetDvarInt("fun_mode_scavenger_noobtubes_max");
+    allWeapons = self GetWeaponsListAll();
+
+    foreach (weapon in allWeapons)
+    {
+        if (!IsScavengerNoobTube(weapon))
+        {
+            continue;
+        }
+
+        currentAmmo = self GetAmmoCount(weapon);
+
+        if (currentAmmo >= maxAmmo)
+        {
+            return;
+        }
+
+        ammoToAdd = refillAmount;
+
+        if (currentAmmo + ammoToAdd > maxAmmo)
+        {
+            ammoToAdd = maxAmmo - currentAmmo;
+        }
+
+        stockAmmo = self GetWeaponAmmoStock(weapon);
+        self SetWeaponAmmoStock(weapon, stockAmmo + ammoToAdd);
+        return;
     }
 }
 
