@@ -29,8 +29,8 @@
       explosive damage instead of the stock 45 percent.
     - Multiplies Javelin damage by ten against players while preserving its
       stock blast radius and earlier damage modifiers. Also doubles damage
-      from bolt-action sniper rifles, the CM901, and the Desert Eagle, and
-      triples MP412 damage.
+      from bolt-action sniper rifles, the AS50, the CM901, and the Desert
+      Eagle, and triples MP412 damage.
     - Restores one chambered round after an MP412 or Desert Eagle kill, or one
       round to each pistol when the killing weapon is an Akimbo variant.
     - After genuinely earning the full Specialist Bonus, every firearm kill
@@ -80,6 +80,7 @@ Main()
     SetDvarIfNotInitialized("fun_mode_javelin_damage_multiplier", 10.0);
     SetDvarIfNotInitialized("fun_mode_shotgun_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_bolt_sniper_damage_multiplier", 2.0);
+    SetDvarIfNotInitialized("fun_mode_as50_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_mp412_damage_multiplier", 3.0);
     SetDvarIfNotInitialized("fun_mode_cm901_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_desert_eagle_damage_multiplier", 2.0);
@@ -359,6 +360,14 @@ GetFunModeWeaponDamageMultiplier(weapon, meansOfDeath)
     )
     {
         return GetDvarFloat("fun_mode_bolt_sniper_damage_multiplier");
+    }
+
+    if (
+        isBulletDamage &&
+        IsSubStr(weapon, "iw5_as50_mp")
+    )
+    {
+        return GetDvarFloat("fun_mode_as50_damage_multiplier");
     }
 
     if (
