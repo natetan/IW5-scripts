@@ -36,6 +36,8 @@
     - After genuinely earning the full Specialist Bonus, every firearm kill
       restores 25 percent of that weapon's magazine, rounded to the nearest
       whole round and capped at its normal clip capacity.
+    - Gives the AA-12 that same 25-percent magazine refill on every kill even
+      without the full Specialist Bonus.
     - Doubles player damage from the SPAS-12, KSG 12, Model 1887, and AA-12,
       including variants containing compatible attachments, camos, and reticles.
     - Gives all players two-stage Quick Fix healing: a strong recovery burst
@@ -84,6 +86,7 @@ Main()
     SetDvarIfNotInitialized("fun_mode_pistol_kill_refill_enable", 1);
     SetDvarIfNotInitialized("fun_mode_specialist_mag_refill_enable", 1);
     SetDvarIfNotInitialized("fun_mode_specialist_mag_refill_percent", 0.25);
+    SetDvarIfNotInitialized("fun_mode_aa12_kill_refill_enable", 1);
     SetDvarIfNotInitialized("fun_mode_quick_fix_enable", 1);
     SetDvarIfNotInitialized("fun_mode_quick_fix_heal_percent", 0.25);
     SetDvarIfNotInitialized("fun_mode_quick_fix_overheal_percent", 0.10);
@@ -409,8 +412,7 @@ OnPlayerConnect()
         player thread WatchKillMomentum();
         player thread WatchKillMomentumSpawns();
         player thread WatchHeavySniperMovement();
-        player thread WatchPistolKillAmmoRefill();
-        player thread WatchSpecialistMagazineRefill();
+        player thread WatchKillAmmoRefills();
 
         if (player IsBotPlayer())
         {
@@ -426,7 +428,7 @@ OnPlayerConnect()
     }
 }
 
-WatchPistolKillAmmoRefill()
+WatchKillAmmoRefills()
 {
     self endon("disconnect");
 
@@ -434,11 +436,7 @@ WatchPistolKillAmmoRefill()
     {
         self waittill("killed_enemy");
 
-        if (
-            !GetDvarInt("fun_mode_pistol_kill_refill_enable") ||
-            !IsAlive(self) ||
-            !IsDefined(self.fun_mode_last_damage_weapon)
-        )
+        if (!IsAlive(self) || !IsDefined(self.fun_mode_last_damage_weapon))
         {
             continue;
         }
@@ -446,33 +444,96 @@ WatchPistolKillAmmoRefill()
         weapon = self.fun_mode_last_damage_weapon;
 
         if (
-            !IsSubStr(weapon, "iw5_mp412_mp") &&
-            !IsSubStr(weapon, "iw5_deserteagle_mp")
+            GetDvarInt("fun_mode_pistol_kill_refill_enable") &&
+            (
+                IsSubStr(weapon, "iw5_mp412_mp") ||
+                IsSubStr(weapon, "iw5_deserteagle_mp")
+            )
         )
+        {
+            refillAmount = 1;
+
+            if (IsSubStr(weapon, "_akimbo"))
+            {
+                refillAmount = 2;
+            }
+
+            self RefillWeaponClipByRounds(weapon, refillAmount);
+        }
+
+        if (!IsSubStr(weapon, "iw5_"))
         {
             continue;
         }
 
-        clipAmmo = self GetWeaponAmmoClip(weapon);
-        clipSize = WeaponClipSize(weapon);
+        shouldRefillByPercent = (
+            GetDvarInt("fun_mode_aa12_kill_refill_enable") &&
+            IsSubStr(weapon, "iw5_aa12_mp")
+        );
+
+        if (
+            !shouldRefillByPercent &&
+            GetDvarInt("fun_mode_specialist_mag_refill_enable") &&
+            self HasEarnedFullSpecialistBonus()
+        )
+        {
+            shouldRefillByPercent = true;
+        }
+
+        if (shouldRefillByPercent)
+        {
+            self RefillWeaponClipByPercent(
+                weapon,
+                GetDvarFloat("fun_mode_specialist_mag_refill_percent")
+            );
+        }
+    }
+}
+
+RefillWeaponClipByPercent(weapon, refillPercent)
+{
+    clipSize = WeaponClipSize(weapon);
+
+    if (clipSize <= 0 || refillPercent <= 0)
+    {
+        return;
+    }
+
+    refillAmount = Int((clipSize * refillPercent) + 0.5);
+
+    if (refillAmount < 1)
+    {
         refillAmount = 1;
+    }
 
-        if (IsSubStr(weapon, "_akimbo"))
-        {
-            refillAmount = 2;
-        }
+    self RefillWeaponClipByRounds(weapon, refillAmount);
+}
 
-        newClipAmmo = clipAmmo + refillAmount;
+RefillWeaponClipByRounds(weapon, refillAmount)
+{
+    if (refillAmount <= 0)
+    {
+        return;
+    }
 
-        if (newClipAmmo > clipSize)
-        {
-            newClipAmmo = clipSize;
-        }
+    clipSize = WeaponClipSize(weapon);
 
-        if (newClipAmmo > clipAmmo)
-        {
-            self SetWeaponAmmoClip(weapon, newClipAmmo);
-        }
+    if (clipSize <= 0)
+    {
+        return;
+    }
+
+    clipAmmo = self GetWeaponAmmoClip(weapon);
+    newClipAmmo = clipAmmo + refillAmount;
+
+    if (newClipAmmo > clipSize)
+    {
+        newClipAmmo = clipSize;
+    }
+
+    if (newClipAmmo > clipAmmo)
+    {
+        self SetWeaponAmmoClip(weapon, newClipAmmo);
     }
 }
 
@@ -501,65 +562,6 @@ HasEarnedFullSpecialistBonus()
     }
 
     return self.adrenaline >= bonusCost;
-}
-
-WatchSpecialistMagazineRefill()
-{
-    self endon("disconnect");
-
-    for (;;)
-    {
-        self waittill("killed_enemy");
-
-        if (
-            !GetDvarInt("fun_mode_specialist_mag_refill_enable") ||
-            !IsAlive(self) ||
-            !self HasEarnedFullSpecialistBonus() ||
-            !IsDefined(self.fun_mode_last_damage_weapon)
-        )
-        {
-            continue;
-        }
-
-        weapon = self.fun_mode_last_damage_weapon;
-
-        // IW5 firearm variants use this prefix. Excluding equipment and
-        // streak weapons prevents invalid WeaponClipSize() calls.
-        if (!IsSubStr(weapon, "iw5_"))
-        {
-            continue;
-        }
-
-        clipSize = WeaponClipSize(weapon);
-
-        if (clipSize <= 0)
-        {
-            continue;
-        }
-
-        refillPercent = GetDvarFloat(
-            "fun_mode_specialist_mag_refill_percent"
-        );
-        refillAmount = Int((clipSize * refillPercent) + 0.5);
-
-        if (refillAmount < 1)
-        {
-            refillAmount = 1;
-        }
-
-        clipAmmo = self GetWeaponAmmoClip(weapon);
-        newClipAmmo = clipAmmo + refillAmount;
-
-        if (newClipAmmo > clipSize)
-        {
-            newClipAmmo = clipSize;
-        }
-
-        if (newClipAmmo > clipAmmo)
-        {
-            self SetWeaponAmmoClip(weapon, newClipAmmo);
-        }
-    }
 }
 
 IsSurvivalMode()
