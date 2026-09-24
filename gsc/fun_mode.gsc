@@ -6,9 +6,9 @@
     Features:
     - Human players using custom classes 13-15 receive the full Specialist
       perk set, its Pro perk mappings, the extra Specialist bonuses, and the
-      Impact and shotgun Damage weapon proficiencies.
-    - Gives every human player the Range proficiency whenever either equipped
-      loadout weapon is a shotgun, including Overkill secondary shotguns.
+      Impact weapon proficiency.
+    - Gives every human player the Range and Damage proficiencies whenever
+      either loadout weapon is a shotgun, including Overkill secondaries.
     - In Survival Reimagined, where custom classes and changed-kit events are
       disabled, human survivors receive that same Fun Mode bonus after the
       Survival mod finishes rebuilding their spawn loadout.
@@ -1144,7 +1144,7 @@ WatchPlayerLoadout()
 
         wait 0.1;
 
-        self ApplyShotgunRangeProficiency();
+        self ApplyShotgunProficiencies();
 
         if (self IsFunModeSuperClassOwner())
         {
@@ -1159,7 +1159,7 @@ WatchPlayerLoadout()
     }
 }
 
-ApplyShotgunRangeProficiency()
+ApplyShotgunProficiencies()
 {
     hasShotgun = false;
 
@@ -1181,6 +1181,7 @@ ApplyShotgunRangeProficiency()
     if (hasShotgun)
     {
         self GivePerk("specialty_longerrange", false);
+        self GivePerk("specialty_moredamage", false);
     }
 }
 
@@ -1496,10 +1497,9 @@ GiveFullSpecialistBonus()
     self GivePerk("specialty_reducedsway", false);
     self GivePerk("specialty_lightweight", false); // Movement-speed boost
 
-    // Fun-mode additions: stack Impact and shotgun Damage with the class's
-    // selected proficiency. Unsupported weapon classes ignore these flags.
+    // Fun-mode addition: stack Impact with the class's selected proficiency.
+    // Unsupported weapon classes ignore this flag.
     self GivePerk("specialty_bulletpenetration", false);
-    self GivePerk("specialty_moredamage", false);
 }
 
 /*
