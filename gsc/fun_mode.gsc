@@ -31,6 +31,8 @@
       stock blast radius and earlier damage modifiers. Also doubles damage
       from bolt-action sniper rifles, the CM901, and the Desert Eagle, and
       triples MP412 damage.
+    - Restores one chambered round after an MP412 or Desert Eagle kill, or one
+      round to each pistol when the killing weapon is an Akimbo variant.
     - Doubles player damage from the SPAS-12, KSG 12, Model 1887, and AA-12,
       including variants containing compatible attachments, camos, and reticles.
     - Gives all players two-stage Quick Fix healing: a strong recovery burst
@@ -76,6 +78,7 @@ Main()
     SetDvarIfNotInitialized("fun_mode_mp412_damage_multiplier", 3.0);
     SetDvarIfNotInitialized("fun_mode_cm901_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_desert_eagle_damage_multiplier", 2.0);
+    SetDvarIfNotInitialized("fun_mode_pistol_kill_refill_enable", 1);
     SetDvarIfNotInitialized("fun_mode_quick_fix_enable", 1);
     SetDvarIfNotInitialized("fun_mode_quick_fix_heal_percent", 0.25);
     SetDvarIfNotInitialized("fun_mode_quick_fix_overheal_percent", 0.10);
@@ -279,6 +282,16 @@ ModifyPlayerDamageForFunMode(
     hitLocation
 )
 {
+    if (
+        IsDefined(attacker) &&
+        IsPlayer(attacker) &&
+        attacker != victim &&
+        IsDefined(weapon)
+    )
+    {
+        attacker.fun_mode_last_damage_weapon = weapon;
+    }
+
     if (IsDefined(level.fun_mode_previous_modify_player_damage))
     {
         damage = [[level.fun_mode_previous_modify_player_damage]](
@@ -391,6 +404,7 @@ OnPlayerConnect()
         player thread WatchKillMomentum();
         player thread WatchKillMomentumSpawns();
         player thread WatchHeavySniperMovement();
+        player thread WatchPistolKillAmmoRefill();
 
         if (player IsBotPlayer())
         {
@@ -403,6 +417,56 @@ OnPlayerConnect()
         player thread WatchTeamSwitchMenu();
         player thread WatchPostSpecialistRewards();
         player thread WatchPostSpecialistSpawns();
+    }
+}
+
+WatchPistolKillAmmoRefill()
+{
+    self endon("disconnect");
+
+    for (;;)
+    {
+        self waittill("killed_enemy");
+
+        if (
+            !GetDvarInt("fun_mode_pistol_kill_refill_enable") ||
+            !IsAlive(self) ||
+            !IsDefined(self.fun_mode_last_damage_weapon)
+        )
+        {
+            continue;
+        }
+
+        weapon = self.fun_mode_last_damage_weapon;
+
+        if (
+            !IsSubStr(weapon, "iw5_mp412_mp") &&
+            !IsSubStr(weapon, "iw5_deserteagle_mp")
+        )
+        {
+            continue;
+        }
+
+        clipAmmo = self GetWeaponAmmoClip(weapon);
+        clipSize = WeaponClipSize(weapon);
+        refillAmount = 1;
+
+        if (IsSubStr(weapon, "_akimbo"))
+        {
+            refillAmount = 2;
+        }
+
+        newClipAmmo = clipAmmo + refillAmount;
+
+        if (newClipAmmo > clipSize)
+        {
+            newClipAmmo = clipSize;
+        }
+
+        if (newClipAmmo > clipAmmo)
+        {
+            self SetWeaponAmmoClip(weapon, newClipAmmo);
+        }
     }
 }
 
