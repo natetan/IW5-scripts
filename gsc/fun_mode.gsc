@@ -29,7 +29,8 @@
       explosive damage instead of the stock 45 percent.
     - Multiplies Javelin damage by ten against players while preserving its
       stock blast radius and earlier damage modifiers. Also doubles damage
-      from bolt-action sniper rifles and the CM901, and triples MP412 damage.
+      from bolt-action sniper rifles, the CM901, and the Desert Eagle, and
+      triples MP412 damage.
     - Doubles player damage from the SPAS-12, KSG 12, Model 1887, and AA-12,
       including variants containing compatible attachments, camos, and reticles.
     - Gives all players two-stage Quick Fix healing: a strong recovery burst
@@ -74,6 +75,7 @@ Main()
     SetDvarIfNotInitialized("fun_mode_bolt_sniper_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_mp412_damage_multiplier", 3.0);
     SetDvarIfNotInitialized("fun_mode_cm901_damage_multiplier", 2.0);
+    SetDvarIfNotInitialized("fun_mode_desert_eagle_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_quick_fix_enable", 1);
     SetDvarIfNotInitialized("fun_mode_quick_fix_heal_percent", 0.25);
     SetDvarIfNotInitialized("fun_mode_quick_fix_overheal_percent", 0.10);
@@ -352,6 +354,14 @@ GetFunModeWeaponDamageMultiplier(weapon, meansOfDeath)
     )
     {
         return GetDvarFloat("fun_mode_cm901_damage_multiplier");
+    }
+
+    if (
+        isBulletDamage &&
+        IsSubStr(weapon, "iw5_deserteagle_mp")
+    )
+    {
+        return GetDvarFloat("fun_mode_desert_eagle_damage_multiplier");
     }
 
     if (
