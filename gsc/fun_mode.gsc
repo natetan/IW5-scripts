@@ -33,6 +33,8 @@
       Eagle, and triples MP412 damage.
     - Restores one chambered round after an MP412 or Desert Eagle kill, or one
       round to each pistol when the killing weapon is an Akimbo variant.
+    - Reloads one Javelin missile after a Javelin kill, including delayed kills
+      that occur after the player has switched back to another weapon.
     - After genuinely earning the full Specialist Bonus, every firearm kill
       restores 25 percent of that weapon's magazine, rounded to the nearest
       whole round and capped at its normal clip capacity.
@@ -85,6 +87,7 @@ Main()
     SetDvarIfNotInitialized("fun_mode_cm901_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_desert_eagle_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_pistol_kill_refill_enable", 1);
+    SetDvarIfNotInitialized("fun_mode_javelin_kill_refill_enable", 1);
     SetDvarIfNotInitialized("fun_mode_specialist_mag_refill_enable", 1);
     SetDvarIfNotInitialized("fun_mode_specialist_mag_refill_percent", 0.25);
     SetDvarIfNotInitialized("fun_mode_aa12_kill_refill_enable", 1);
@@ -451,6 +454,14 @@ WatchKillAmmoRefills()
         }
 
         weapon = self.fun_mode_last_damage_weapon;
+
+        if (
+            GetDvarInt("fun_mode_javelin_kill_refill_enable") &&
+            weapon == "javelin_mp"
+        )
+        {
+            self RefillWeaponClipByRounds(weapon, 1);
+        }
 
         if (
             GetDvarInt("fun_mode_pistol_kill_refill_enable") &&
