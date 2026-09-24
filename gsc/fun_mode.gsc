@@ -33,6 +33,9 @@
       triples MP412 damage.
     - Restores one chambered round after an MP412 or Desert Eagle kill, or one
       round to each pistol when the killing weapon is an Akimbo variant.
+    - After genuinely earning the full Specialist Bonus, every firearm kill
+      restores 25 percent of that weapon's magazine, rounded to the nearest
+      whole round and capped at its normal clip capacity.
     - Doubles player damage from the SPAS-12, KSG 12, Model 1887, and AA-12,
       including variants containing compatible attachments, camos, and reticles.
     - Gives all players two-stage Quick Fix healing: a strong recovery burst
@@ -79,6 +82,8 @@ Main()
     SetDvarIfNotInitialized("fun_mode_cm901_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_desert_eagle_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_pistol_kill_refill_enable", 1);
+    SetDvarIfNotInitialized("fun_mode_specialist_mag_refill_enable", 1);
+    SetDvarIfNotInitialized("fun_mode_specialist_mag_refill_percent", 0.25);
     SetDvarIfNotInitialized("fun_mode_quick_fix_enable", 1);
     SetDvarIfNotInitialized("fun_mode_quick_fix_heal_percent", 0.25);
     SetDvarIfNotInitialized("fun_mode_quick_fix_overheal_percent", 0.10);
@@ -405,6 +410,7 @@ OnPlayerConnect()
         player thread WatchKillMomentumSpawns();
         player thread WatchHeavySniperMovement();
         player thread WatchPistolKillAmmoRefill();
+        player thread WatchSpecialistMagazineRefill();
 
         if (player IsBotPlayer())
         {
@@ -456,6 +462,92 @@ WatchPistolKillAmmoRefill()
             refillAmount = 2;
         }
 
+        newClipAmmo = clipAmmo + refillAmount;
+
+        if (newClipAmmo > clipSize)
+        {
+            newClipAmmo = clipSize;
+        }
+
+        if (newClipAmmo > clipAmmo)
+        {
+            self SetWeaponAmmoClip(weapon, newClipAmmo);
+        }
+    }
+}
+
+HasEarnedFullSpecialistBonus()
+{
+    if (
+        !IsDefined(self.streaktype) ||
+        self.streaktype != "specialist" ||
+        !IsDefined(self.adrenaline) ||
+        !IsDefined(self.pers["killstreaks"]) ||
+        !IsDefined(self.pers["killstreaks"][4]) ||
+        !IsDefined(self.pers["killstreaks"][4].streakname) ||
+        self.pers["killstreaks"][4].streakname != "all_perks_bonus" ||
+        !IsDefined(self.pers["killstreaks"][4].available) ||
+        !self.pers["killstreaks"][4].available
+    )
+    {
+        return false;
+    }
+
+    bonusCost = 8;
+
+    if (self maps\mp\_utility::_hasperk("specialty_hardline"))
+    {
+        bonusCost--;
+    }
+
+    return self.adrenaline >= bonusCost;
+}
+
+WatchSpecialistMagazineRefill()
+{
+    self endon("disconnect");
+
+    for (;;)
+    {
+        self waittill("killed_enemy");
+
+        if (
+            !GetDvarInt("fun_mode_specialist_mag_refill_enable") ||
+            !IsAlive(self) ||
+            !self HasEarnedFullSpecialistBonus() ||
+            !IsDefined(self.fun_mode_last_damage_weapon)
+        )
+        {
+            continue;
+        }
+
+        weapon = self.fun_mode_last_damage_weapon;
+
+        // IW5 firearm variants use this prefix. Excluding equipment and
+        // streak weapons prevents invalid WeaponClipSize() calls.
+        if (!IsSubStr(weapon, "iw5_"))
+        {
+            continue;
+        }
+
+        clipSize = WeaponClipSize(weapon);
+
+        if (clipSize <= 0)
+        {
+            continue;
+        }
+
+        refillPercent = GetDvarFloat(
+            "fun_mode_specialist_mag_refill_percent"
+        );
+        refillAmount = Int((clipSize * refillPercent) + 0.5);
+
+        if (refillAmount < 1)
+        {
+            refillAmount = 1;
+        }
+
+        clipAmmo = self GetWeaponAmmoClip(weapon);
         newClipAmmo = clipAmmo + refillAmount;
 
         if (newClipAmmo > clipSize)
