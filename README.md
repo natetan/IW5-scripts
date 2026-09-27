@@ -20,6 +20,18 @@ Custom DSR files for:
 
 Designed to play like traditional MW3 Hardcore while keeping the HUD and removing unnecessary delays.
 
+### ✈️ Harrier Strike
+
+Locally replaces the Precision Airstrike's behavior with IW5's dormant
+Harrier Strike implementation. The existing Precision Airstrike selection,
+cost, icon, and targeting controls are retained.
+
+Disable the replacement before loading a map with:
+
+```cfg
+set fun_mode_harrier_airstrike_enable 0
+```
+
 ### 🗺️ Improved Map Rotation
 - Map voting support
 - Modernized map pool
