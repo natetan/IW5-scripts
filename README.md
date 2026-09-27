@@ -32,6 +32,20 @@ Disable the replacement before loading a map with:
 set fun_mode_harrier_airstrike_enable 0
 ```
 
+### 🚀 AA Strike
+
+Locally replaces the nine-kill Strafe Run with IW5's dormant AA Strike. The
+streak launches Harrier flybys, attacks enemy air support with guided missiles,
+and temporarily denies the opposing team's airspace. Two spaced guided missiles
+also attack living enemies on the ground, giving the streak a modest offensive
+component without replacing its anti-air purpose.
+
+Disable the replacement before loading a map with:
+
+```cfg
+set fun_mode_aa_strike_enable 0
+```
+
 ### 🗺️ Improved Map Rotation
 - Map voting support
 - Modernized map pool
