@@ -8,8 +8,9 @@ param(
 $ErrorActionPreference = "Stop"
 
 <#
-Updates maps\mp\bots inside z_svr_bots.iwd in both the local Plutonium
-storage folder and the dedicated server by default.
+Updates maps\mp\bots and the map waypoint scripts under scripts\mp inside
+z_svr_bots.iwd in both the local Plutonium storage folder and the dedicated
+server by default.
 
 If the dedicated server does not have z_svr_bots.iwd yet, the current client
 archive is copied there before it is updated.
@@ -24,6 +25,7 @@ Close WinRAR and Plutonium before running.
 
 $repoRoot = $PSScriptRoot
 $sourceBotsFolder = Join-Path $repoRoot "gsc\bots"
+$sourceWaypointsFolder = Join-Path $repoRoot "waypoints"
 . (Join-Path $repoRoot "iw5_targets.ps1")
 
 $clientRoot = Join-Path $env:LOCALAPPDATA "Plutonium\storage\iw5"
@@ -32,6 +34,10 @@ $winRar = Get-WinRarPath
 
 if (-not (Test-Path -LiteralPath $sourceBotsFolder -PathType Container)) {
     throw "Could not find source folder: $sourceBotsFolder"
+}
+
+if (-not (Test-Path -LiteralPath $sourceWaypointsFolder -PathType Container)) {
+    throw "Could not find source waypoint folder: $sourceWaypointsFolder"
 }
 
 if (Get-Process -Name "WinRAR" -ErrorAction SilentlyContinue) {
@@ -45,6 +51,15 @@ $botFiles = @(
 
 if ($botFiles.Count -eq 0) {
     throw "No .gsc files were found in: $sourceBotsFolder"
+}
+
+$waypointFiles = @(
+    Get-ChildItem -LiteralPath $sourceWaypointsFolder -Recurse -File -Filter "*.gsc" |
+        Sort-Object FullName
+)
+
+if ($waypointFiles.Count -eq 0) {
+    throw "No waypoint .gsc files were found in: $sourceWaypointsFolder"
 }
 
 function Invoke-WinRar {
@@ -127,9 +142,37 @@ foreach ($target in $targets) {
         )
     }
 
+    foreach ($file in $waypointFiles) {
+        $mapFolder = $file.Directory.Name
+        $archiveFolder = "scripts\mp\$mapFolder"
+        $archivePath = "$archiveFolder\$($file.Name)"
+        Write-Host "  $archivePath"
+
+        $deleteProcess = Start-Process `
+            -FilePath $winRar `
+            -ArgumentList @("d", "`"$iwdPath`"", "`"$archivePath`"") `
+            -Wait `
+            -PassThru `
+            -WindowStyle Hidden
+
+        # WinRAR exit code 10 means no matching file existed, which is harmless.
+        if ($deleteProcess.ExitCode -ne 0 -and $deleteProcess.ExitCode -ne 10) {
+            throw "WinRAR failed while deleting $archivePath (exit code $($deleteProcess.ExitCode))."
+        }
+
+        Invoke-WinRar -Arguments @(
+            "a",
+            "-ep",
+            "-o+",
+            "-ap$archiveFolder",
+            "`"$iwdPath`"",
+            "`"$($file.FullName)`""
+        )
+    }
+
     Write-Host "Updated: $iwdPath" -ForegroundColor Green
 }
 
 Write-Host ""
-Write-Host "Installed $($botFiles.Count) bot script(s) to $($targets.Count) target(s)." -ForegroundColor Green
+Write-Host "Installed $($botFiles.Count) bot script(s) and $($waypointFiles.Count) waypoint script(s) to $($targets.Count) target(s)." -ForegroundColor Green
 Write-Host "Restart Plutonium or load a new map before testing."
