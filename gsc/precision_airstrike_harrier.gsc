@@ -153,6 +153,9 @@ runHarrierStrike( lifeId, strikeOrigin, strikeYaw, owner, team )
         "harrier_airstrike"
     );
 
+    if ( isdefined( harrier ) )
+        harrier thread destroyHarrierOnEmp( owner );
+
     wait 1.0;
     level.airstrikeinprogress = undefined;
     owner notify( "begin_airstrike" );
@@ -165,6 +168,28 @@ runHarrierStrike( lifeId, strikeOrigin, strikeYaw, owner, team )
         wait 0.1;
 
     level.funModeHarrierCount--;
+}
+
+destroyHarrierOnEmp( owner )
+{
+    self endon( "death" );
+
+    for (;;)
+    {
+        // Stock EMP damage is halved by the dormant Harrier callback, leaving
+        // its 3000-health airframe alive at 500 health. Route an EMP through
+        // the Harrier's normal death/crash sequence instead. Check before
+        // waiting so an EMP already in progress also destroys a newly spawned
+        // hovering Harrier.
+        if ( isdefined( owner ) && owner maps\mp\_utility::isemped() )
+        {
+            self.health = 0;
+            self notify( "death" );
+            return;
+        }
+
+        level waittill( "emp_update" );
+    }
 }
 
 removeHarrierDangerCenter( targetOrigin )

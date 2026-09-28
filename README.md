@@ -46,6 +46,20 @@ Disable the replacement before loading a map with:
 set fun_mode_aa_strike_enable 0
 ```
 
+### 🚁 Attack Helicopter Rockets
+
+Expands the stock seven-kill Attack Helicopter's native FFAR secondary weapon.
+The helicopter still prioritizes hostile Harriers, but otherwise fires rockets
+at its current cannon target when it has a safe, forward-facing shot. Ground
+rockets have unlimited ammunition with a nine-second firing cooldown; health,
+duration, cannon behavior, and lack of flares remain stock.
+
+Disable ground-targeting rockets before loading a map with:
+
+```cfg
+set fun_mode_attack_heli_rockets_enable 0
+```
+
 ### 🗺️ Improved Map Rotation
 - Map voting support
 - Modernized map pool
