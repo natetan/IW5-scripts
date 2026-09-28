@@ -65,15 +65,24 @@ if ($waypointFiles.Count -eq 0) {
 function Invoke-WinRar {
     param(
         [Parameter(Mandatory)]
-        [string[]] $Arguments
+        [string[]] $Arguments,
+
+        [string] $WorkingDirectory
     )
 
-    $process = Start-Process `
-        -FilePath $winRar `
-        -ArgumentList $Arguments `
-        -Wait `
-        -PassThru `
-        -WindowStyle Hidden
+    $startProcessArguments = @{
+        FilePath = $winRar
+        ArgumentList = $Arguments
+        Wait = $true
+        PassThru = $true
+        WindowStyle = "Hidden"
+    }
+
+    if ($WorkingDirectory) {
+        $startProcessArguments.WorkingDirectory = $WorkingDirectory
+    }
+
+    $process = Start-Process @startProcessArguments
 
     if ($process.ExitCode -ne 0) {
         throw "WinRAR exited with code $($process.ExitCode)."
@@ -85,92 +94,74 @@ $targets = @(Get-Iw5Targets `
     -ClientOnly:$ClientOnly `
     -ServerOnly:$ServerOnly)
 
-foreach ($target in $targets) {
-    if (-not (Test-Path -LiteralPath $target.Root -PathType Container)) {
-        throw "$($target.Name) root does not exist: $($target.Root)"
-    }
+$stagingRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("iw5-bot-install-" + [guid]::NewGuid().ToString("N"))
+$stagedBotsFolder = Join-Path $stagingRoot "maps\mp\bots"
+$stagedWaypointsFolder = Join-Path $stagingRoot "scripts\mp"
 
-    $iwdPath = Join-Path $target.Root "z_svr_bots.iwd"
-    $backupPath = Join-Path $target.Root "z_svr_bots.backup.iwd"
-
-    if (-not (Test-Path -LiteralPath $iwdPath -PathType Leaf)) {
-        if ($target.Root -eq $clientRoot) {
-            throw "Could not find z_svr_bots.iwd at: $iwdPath"
-        }
-
-        if (-not (Test-Path -LiteralPath $clientIwdPath -PathType Leaf)) {
-            throw "Cannot seed the server archive because the client archive is missing: $clientIwdPath"
-        }
-
-        Copy-Item -LiteralPath $clientIwdPath -Destination $iwdPath
-        Write-Host "Seeded Bot Warfare archive:" -ForegroundColor DarkGray
-        Write-Host "  $iwdPath" -ForegroundColor DarkGray
-    }
-
-    if (-not (Test-Path -LiteralPath $backupPath -PathType Leaf)) {
-        Copy-Item -LiteralPath $iwdPath -Destination $backupPath
-        Write-Host "Created backup:" -ForegroundColor DarkGray
-        Write-Host "  $backupPath" -ForegroundColor DarkGray
-    }
-
-    Write-Host ""
-    Write-Host "Installing Bot Warfare scripts to $($target.Name):" -ForegroundColor Cyan
+try {
+    New-Item -ItemType Directory -Force -Path $stagedBotsFolder, $stagedWaypointsFolder | Out-Null
 
     foreach ($file in $botFiles) {
-        $archivePath = "maps\mp\bots\$($file.Name)"
-        Write-Host "  $archivePath"
-
-        $deleteProcess = Start-Process `
-            -FilePath $winRar `
-            -ArgumentList @("d", "`"$iwdPath`"", "`"$archivePath`"") `
-            -Wait `
-            -PassThru `
-            -WindowStyle Hidden
-
-        # WinRAR exit code 10 means no matching file existed, which is harmless.
-        if ($deleteProcess.ExitCode -ne 0 -and $deleteProcess.ExitCode -ne 10) {
-            throw "WinRAR failed while deleting $archivePath (exit code $($deleteProcess.ExitCode))."
-        }
-
-        Invoke-WinRar -Arguments @(
-            "a",
-            "-ep",
-            "-o+",
-            "-apmaps\mp\bots",
-            "`"$iwdPath`"",
-            "`"$($file.FullName)`""
-        )
+        Copy-Item -LiteralPath $file.FullName -Destination $stagedBotsFolder
     }
 
     foreach ($file in $waypointFiles) {
-        $mapFolder = $file.Directory.Name
-        $archiveFolder = "scripts\mp\$mapFolder"
-        $archivePath = "$archiveFolder\$($file.Name)"
-        Write-Host "  $archivePath"
-
-        $deleteProcess = Start-Process `
-            -FilePath $winRar `
-            -ArgumentList @("d", "`"$iwdPath`"", "`"$archivePath`"") `
-            -Wait `
-            -PassThru `
-            -WindowStyle Hidden
-
-        # WinRAR exit code 10 means no matching file existed, which is harmless.
-        if ($deleteProcess.ExitCode -ne 0 -and $deleteProcess.ExitCode -ne 10) {
-            throw "WinRAR failed while deleting $archivePath (exit code $($deleteProcess.ExitCode))."
-        }
-
-        Invoke-WinRar -Arguments @(
-            "a",
-            "-ep",
-            "-o+",
-            "-ap$archiveFolder",
-            "`"$iwdPath`"",
-            "`"$($file.FullName)`""
-        )
+        $mapFolder = Join-Path $stagedWaypointsFolder $file.Directory.Name
+        New-Item -ItemType Directory -Force -Path $mapFolder | Out-Null
+        Copy-Item -LiteralPath $file.FullName -Destination $mapFolder
     }
 
-    Write-Host "Updated: $iwdPath" -ForegroundColor Green
+    foreach ($target in $targets) {
+        if (-not (Test-Path -LiteralPath $target.Root -PathType Container)) {
+            throw "$($target.Name) root does not exist: $($target.Root)"
+        }
+
+        $iwdPath = Join-Path $target.Root "z_svr_bots.iwd"
+        $backupPath = Join-Path $target.Root "z_svr_bots.backup.iwd"
+
+        if (-not (Test-Path -LiteralPath $iwdPath -PathType Leaf)) {
+            if ($target.Root -eq $clientRoot) {
+                throw "Could not find z_svr_bots.iwd at: $iwdPath"
+            }
+
+            if (-not (Test-Path -LiteralPath $clientIwdPath -PathType Leaf)) {
+                throw "Cannot seed the server archive because the client archive is missing: $clientIwdPath"
+            }
+
+            Copy-Item -LiteralPath $clientIwdPath -Destination $iwdPath
+            Write-Host "Seeded Bot Warfare archive:" -ForegroundColor DarkGray
+            Write-Host "  $iwdPath" -ForegroundColor DarkGray
+        }
+
+        if (-not (Test-Path -LiteralPath $backupPath -PathType Leaf)) {
+            Copy-Item -LiteralPath $iwdPath -Destination $backupPath
+            Write-Host "Created backup:" -ForegroundColor DarkGray
+            Write-Host "  $backupPath" -ForegroundColor DarkGray
+        }
+
+        Write-Host ""
+        Write-Host "Installing Bot Warfare scripts to $($target.Name):" -ForegroundColor Cyan
+
+        Write-Host "  Updating $($botFiles.Count + $waypointFiles.Count) files in one archive operation..."
+
+        Invoke-WinRar `
+            -WorkingDirectory $stagingRoot `
+            -Arguments @(
+                "a",
+                "-r",
+                "-o+",
+                "`"$iwdPath`"",
+                "maps",
+                "scripts"
+            )
+
+        Write-Host "Updated: $iwdPath" -ForegroundColor Green
+    }
+}
+finally {
+    if (Test-Path -LiteralPath $stagingRoot) {
+        Remove-Item -LiteralPath $stagingRoot -Recurse -Force
+    }
 }
 
 Write-Host ""
