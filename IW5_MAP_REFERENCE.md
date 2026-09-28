@@ -13,8 +13,8 @@ must also have compatible map assets for the map to load.
 ## Status definitions
 
 - **Playable — Yes:** The map has been launched and confirmed working.
-- **Playable — Untested:** Compatible assets are installed, but the map has
-  not yet been manually verified.
+- **Playable — Untested:** The map has not yet been manually verified; asset
+  availability and runtime compatibility may still need confirmation.
 - **Playable — No:** Required compatible map assets are not installed locally.
 - **Map vote — Yes:** The map is included in `mapvote_maps` and can appear as
   one of the twelve randomly selected post-game choices.
@@ -92,28 +92,35 @@ must also have compatible map assets for the map to load.
 
 ## Plutonium and imported maps
 
-This table is alphabetized by display name. All entries have compatible local
-map assets. The `Playable` column remains `Untested` until a map successfully
-starts in a manual test.
+This table is alphabetized by display name. The `Playable` column remains
+`Untested` until a map successfully starts in a manual test.
 
 `Origin` identifies the game in which the original map debuted; custom variants
 retain their source game's lineage where applicable.
 
 | Display name | Internal name | Origin | Playable | Map vote | Waypoint source | Notes |
 |---|---|---|:---:|:---:|:---:|---|
+| Afghan | `mp_afghan` | MW2 | Yes | Yes | Available | |
 | Ambush | `mp_convoy` | COD4 | Yes | Yes | Available | |
+| Backlot | `mp_backlot_sh` | COD4 | Yes | Yes | Available | |
+| Bailout | `mp_complex` | MW2 | Yes | Yes | Available | |
+| Bog | `mp_bog_sh` | COD4 | Yes | Yes | Available | |
 | Broadcast | `mp_broadcast` | COD4 | Yes | Yes | Available | |
 | Carnival | `mp_abandon` | MW2 | Yes | No | Missing | Playable, but excluded because bots lack waypoints. |
 | Countdown | `mp_countdown` | COD4 | Yes | Yes | Available | |
 | Crash | `mp_crash` | COD4 | Yes | Yes | Available | |
+| Creek | `mp_creek` | COD4 | Yes | No | Available | Excluded because the map performs poorly and has severe frame drops. |
 | Crossfire | `mp_cross_fire` | COD4 | Yes | Yes | Available | Use this variant; `mp_crossfire` has no matching waypoint source. |
 | Derail | `mp_derail` | MW2 | Yes | Yes | Available | |
 | District | `mp_citystreets` | COD4 | Yes | Yes | Available | |
+| Downpour | `mp_farm` | COD4 | Yes | Yes | Available | |
 | Estate | `mp_estate` | MW2 | Yes | Yes | Available | |
 | Favela | `mp_favela` | MW2 | Yes | Yes | Available | |
+| Firing Range | `mp_firingrange` | Black Ops | Yes | Yes | Available | |
 | Highrise | `mp_highrise` | MW2 | Yes | Yes | Available | |
 | Invasion | `mp_invasion` | MW2 | Yes | No | Missing | Playable, but excluded because bots lack waypoints. |
 | Karachi | `mp_checkpoint` | MW2 | Yes | Yes | Available | |
+| Killhouse | `mp_killhouse` | COD4 | Yes | Yes | Available | |
 | Nuketown | `mp_nuked` | Black Ops | Yes | Yes | Available | |
 | Overgrown | `mp_overgrown` | COD4 | Yes | Yes | Available | |
 | Pipeline | `mp_pipeline` | COD4 | Yes | Yes | Available | |
@@ -123,11 +130,15 @@ retain their source game's lineage where applicable.
 | Salvage | `mp_compact` | MW2 | Yes | Yes | Available | |
 | Scrapyard | `mp_boneyard` | MW2 | Yes | Yes | Available | |
 | Shipment | `mp_shipment` | COD4 | Yes | Yes | Available | |
+| Shipment: Long | `mp_shipmentlong` | Custom (COD4-derived) | Untested | No | Available | |
 | Showdown | `mp_showdown_sh` | COD4 | Yes | Yes | Available | |
 | Skidrow | `mp_nightshift` | MW2 | Yes | Yes | Available | |
 | Storm | `mp_storm` | MW2 | Yes | Yes | Available | |
+| Strike | `mp_strike_sh` | COD4 | Yes | Yes | Available | |
 | Sub Base | `mp_subbase` | MW2 | Yes | Yes | Available | |
 | Trailer Park | `mp_trailerpark` | MW2 | Yes | Yes | Available | |
 | Underpass | `mp_underpass` | MW2 | Yes | Yes | Available | |
 | Vacant | `mp_vacant` | COD4 | Yes | Yes | Available | |
 | Wasteland | `mp_brecourt` | MW2 | Yes | Yes | Available | |
+| Wet Work | `mp_cargoship` | COD4 | Yes | Yes | Available | |
+| Winter Crash | `mp_crash_snow` | COD4 | Untested | No | Available | |
