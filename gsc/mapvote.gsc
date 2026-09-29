@@ -66,9 +66,12 @@ InitDvars()
     // selected randomly after the vote ends.
     SetDvarIfNotInitialized("mapvote_hide_modes", true);
 
-    SetDvarIfNotInitialized("mapvote_maps", "Seatown,mp_seatown:Dome,mp_dome:Bakaara,mp_mogadishu:Resistance,mp_paris:Bootleg,mp_bootleg:Hardhat,mp_hardhat:Lockdown,mp_alpha:Village,mp_village:Fallen,mp_lambeth:Mission,mp_bravo:Terminal,mp_terminal_cls:Boardwalk,mp_boardwalk:Off Shore,mp_roughneck:Highrise,mp_highrise:Karachi,mp_checkpoint:Nuketown,mp_nuked:Ambush,mp_convoy:Rust,mp_rust:Rust Long,mp_rust_long:Killhouse,mp_killhouse:Shipment,mp_shipment:Scrapyard,mp_boneyard:Skidrow,mp_nightshift:Sub Base,mp_subbase:Countdown,mp_countdown:Raid,mp_raid:Favela,mp_favela:Trailer Park,mp_trailerpark:Downpour,mp_farm:Vacant,mp_vacant:Wasteland,mp_brecourt:Salvage,mp_compact:Carbon,mp_carbon:Arkaden,mp_plaza2:Outpost,mp_radar:Underground,mp_underground:Aground,mp_aground_ss:Erosion,mp_courtyard_ss:Overwatch,mp_overwatch:Parish,mp_nola:Broadcast,mp_broadcast:Crash,mp_crash:Crossfire,mp_cross_fire:Derail,mp_derail:District,mp_citystreets:Estate,mp_estate:Overgrown,mp_overgrown:Pipeline,mp_pipeline:Showdown,mp_showdown_sh:Storm,mp_storm:Underpass,mp_underpass:Afghan,mp_afghan:Backlot,mp_backlot_sh:Bailout,mp_complex:Bog,mp_bog_sh:Firing Range,mp_firingrange:Wet Work,mp_cargoship:Strike,mp_strike_sh");
+    // Split the fallback pool so no single engine command or literal crosses
+    // IW5's 1,024-byte va() formatting buffer.
+    SetDvarIfNotInitialized("mapvote_maps", "Seatown,mp_seatown:Dome,mp_dome:Bakaara,mp_mogadishu:Resistance,mp_paris:Bootleg,mp_bootleg:Hardhat,mp_hardhat:Lockdown,mp_alpha:Village,mp_village:Fallen,mp_lambeth:Mission,mp_bravo:Terminal,mp_terminal_cls:Boardwalk,mp_boardwalk:Off Shore,mp_roughneck:Highrise,mp_highrise:Karachi,mp_checkpoint:Nuketown,mp_nuked:Ambush,mp_convoy:Rust,mp_rust:Rust Long,mp_rust_long:Killhouse,mp_killhouse:Shipment,mp_shipment:Scrapyard,mp_boneyard:Skidrow,mp_nightshift:Sub Base,mp_subbase:Countdown,mp_countdown:Raid,mp_raid:Favela,mp_favela:Trailer Park,mp_trailerpark:Downpour,mp_farm");
+    SetDvarIfNotInitialized("mapvote_maps_2", "Vacant,mp_vacant:Wasteland,mp_brecourt:Salvage,mp_compact:Carbon,mp_carbon:Arkaden,mp_plaza2:Outpost,mp_radar:Underground,mp_underground:Aground,mp_aground_ss:Erosion,mp_courtyard_ss:Overwatch,mp_overwatch:Parish,mp_nola:Broadcast,mp_broadcast:Crash,mp_crash:Crossfire,mp_cross_fire:Derail,mp_derail:District,mp_citystreets:Estate,mp_estate:Overgrown,mp_overgrown:Pipeline,mp_pipeline:Showdown,mp_showdown_sh:Storm,mp_storm:Underpass,mp_underpass:Afghan,mp_afghan:Backlot,mp_backlot_sh:Bailout,mp_complex:Bog,mp_bog_sh:Firing Range,mp_firingrange:Wet Work,mp_cargoship:Strike,mp_strike_sh");
     SetDvarIfNotInitialized("mapvote_modes", "Domination,DOM_HC_100hp:Drop Zone,DZ_HC_100hp");
-    SetDvarIfNotInitialized("mapvote_additional_maps_dvars", "");
+    SetDvarIfNotInitialized("mapvote_additional_maps_dvars", "mapvote_maps_2");
     SetDvarIfNotInitialized("mapvote_limits_maps", 12);
     SetDvarIfNotInitialized("mapvote_limits_modes", 0);
     SetDvarIfNotInitialized("mapvote_limits_max", 12);
@@ -119,21 +122,16 @@ InitDvars()
 
 InitVariables()
 {
-    mapsString = GetDvar("mapvote_maps");
+    mapsArray = StrTok(GetDvar("mapvote_maps"), ":");
 
     foreach (mapDvar in StrTok(GetDvar("mapvote_additional_maps_dvars"), ":"))
     {
-        if (mapsString == " ")
+        foreach (additionalMap in StrTok(GetDvar(mapDvar), ":"))
         {
-            mapsString = GetDvar(mapDvar);
-        }
-        else
-        {
-            mapsString = mapsString + ":" + GetDvar(mapDvar);
+            mapsArray[mapsArray.size] = additionalMap;
         }
     }
 
-    mapsArray = StrTok(mapsString, ":");
     voteLimits = [];
 
     modesArray = StrTok(GetDvar("mapvote_modes"), ":");
