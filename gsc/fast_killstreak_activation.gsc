@@ -12,6 +12,7 @@
         fun_mode_fast_uav_activation_enable
         fun_mode_fast_support_uav_activation_enable
         fun_mode_fast_counter_uav_activation_enable
+        fun_mode_fast_advanced_uav_activation_enable
         fun_mode_fast_emp_activation_enable
         fun_mode_fast_helicopter_activation_enable
         fun_mode_fast_ah6_activation_enable
@@ -25,6 +26,7 @@ main()
     setdvarifuninitialized( "fun_mode_fast_uav_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_support_uav_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_counter_uav_activation_enable", 1 );
+    setdvarifuninitialized( "fun_mode_fast_advanced_uav_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_emp_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_helicopter_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_ah6_activation_enable", 1 );
@@ -33,6 +35,7 @@ main()
     level.fastUavActivation = getdvarint( "fun_mode_fast_uav_activation_enable" );
     level.fastSupportUavActivation = getdvarint( "fun_mode_fast_support_uav_activation_enable" );
     level.fastCounterUavActivation = getdvarint( "fun_mode_fast_counter_uav_activation_enable" );
+    level.fastAdvancedUavActivation = getdvarint( "fun_mode_fast_advanced_uav_activation_enable" );
     level.fastEmpActivation = getdvarint( "fun_mode_fast_emp_activation_enable" );
     level.fastHelicopterActivation = getdvarint( "fun_mode_fast_helicopter_activation_enable" );
     level.fastAh6Activation = getdvarint( "fun_mode_fast_ah6_activation_enable" );
@@ -41,6 +44,7 @@ main()
     if ( !level.fastUavActivation &&
          !level.fastSupportUavActivation &&
          !level.fastCounterUavActivation &&
+         !level.fastAdvancedUavActivation &&
          !level.fastEmpActivation &&
          !level.fastHelicopterActivation &&
          !level.fastAh6Activation &&
@@ -70,6 +74,11 @@ getFastUavKillstreakWeapon( streakName )
 
     if ( streakName == "counter_uav" && level.fastCounterUavActivation )
         return "airdrop_tank_marker_mp";
+
+    // Advanced UAV is a Support reward, so it can safely reuse the Assault
+    // UAV marker without making two held Support rewards indistinguishable.
+    if ( streakName == "triple_uav" && level.fastAdvancedUavActivation )
+        return "airdrop_mega_marker_mp";
 
     if ( streakName == "emp" && level.fastEmpActivation )
         return "airdrop_juggernaut_mp";
