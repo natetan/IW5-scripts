@@ -97,6 +97,7 @@ See [BOTNAMES.md](./BOTNAMES.md) for details.
 │   └── bots/                    Modified Bot Warfare scripts
 ├── players/                     Player configuration files (.cfg)
 ├── BOTNAMES.md                  Bot name generator documentation
+├── FASTDL.md                    Dedicated-server FastDL operations
 ├── generate_iw5_bot_names.ps1
 ├── iw5_targets.ps1              Shared client/server target configuration
 ├── install_bot_scripts.ps1
@@ -163,6 +164,10 @@ The targets are `%LOCALAPPDATA%\Plutonium\storage\iw5` and
 `C:\gameserver\IW5`. Existing stock server files are preserved; matching
 overlay files are replaced. The same `-ClientOnly`, `-ServerOnly`, and
 `-ServerRoot` options shown above are supported.
+
+Custom-map binaries are maintained outside Git. See [FASTDL.md](./FASTDL.md)
+for the dedicated server's IIS layout, map synchronization process, validation
+steps, and sanitized Azure configuration overview.
 
 For the dedicated target, the installer also merges `players\normal.cfg` into
 the existing `admin\server.cfg` immediately before `sv_maprotation`. The block
