@@ -10481,9 +10481,16 @@ bots_watch_grnd()
 {
 	self endon( "death" );
 	self endon( "disconnect" );
+	self endon( "joined_team" );
 	self endon( "goal" );
 	self endon( "bad_path" );
 	self endon( "new_goal" );
+
+	if ( !isdefined( level.grnd_zone ) || !isdefined( level.grnd_zone.origin ) )
+	{
+		self notify( "bad_path" );
+		return;
+	}
 	
 	grnd_origin = level.grnd_zone.origin;
 	
@@ -10491,6 +10498,12 @@ bots_watch_grnd()
 	{
 		wait 1 + randomint( 5 ) * 0.5;
 		
+		if ( !isdefined( level.grnd_zone ) || !isdefined( level.grnd_zone.origin ) )
+		{
+			self notify( "bad_path" );
+			return;
+		}
+
 		if ( grnd_origin != level.grnd_zone.origin )
 		{
 			break;
@@ -10517,11 +10530,38 @@ bots_watch_grnd()
 */
 bot_grnd_loop()
 {
+	if (
+		!isdefined( self.pers ) ||
+		!isdefined( self.pers[ "team" ] ) ||
+		self.pers[ "team" ] == "spectator" ||
+		!isdefined( self.team ) ||
+		!isdefined( level.otherteam ) ||
+		!isdefined( level.otherteam[ self.pers[ "team" ] ] ) ||
+		!isdefined( level.grnd_numplayers ) ||
+		!isdefined( level.players ) ||
+		!isdefined( level.grnd_zone ) ||
+		!isdefined( level.grnd_zone.origin )
+	)
+	{
+		return;
+	}
+
+	team = self.pers[ "team" ];
+	enemyTeam = level.otherteam[ team ];
+
+	if (
+		!isdefined( level.grnd_numplayers[ team ] ) ||
+		!isdefined( level.grnd_numplayers[ enemyTeam ] )
+	)
+	{
+		return;
+	}
+
 	if ( isdefined( self.ingrindzone ) && self.ingrindzone && isreallyalive( self ) && self.pers[ "team" ] != "spectator" && self maps\mp\gametypes\grnd::isingrindzone() )
 	{
 		// in the grnd zone
 		
-		if ( level.grnd_numplayers[ level.otherteam[ self.team ] ] )
+		if ( level.grnd_numplayers[ enemyTeam ] )
 		{
 			// hunt enemy in drop zone
 			target = undefined;
@@ -10530,7 +10570,16 @@ bot_grnd_loop()
 			{
 				player = level.players[ i ];
 				
-				if ( isdefined( player.ingrindzone ) && player.ingrindzone && isreallyalive( player ) && player.pers[ "team" ] != "spectator" && player maps\mp\gametypes\grnd::isingrindzone() )
+				if (
+					isdefined( player ) &&
+					isdefined( player.pers ) &&
+					isdefined( player.pers[ "team" ] ) &&
+					player.pers[ "team" ] == enemyTeam &&
+					isdefined( player.ingrindzone ) &&
+					player.ingrindzone &&
+					isreallyalive( player ) &&
+					player maps\mp\gametypes\grnd::isingrindzone()
+				)
 				{
 					target = player;
 					
@@ -10566,7 +10615,14 @@ bot_grnd_loop()
 			
 			while ( self HasScriptGoal() && self GetScriptGoal() == goal && self maps\mp\gametypes\grnd::isingrindzone() )
 			{
-				if ( level.grnd_numplayers[ level.otherteam[ self.team ] ] )
+				if (
+					!isdefined( self.pers ) ||
+					!isdefined( self.pers[ "team" ] ) ||
+					self.pers[ "team" ] != team ||
+					!isdefined( level.grnd_numplayers ) ||
+					!isdefined( level.grnd_numplayers[ enemyTeam ] ) ||
+					level.grnd_numplayers[ enemyTeam ]
+				)
 				{
 					break;
 				}
@@ -10587,7 +10643,7 @@ bot_grnd_loop()
 		return;
 	}
 	
-	if ( randomint( 100 ) < 40 || level.grnd_numplayers[ self.team ] <= 0 )
+	if ( randomint( 100 ) < 40 || level.grnd_numplayers[ team ] <= 0 )
 	{
 		self BotNotifyBotEvent( "grnd", "start", "go_cap" );
 		
@@ -10614,6 +10670,7 @@ bot_grnd()
 {
 	self endon( "death" );
 	self endon( "disconnect" );
+	self endon( "joined_team" );
 	level endon( "game_ended" );
 	
 	if ( level.gametype != "grnd" )
@@ -10625,12 +10682,18 @@ bot_grnd()
 	{
 		wait( randomintrange( 1, 3 ) );
 		
-		if ( self isusingremote() || self.bot_lock_goal )
+		if ( self isusingremote() || ( isdefined( self.bot_lock_goal ) && self.bot_lock_goal ) )
 		{
 			continue;
 		}
 		
-		if ( !isdefined( level.grnd_zone ) )
+		if (
+			!isdefined( self.pers ) ||
+			!isdefined( self.pers[ "team" ] ) ||
+			self.pers[ "team" ] == "spectator" ||
+			!isdefined( level.grnd_zone ) ||
+			!isdefined( level.grnd_zone.origin )
+		)
 		{
 			continue;
 		}
