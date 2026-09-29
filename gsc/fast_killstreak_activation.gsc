@@ -13,6 +13,7 @@
         fun_mode_fast_support_uav_activation_enable
         fun_mode_fast_counter_uav_activation_enable
         fun_mode_fast_advanced_uav_activation_enable
+        fun_mode_fast_recon_pulse_activation_enable
         fun_mode_fast_emp_activation_enable
         fun_mode_fast_helicopter_activation_enable
         fun_mode_fast_ah6_activation_enable
@@ -27,6 +28,7 @@ main()
     setdvarifuninitialized( "fun_mode_fast_support_uav_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_counter_uav_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_advanced_uav_activation_enable", 1 );
+    setdvarifuninitialized( "fun_mode_fast_recon_pulse_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_emp_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_helicopter_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_ah6_activation_enable", 1 );
@@ -36,6 +38,7 @@ main()
     level.fastSupportUavActivation = getdvarint( "fun_mode_fast_support_uav_activation_enable" );
     level.fastCounterUavActivation = getdvarint( "fun_mode_fast_counter_uav_activation_enable" );
     level.fastAdvancedUavActivation = getdvarint( "fun_mode_fast_advanced_uav_activation_enable" );
+    level.fastReconPulseActivation = getdvarint( "fun_mode_fast_recon_pulse_activation_enable" );
     level.fastEmpActivation = getdvarint( "fun_mode_fast_emp_activation_enable" );
     level.fastHelicopterActivation = getdvarint( "fun_mode_fast_helicopter_activation_enable" );
     level.fastAh6Activation = getdvarint( "fun_mode_fast_ah6_activation_enable" );
@@ -45,6 +48,7 @@ main()
          !level.fastSupportUavActivation &&
          !level.fastCounterUavActivation &&
          !level.fastAdvancedUavActivation &&
+         !level.fastReconPulseActivation &&
          !level.fastEmpActivation &&
          !level.fastHelicopterActivation &&
          !level.fastAh6Activation &&
@@ -79,6 +83,11 @@ getFastUavKillstreakWeapon( streakName )
     // UAV marker without making two held Support rewards indistinguishable.
     if ( streakName == "triple_uav" && level.fastAdvancedUavActivation )
         return "airdrop_mega_marker_mp";
+
+    // Recon Pulse replaces the Support Recon Drone. Reuse an Assault-package
+    // marker so it remains distinct from every other held Support reward.
+    if ( streakName == "remote_uav" && level.fastReconPulseActivation )
+        return "airdrop_trap_marker_mp";
 
     if ( streakName == "emp" && level.fastEmpActivation )
         return "airdrop_juggernaut_mp";
