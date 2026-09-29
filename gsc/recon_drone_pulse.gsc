@@ -188,5 +188,8 @@ clearReconPulseTagAfterDelay( owner, markId, duration )
     }
 
     self.uavremotemarkedby = undefined;
-    self unsetperk( "specialty_radarblip", 1 );
+
+    // An active Advanced UAV may still be revealing this Assassin user.
+    if ( !isdefined( self.funModeAdvancedUavRevealed ) )
+        self unsetperk( "specialty_radarblip", 1 );
 }
