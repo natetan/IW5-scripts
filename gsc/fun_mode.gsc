@@ -63,6 +63,8 @@
       classes with a refreshable five-second UAV for the player's team.
     - Disables MW3's post-spawn killstreak damage cap for more lethal,
       MW2-style player-controlled streaks.
+    - Multiplies Reaper missile damage by a configurable amount so accurate
+      strikes are less likely to produce nonlethal hitmarkers.
     - Assists team changes in full 9v9 bot lobbies by temporarily removing a
       destination-team bot, then restoring the configured fill target so Bot
       Warfare replaces it on the team the human left.
@@ -87,6 +89,7 @@ Main()
     SetDvarIfNotInitialized("fun_mode_blast_shield_damage", 0.25);
     SetDvarIfNotInitialized("fun_mode_javelin_damage_multiplier", 10.0);
     SetDvarIfNotInitialized("fun_mode_noobtube_damage_multiplier", 3.0);
+    SetDvarIfNotInitialized("fun_mode_reaper_damage_multiplier", 1.5);
     SetDvarIfNotInitialized("fun_mode_shotgun_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_1887_damage_multiplier", 4.0);
     SetDvarIfNotInitialized("fun_mode_silenced_shotgun_damage_multiplier", 5.0);
@@ -358,6 +361,11 @@ GetFunModeWeaponDamageMultiplier(weapon, meansOfDeath)
     if (weapon == "javelin_mp")
     {
         return GetDvarFloat("fun_mode_javelin_damage_multiplier");
+    }
+
+    if (weapon == "remote_mortar_missile_mp")
+    {
+        return GetDvarFloat("fun_mode_reaper_damage_multiplier");
     }
 
     if (IsScavengerNoobTube(weapon))
