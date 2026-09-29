@@ -42,8 +42,12 @@
       whole round and capped at its normal clip capacity.
     - Gives the AA-12 that same 25-percent magazine refill on every kill even
       without the full Specialist Bonus.
-    - Doubles player damage from the SPAS-12, KSG 12, Model 1887, and AA-12,
-      including variants containing compatible attachments, camos, and reticles.
+    - Doubles player damage from the SPAS-12, KSG 12, and AA-12, while the
+      attachment-free Model 1887 receives quadruple damage.
+      Silenced shotguns instead receive dedicated multipliers: quintuple damage
+      for the SPAS-12 and KSG 12, triple damage for the AA-12 and USAS-12, and
+      double damage for the Striker. Attachment combinations, camos, and
+      reticles remain supported.
     - Gives all players two-stage Quick Fix healing: a strong recovery burst
       below normal health, followed by non-regenerating overhealth up to a
       configurable percentage of their normal maximum. A progressively
@@ -84,6 +88,10 @@ Main()
     SetDvarIfNotInitialized("fun_mode_javelin_damage_multiplier", 10.0);
     SetDvarIfNotInitialized("fun_mode_noobtube_damage_multiplier", 3.0);
     SetDvarIfNotInitialized("fun_mode_shotgun_damage_multiplier", 2.0);
+    SetDvarIfNotInitialized("fun_mode_1887_damage_multiplier", 4.0);
+    SetDvarIfNotInitialized("fun_mode_silenced_shotgun_damage_multiplier", 5.0);
+    SetDvarIfNotInitialized("fun_mode_silenced_auto_shotgun_damage_multiplier", 3.0);
+    SetDvarIfNotInitialized("fun_mode_silenced_striker_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_bolt_sniper_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_as50_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_mp412_damage_multiplier", 3.0);
@@ -408,10 +416,39 @@ GetFunModeWeaponDamageMultiplier(weapon, meansOfDeath)
 
     if (
         isBulletDamage &&
+        IsFunModeShotgun(weapon) &&
+        IsSubStr(weapon, "_silencer")
+    )
+    {
+        if (IsSubStr(weapon, "iw5_striker_mp"))
+        {
+            return GetDvarFloat("fun_mode_silenced_striker_damage_multiplier");
+        }
+
+        if (
+            IsSubStr(weapon, "iw5_aa12_mp") ||
+            IsSubStr(weapon, "iw5_usas12_mp")
+        )
+        {
+            return GetDvarFloat("fun_mode_silenced_auto_shotgun_damage_multiplier");
+        }
+
+        return GetDvarFloat("fun_mode_silenced_shotgun_damage_multiplier");
+    }
+
+    if (
+        isBulletDamage &&
+        IsSubStr(weapon, "iw5_1887_mp")
+    )
+    {
+        return GetDvarFloat("fun_mode_1887_damage_multiplier");
+    }
+
+    if (
+        isBulletDamage &&
         (
             IsSubStr(weapon, "iw5_spas12_mp") ||
             IsSubStr(weapon, "iw5_ksg_mp") ||
-            IsSubStr(weapon, "iw5_1887_mp") ||
             IsSubStr(weapon, "iw5_aa12_mp")
         )
     )
@@ -420,6 +457,17 @@ GetFunModeWeaponDamageMultiplier(weapon, meansOfDeath)
     }
 
     return 1.0;
+}
+
+IsFunModeShotgun(weapon)
+{
+    return (
+        IsSubStr(weapon, "iw5_spas12_mp") ||
+        IsSubStr(weapon, "iw5_aa12_mp") ||
+        IsSubStr(weapon, "iw5_striker_mp") ||
+        IsSubStr(weapon, "iw5_usas12_mp") ||
+        IsSubStr(weapon, "iw5_ksg_mp")
+    );
 }
 
 OnPlayerConnect()
