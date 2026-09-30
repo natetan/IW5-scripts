@@ -2916,15 +2916,16 @@ botGiveLoadout( team, class, allowCopycat, setPrimarySpawnWeapon ) // setPrimary
 	}
 	else if ( class == "juggernaut" )
 	{
-		loadoutPrimary = "iw5_acr";
-		loadoutPrimaryAttachment = "reflex";
+		// Mirror the human Assault Juggernaut loadout.
+		loadoutPrimary = "iw5_ksg";
+		loadoutPrimaryAttachment = "silencer03";
 		loadoutPrimaryAttachment2 = "xmags";
 		loadoutPrimaryBuff = "specialty_null";
 		loadoutPrimaryCamo = "none";
 		loadoutPrimaryReticle = "none";
-		loadoutSecondary = "iw5_mp9";
-		loadoutSecondaryAttachment = "reflex";
-		loadoutSecondaryAttachment2 = "xmags";
+		loadoutSecondary = "iw5_deserteagle";
+		loadoutSecondaryAttachment = "tactical";
+		loadoutSecondaryAttachment2 = "none";
 		loadoutSecondaryBuff = "specialty_null";
 		loadoutSecondaryCamo = "none";
 		loadoutSecondaryReticle = "none";

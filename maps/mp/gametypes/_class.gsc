@@ -763,15 +763,17 @@ giveLoadout( team, class, allowCopycat, setPrimarySpawnWeapon )
 	}
 	else if ( class == "juggernaut" )
 	{
-		loadoutPrimary = "iw5_acr";
-		loadoutPrimaryAttachment = "reflex";
+		// Keep the Assault Juggernaut dangerous up close without giving its
+		// enormous health pool the stock ACR's effortless ranged pressure.
+		loadoutPrimary = "iw5_ksg";
+		loadoutPrimaryAttachment = "silencer03";
 		loadoutPrimaryAttachment2 = "xmags";
 		loadoutPrimaryBuff = "specialty_null";
 		loadoutPrimaryCamo = "none";
 		loadoutPrimaryReticle = "none";
-		loadoutSecondary = "iw5_mp9";
-		loadoutSecondaryAttachment = "reflex";
-		loadoutSecondaryAttachment2 = "xmags";
+		loadoutSecondary = "iw5_deserteagle";
+		loadoutSecondaryAttachment = "tactical";
+		loadoutSecondaryAttachment2 = "none";
 		loadoutSecondaryBuff = "specialty_null";
 		loadoutSecondaryCamo = "none";
 		loadoutSecondaryReticle = "none";
