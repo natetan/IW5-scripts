@@ -56,6 +56,8 @@
       the full Specialist Lightweight bonus during the same spawn sequence.
     - Raises the Barrett and AS50's 80-percent movement speed to the standard
       sniper-rifle 90-percent tier while composing with other speed bonuses.
+    - Gives Extreme Conditioning a configurable sprint-only speed multiplier
+      that composes with other movement effects without changing walking speed.
     - Gives all players brief, escalating kill momentum: consecutive kills
       refresh the timer and raise movement speed to a conservative cap, then
       momentum decays one stack at a time instead of disappearing at once.
@@ -118,6 +120,8 @@ Main()
     SetDvarIfNotInitialized("fun_mode_kill_momentum_max_stacks", 5);
     SetDvarIfNotInitialized("fun_mode_heavy_sniper_speed_enable", 1);
     SetDvarIfNotInitialized("fun_mode_heavy_sniper_speed_multiplier", 1.125);
+    SetDvarIfNotInitialized("fun_mode_extreme_conditioning_sprint_speed_enable", 1);
+    SetDvarIfNotInitialized("fun_mode_extreme_conditioning_sprint_speed_multiplier", 1.10);
     SetDvarIfNotInitialized("fun_mode_post_specialist_enable", 1);
     SetDvarIfNotInitialized("fun_mode_post_specialist_kills", 3);
     SetDvarIfNotInitialized("fun_mode_post_specialist_uav_duration", 5);
@@ -489,6 +493,7 @@ OnPlayerConnect()
         player thread WatchKillMomentum();
         player thread WatchKillMomentumSpawns();
         player thread WatchHeavySniperMovement();
+        player thread WatchExtremeConditioningSprintSpawns();
         player thread WatchKillAmmoRefills();
 
         if (player IsBotPlayer())
@@ -1328,6 +1333,58 @@ WatchKillMomentumSpawns()
     }
 }
 
+WatchExtremeConditioningSprintSpawns()
+{
+    self endon("disconnect");
+
+    for (;;)
+    {
+        self waittill("spawned_player");
+        self.fun_mode_extreme_conditioning_sprinting = false;
+        self thread WatchExtremeConditioningSprintLife();
+    }
+}
+
+WatchExtremeConditioningSprintLife()
+{
+    self endon("disconnect");
+    self endon("death");
+    self endon("spawned_player");
+
+    for (;;)
+    {
+        self waittill("sprint_begin");
+        self.fun_mode_extreme_conditioning_sprinting = true;
+        self RefreshFunModeMovementSpeed();
+
+        self waittill("sprint_end");
+        self.fun_mode_extreme_conditioning_sprinting = false;
+        self RefreshFunModeMovementSpeed();
+    }
+}
+
+GetExtremeConditioningSprintSpeedMultiplier()
+{
+    if (
+        !GetDvarInt("fun_mode_extreme_conditioning_sprint_speed_enable") ||
+        !IsDefined(self.fun_mode_extreme_conditioning_sprinting) ||
+        !self.fun_mode_extreme_conditioning_sprinting ||
+        !self maps\mp\_utility::_hasPerk("specialty_longersprint")
+    )
+    {
+        return 1.0;
+    }
+
+    multiplier = GetDvarFloat("fun_mode_extreme_conditioning_sprint_speed_multiplier");
+
+    if (multiplier < 1.0)
+    {
+        multiplier = 1.0;
+    }
+
+    return multiplier;
+}
+
 GetFunModeBaseMoveSpeed()
 {
     speed = 1.0;
@@ -1349,7 +1406,9 @@ GetFunModeBaseMoveSpeed()
         speed = maps\mp\_utility::lightweightScalar();
     }
 
-    return speed * (self GetHeavySniperMoveSpeedMultiplier());
+    return speed *
+        (self GetHeavySniperMoveSpeedMultiplier()) *
+        (self GetExtremeConditioningSprintSpeedMultiplier());
 }
 
 GetHeavySniperMoveSpeedMultiplier()
@@ -1413,7 +1472,9 @@ ApplyActiveKillMomentumSpeed()
         return;
     }
 
-    speed = self.fun_mode_kill_momentum_speed * (self GetHeavySniperMoveSpeedMultiplier());
+    speed = self.fun_mode_kill_momentum_speed *
+        (self GetHeavySniperMoveSpeedMultiplier()) *
+        (self GetExtremeConditioningSprintSpeedMultiplier());
     baseSpeed = self GetFunModeBaseMoveSpeed();
 
     if (speed < baseSpeed)
@@ -1423,6 +1484,12 @@ ApplyActiveKillMomentumSpeed()
 
     self.moveSpeedScaler = speed;
     self maps\mp\gametypes\_weapons::updateMoveSpeedScale();
+}
+
+RefreshFunModeMovementSpeed()
+{
+    self RestoreFunModeBaseMoveSpeed();
+    self ApplyActiveKillMomentumSpeed();
 }
 
 WatchKillMomentum()
