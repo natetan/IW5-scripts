@@ -105,7 +105,7 @@ retain their source game's lineage where applicable.
 | Backlot | `mp_backlot_sh` | COD4 | Yes | Yes | Available | |
 | Bailout | `mp_complex` | MW2 | Yes | Yes | Available | |
 | Bog | `mp_bog_sh` | COD4 | Yes | Yes | Available | |
-| Broadcast | `mp_broadcast` | COD4 | Yes | Yes | Available | |
+| Broadcast | `mp_broadcast` | COD4 | Yes | Yes | Available | DOM works; Drop Zone crashes and is remapped to DOM or Kill Confirmed. |
 | Carnival | `mp_abandon` | MW2 | Yes | No | Missing | Playable, but excluded because bots lack waypoints. |
 | Countdown | `mp_countdown` | COD4 | Yes | Yes | Available | |
 | Crash | `mp_crash` | COD4 | Yes | Yes | Available | |

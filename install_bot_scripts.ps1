@@ -32,6 +32,8 @@ $clientRoot = Join-Path $env:LOCALAPPDATA "Plutonium\storage\iw5"
 $clientIwdPath = Join-Path $clientRoot "z_svr_bots.iwd"
 $winRar = Get-WinRarPath
 
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+
 if (-not (Test-Path -LiteralPath $sourceBotsFolder -PathType Container)) {
     throw "Could not find source folder: $sourceBotsFolder"
 }
@@ -89,6 +91,46 @@ function Invoke-WinRar {
     }
 }
 
+function Assert-IwdEntries {
+    param(
+        [Parameter(Mandatory)]
+        [string] $IwdPath,
+
+        [Parameter(Mandatory)]
+        [string[]] $ExpectedEntries
+    )
+
+    $archive = [System.IO.Compression.ZipFile]::OpenRead($IwdPath)
+
+    try {
+        $archiveEntries = @{}
+
+        foreach ($entry in $archive.Entries) {
+            $normalizedName = $entry.FullName.Replace("\", "/").ToLowerInvariant()
+            $archiveEntries[$normalizedName] = $true
+        }
+
+        $missingEntries = @(
+            foreach ($expectedEntry in $ExpectedEntries) {
+                $normalizedExpected = $expectedEntry.Replace("\", "/").ToLowerInvariant()
+
+                if (-not $archiveEntries.ContainsKey($normalizedExpected)) {
+                    $expectedEntry
+                }
+            }
+        )
+
+        if ($missingEntries.Count -gt 0) {
+            throw "Archive validation failed for $IwdPath. Missing entries:`n  $($missingEntries -join "`n  ")"
+        }
+    }
+    finally {
+        $archive.Dispose()
+    }
+
+    Write-Host "  Verified $($ExpectedEntries.Count) expected archive entries." -ForegroundColor Green
+}
+
 $targets = @(Get-Iw5Targets `
     -ServerRoot $ServerRoot `
     -ClientOnly:$ClientOnly `
@@ -97,6 +139,15 @@ $targets = @(Get-Iw5Targets `
 $stagingRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("iw5-bot-install-" + [guid]::NewGuid().ToString("N"))
 $stagedBotsFolder = Join-Path $stagingRoot "maps\mp\bots"
 $stagedWaypointsFolder = Join-Path $stagingRoot "scripts\mp"
+$expectedEntries = @(
+    foreach ($file in $botFiles) {
+        "maps/mp/bots/$($file.Name)"
+    }
+
+    foreach ($file in $waypointFiles) {
+        "scripts/mp/$($file.Directory.Name)/$($file.Name)"
+    }
+)
 
 try {
     New-Item -ItemType Directory -Force -Path $stagedBotsFolder, $stagedWaypointsFolder | Out-Null
@@ -154,6 +205,8 @@ try {
                 "maps",
                 "scripts"
             )
+
+        Assert-IwdEntries -IwdPath $iwdPath -ExpectedEntries $expectedEntries
 
         Write-Host "Updated: $iwdPath" -ForegroundColor Green
     }

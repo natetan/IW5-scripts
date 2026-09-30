@@ -642,6 +642,24 @@ ListenForEndVote()
     modeDsr = level.mapvote["modes"]["by_name"][level.mapvote["modes"]["by_index"][mostVotedModeIndex]];
     mapName = level.mapvote["maps"]["by_name"][level.mapvote["maps"]["by_index"][mostVotedMapIndex]];
 
+    // Broadcast crashes when loaded with Drop Zone. Keep it in rotation, but
+    // replace a selected DZ recipe with one of its verified modes.
+    if (mapName == "mp_broadcast" && IsSubStr(modeDsr, "DZ_"))
+    {
+        if (RandomInt(2) == 0)
+        {
+            modeName = "Domination";
+            modeDsr = "DOM_HC_100hp";
+        }
+        else
+        {
+            modeName = "Kill Confirmed";
+            modeDsr = "KC_HC";
+        }
+
+        Print("[MAPVOTE] mp_broadcast does not support Drop Zone; forcing " + modeDsr + ".");
+    }
+
     // These maps do not provide the grnd_dropZone entities required by Drop
     // Zone. Match the recipe family so renamed DZ recipes stay safe.
     if (
