@@ -134,7 +134,7 @@ retain their source game's lineage where applicable.
 | Showdown | `mp_showdown_sh` | COD4 | Yes | Yes | Available | |
 | Skidrow | `mp_nightshift` | MW2 | Yes | Yes | Available | |
 | Storm | `mp_storm` | MW2 | Yes | Yes | Available | |
-| Strike | `mp_strike_sh` | COD4 | Yes | Yes | Available | |
+| Strike | `mp_strike_sh` | COD4 | Yes | Yes | Available | DOM works; Drop Zone is unsupported and is remapped to DOM. |
 | Sub Base | `mp_subbase` | MW2 | Yes | Yes | Available | |
 | Trailer Park | `mp_trailerpark` | MW2 | Yes | Yes | Available | |
 | Underpass | `mp_underpass` | MW2 | Yes | Yes | Available | |

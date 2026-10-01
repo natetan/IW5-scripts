@@ -663,7 +663,12 @@ ListenForEndVote()
     // These maps do not provide the grnd_dropZone entities required by Drop
     // Zone. Match the recipe family so renamed DZ recipes stay safe.
     if (
-        (mapName == "mp_rust" || mapName == "mp_rust_long" || mapName == "mp_crash") &&
+        (
+            mapName == "mp_rust" ||
+            mapName == "mp_rust_long" ||
+            mapName == "mp_crash" ||
+            mapName == "mp_strike_sh"
+        ) &&
         IsSubStr(modeDsr, "DZ_")
     )
     {
