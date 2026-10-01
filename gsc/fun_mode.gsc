@@ -35,15 +35,15 @@
       round to each pistol when the killing weapon is an Akimbo variant.
     - Reloads one Javelin missile after a Javelin kill, including delayed kills
       that occur after the player has switched back to another weapon.
-    - Triples underbarrel grenade-launcher damage and restores one tube round
-      after a kill, capped by the configured Scavenger tube capacity.
+    - Triples underbarrel grenade-launcher damage and restores one loaded tube
+      round after a kill, capped by the launcher's clip capacity.
     - After genuinely earning the full Specialist Bonus, every firearm kill
       restores 25 percent of that weapon's magazine, rounded to the nearest
       whole round and capped at its normal clip capacity.
     - Gives the AA-12 that same 25-percent magazine refill on every kill even
       without the full Specialist Bonus.
     - Doubles player damage from the SPAS-12, KSG 12, and AA-12, while the
-      attachment-free Model 1887 receives quadruple damage.
+      attachment-free Model 1887 receives quintuple damage.
       Silenced shotguns instead receive dedicated multipliers: quintuple damage
       for the SPAS-12 and KSG 12, triple damage for the AA-12 and USAS-12, and
       double damage for the Striker. Attachment combinations, camos, and
@@ -93,7 +93,7 @@ Main()
     SetDvarIfNotInitialized("fun_mode_noobtube_damage_multiplier", 3.0);
     SetDvarIfNotInitialized("fun_mode_reaper_damage_multiplier", 1.5);
     SetDvarIfNotInitialized("fun_mode_shotgun_damage_multiplier", 2.0);
-    SetDvarIfNotInitialized("fun_mode_1887_damage_multiplier", 4.0);
+    SetDvarIfNotInitialized("fun_mode_1887_damage_multiplier", 5.0);
     SetDvarIfNotInitialized("fun_mode_silenced_shotgun_damage_multiplier", 5.0);
     SetDvarIfNotInitialized("fun_mode_silenced_auto_shotgun_damage_multiplier", 3.0);
     SetDvarIfNotInitialized("fun_mode_silenced_striker_damage_multiplier", 2.0);
@@ -538,7 +538,11 @@ WatchKillAmmoRefills()
             IsScavengerNoobTube(weapon)
         )
         {
-            self RefillOwnedNoobTubeAmmo(1);
+            // Underbarrel launchers consume their loaded clip directly. The
+            // reserve-stock path used by Scavenger does not immediately make
+            // another shot available, while the Specialist magazine-refill
+            // path proves that restoring the tube clip does.
+            self RefillWeaponClipByRounds(weapon, 1);
         }
 
         if (
