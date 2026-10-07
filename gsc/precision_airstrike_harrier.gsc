@@ -20,11 +20,36 @@ main()
     // array of plane entities and as a numeric Harrier counter. Keep our count
     // separate so the stock plane list remains an array.
     level.funModeHarrierCount = 0;
+    level.funModeLastEmpPlayer = undefined;
+
+    level thread watchEmpUsers();
 
     replacefunc(
         maps\mp\killstreaks\_airstrike::tryuseprecisionairstrike,
         ::tryuseprecisionairstrikeasHarrier
     );
+}
+
+watchEmpUsers()
+{
+    level endon( "game_ended" );
+
+    for ( ;; )
+    {
+        level waittill( "connected", player );
+        player thread rememberEmpUsage();
+    }
+}
+
+rememberEmpUsage()
+{
+    self endon( "disconnect" );
+
+    for ( ;; )
+    {
+        self waittill( "used_emp" );
+        level.funModeLastEmpPlayer = self;
+    }
 }
 
 tryuseprecisionairstrikeasHarrier( lifeId )
@@ -176,20 +201,66 @@ destroyHarrierOnEmp( owner )
 
     for (;;)
     {
-        // Stock EMP damage is halved by the dormant Harrier callback, leaving
-        // its 3000-health airframe alive at 500 health. Route an EMP through
-        // the Harrier's normal death/crash sequence instead. Check before
-        // waiting so an EMP already in progress also destroys a newly spawned
-        // hovering Harrier.
-        if ( isdefined( owner ) && owner maps\mp\_utility::isemped() )
+        empAttacker = getHarrierEmpAttacker( owner );
+
+        if ( isdefined( empAttacker ) )
         {
-            self.health = 0;
-            self notify( "death" );
+            /*
+                The Harrier callback halves unrecognized weapon damage, so
+                the stock EMP's 5000 damage leaves this 3000-health aircraft
+                alive. Send 7000 through the native callback instead. Its
+                halved 3500 damage remains lethal while preserving the normal
+                hitmarker, 300 XP, player-card splash, mission progress, and
+                destroyed_killstreak notification for the EMP/MOAB owner.
+            */
+            self notify(
+                "damage",
+                7000,
+                empAttacker,
+                ( 0.0, 0.0, 0.0 ),
+                ( 0.0, 0.0, 0.0 ),
+                "MOD_EXPLOSIVE",
+                "",
+                "",
+                "",
+                undefined,
+                "killstreak_emp_mp"
+            );
             return;
         }
 
-        level waittill( "emp_update" );
+        // Ordinary EMP and MOAB EMP maintain separate state and emit separate
+        // update events. Wake for either so both effects destroy the Harrier.
+        level common_scripts\utility::waittill_either(
+            "emp_update",
+            "nuke_emp_update"
+        );
     }
+}
+
+getHarrierEmpAttacker( owner )
+{
+    if ( !isdefined( owner ) )
+        return undefined;
+
+    if (
+        owner maps\mp\_utility::isnuked() &&
+        isdefined( level.nukeinfo ) &&
+        isdefined( level.nukeinfo.player )
+    )
+    {
+        return level.nukeinfo.player;
+    }
+
+    if (
+        owner maps\mp\_utility::isemped() &&
+        isdefined( level.funModeLastEmpPlayer )
+    )
+    {
+        return level.funModeLastEmpPlayer;
+    }
+
+    return undefined;
 }
 
 removeHarrierDangerCenter( targetOrigin )

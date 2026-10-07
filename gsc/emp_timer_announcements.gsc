@@ -1,10 +1,9 @@
 /*
     EMP timer announcements - IW5 / Plutonium
 
-    Uses the stock EMP and MOAB EMP countdowns as sources of truth. While
-    either effect is active, announce its remaining duration every ten
-    seconds, then every second from five through one. A newly activated effect
-    naturally restarts its announcements when the corresponding timer resets.
+    Uses the stock EMP and MOAB EMP countdowns as sources of truth. When both
+    effects overlap, only the longer effective duration is announced. Report
+    that duration every ten seconds, then every second from five through one.
 */
 
 main()
@@ -12,99 +11,94 @@ main()
     setdvarifuninitialized( "fun_mode_emp_timer_announcements_enable", 1 );
     setdvarifuninitialized( "fun_mode_moab_emp_timer_announcements_enable", 1 );
 
-    if ( getdvarint( "fun_mode_emp_timer_announcements_enable" ) )
-        level thread watchEmpTimerAnnouncements();
-
-    if ( getdvarint( "fun_mode_moab_emp_timer_announcements_enable" ) )
-        level thread watchMoabEmpTimerAnnouncements();
+    if (
+        getdvarint( "fun_mode_emp_timer_announcements_enable" ) ||
+        getdvarint( "fun_mode_moab_emp_timer_announcements_enable" )
+    )
+    {
+        level thread watchEffectiveEmpTimerAnnouncements();
+    }
 }
 
-watchEmpTimerAnnouncements()
+watchEffectiveEmpTimerAnnouncements()
 {
     level endon( "game_ended" );
 
     lastAnnouncedTime = -1;
-    expirationAnnounced = false;
+    lastAnnouncedLabel = "";
+    lastActiveLabel = "EMP";
     wasActive = false;
 
     for ( ;; )
     {
-        if ( !isEmpCurrentlyActive() )
+        state = getEffectiveEmpTimerState();
+
+        if ( !state["active"] )
         {
-            if ( wasActive && !expirationAnnounced )
-                announceEmpTimer( "EMP", "effects have expired." );
+            if ( wasActive )
+                announceEmpTimer( lastActiveLabel, "effects have expired." );
 
             lastAnnouncedTime = -1;
-            expirationAnnounced = false;
+            lastAnnouncedLabel = "";
             wasActive = false;
             wait 0.1;
             continue;
         }
 
         wasActive = true;
-        remaining = level.emptimeremaining;
+        remaining = state["remaining"];
+        label = state["label"];
+        lastActiveLabel = label;
 
         if (
             remaining > 0 &&
-            remaining != lastAnnouncedTime &&
+            (
+                remaining != lastAnnouncedTime ||
+                label != lastAnnouncedLabel
+            ) &&
             ( remaining % 10 == 0 || remaining <= 5 )
         )
         {
-            announceEmpTimer( "EMP", remaining + " seconds remaining." );
+            announceEmpTimer( label, remaining + " seconds remaining." );
             lastAnnouncedTime = remaining;
-        }
-        else if ( remaining <= 0 && !expirationAnnounced )
-        {
-            announceEmpTimer( "EMP", "effects have expired." );
-            expirationAnnounced = true;
+            lastAnnouncedLabel = label;
         }
 
         wait 0.1;
     }
 }
 
-watchMoabEmpTimerAnnouncements()
+getEffectiveEmpTimerState()
 {
-    level endon( "game_ended" );
+    state = [];
+    state["active"] = false;
+    state["remaining"] = 0;
+    state["label"] = "EMP";
 
-    lastAnnouncedTime = -1;
-    expirationAnnounced = false;
-    wasActive = false;
-
-    for ( ;; )
+    if (
+        getdvarint( "fun_mode_emp_timer_announcements_enable" ) &&
+        isEmpCurrentlyActive()
+    )
     {
-        if ( !isMoabEmpCurrentlyActive() )
-        {
-            if ( wasActive && !expirationAnnounced )
-                announceEmpTimer( "MOAB EMP", "effects have expired." );
-
-            lastAnnouncedTime = -1;
-            expirationAnnounced = false;
-            wasActive = false;
-            wait 0.1;
-            continue;
-        }
-
-        wasActive = true;
-        remaining = level.nukeemptimeremaining;
-
-        if (
-            remaining > 0 &&
-            remaining != lastAnnouncedTime &&
-            ( remaining % 10 == 0 || remaining <= 5 )
-        )
-        {
-            announceEmpTimer( "MOAB EMP", remaining + " seconds remaining." );
-            lastAnnouncedTime = remaining;
-        }
-        else if ( remaining <= 0 && !expirationAnnounced )
-        {
-            announceEmpTimer( "MOAB EMP", "effects have expired." );
-            expirationAnnounced = true;
-        }
-
-        wait 0.1;
+        state["active"] = true;
+        state["remaining"] = level.emptimeremaining;
     }
+
+    if (
+        getdvarint( "fun_mode_moab_emp_timer_announcements_enable" ) &&
+        isMoabEmpCurrentlyActive() &&
+        (
+            !state["active"] ||
+            level.nukeemptimeremaining >= state["remaining"]
+        )
+    )
+    {
+        state["active"] = true;
+        state["remaining"] = level.nukeemptimeremaining;
+        state["label"] = "MOAB EMP";
+    }
+
+    return state;
 }
 
 announceEmpTimer( label, message )
