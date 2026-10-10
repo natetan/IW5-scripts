@@ -188,6 +188,21 @@ guardedDropZoneLocationStatus()
                 {
                     teamCounts[team]++;
                     player.ingrindzonepoints += zoneTickScore;
+
+                    // The guarded scorer owns the stock one-second zone tick,
+                    // so also preserve its +20 HUD feedback for human players.
+                    // This is deliberately presentation-only: team score and
+                    // crate eligibility are already updated above, and awarding
+                    // rank XP here would duplicate the objective reward.
+                    if ( canShowDropZoneTickPopup( player ) )
+                    {
+                        player thread maps\mp\gametypes\_rank::xppointspopup(
+                            zoneTickScore,
+                            0,
+                            ( 1.0, 1.0, 0.5 ),
+                            0
+                        );
+                    }
                 }
             }
 
@@ -227,6 +242,23 @@ guardedDropZoneLocationStatus()
 
         maps\mp\gametypes\_hostmigration::waitlongdurationwithhostmigrationpause( 1.0 );
     }
+}
+
+canShowDropZoneTickPopup( player )
+{
+    if (
+        !isdefined( player ) ||
+        !isdefined( player.pers ) ||
+        isdefined( player.pers["isBot"] ) && player.pers["isBot"] ||
+        !isdefined( player.hud_xppointspopup ) ||
+        !isdefined( player.xpupdatetotal ) ||
+        !isdefined( player.bonusupdatetotal )
+    )
+    {
+        return 0;
+    }
+
+    return 1;
 }
 
 canUpdateDropZoneHud( player )
