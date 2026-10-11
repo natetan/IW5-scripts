@@ -179,7 +179,7 @@ runHarrierStrike( lifeId, strikeOrigin, strikeYaw, owner, team )
     );
 
     if ( isdefined( harrier ) )
-        harrier thread destroyHarrierOnEmp( owner );
+        harrier thread destroyHarrierOnEmp( owner, team );
 
     wait 1.0;
     level.airstrikeinprogress = undefined;
@@ -195,13 +195,13 @@ runHarrierStrike( lifeId, strikeOrigin, strikeYaw, owner, team )
     level.funModeHarrierCount--;
 }
 
-destroyHarrierOnEmp( owner )
+destroyHarrierOnEmp( owner, harrierTeam )
 {
     self endon( "death" );
 
     for (;;)
     {
-        empAttacker = getHarrierEmpAttacker( owner );
+        empAttacker = getHarrierEmpAttacker( owner, harrierTeam );
 
         if ( isdefined( empAttacker ) )
         {
@@ -238,12 +238,38 @@ destroyHarrierOnEmp( owner )
     }
 }
 
-getHarrierEmpAttacker( owner )
+getHarrierEmpAttacker( owner, harrierTeam )
 {
-    if ( !isdefined( owner ) )
-        return undefined;
+    // The stock MOAB sets its authoritative team EMP flag immediately before
+    // nuke_emp_update. Checking the owner entity alone is timing-sensitive and
+    // can miss the aircraft when its owner dies in the blast.
+    if (
+        isdefined( harrierTeam ) &&
+        isdefined( level.teamnukeemped ) &&
+        isdefined( level.teamnukeemped[harrierTeam] ) &&
+        level.teamnukeemped[harrierTeam] &&
+        isdefined( level.nukeinfo ) &&
+        isdefined( level.nukeinfo.player )
+    )
+    {
+        return level.nukeinfo.player;
+    }
 
     if (
+        isdefined( harrierTeam ) &&
+        isdefined( level.teamemped ) &&
+        isdefined( level.teamemped[harrierTeam] ) &&
+        level.teamemped[harrierTeam] &&
+        isdefined( level.funModeLastEmpPlayer )
+    )
+    {
+        return level.funModeLastEmpPlayer;
+    }
+
+    // Retain the entity checks as fallbacks for FFA or custom recipes that do
+    // not populate the stock team arrays in the usual order.
+    if (
+        isdefined( owner ) &&
         owner maps\mp\_utility::isnuked() &&
         isdefined( level.nukeinfo ) &&
         isdefined( level.nukeinfo.player )
@@ -253,6 +279,7 @@ getHarrierEmpAttacker( owner )
     }
 
     if (
+        isdefined( owner ) &&
         owner maps\mp\_utility::isemped() &&
         isdefined( level.funModeLastEmpPlayer )
     )
