@@ -206,35 +206,33 @@ destroyHarrierOnEmp( owner, harrierTeam )
         if ( isdefined( empAttacker ) )
         {
             /*
-                The Harrier callback halves unrecognized weapon damage, so
-                the stock EMP's 5000 damage leaves this 3000-health aircraft
-                alive. Send 7000 through the native callback instead. Its
-                halved 3500 damage remains lethal while preserving the normal
-                hitmarker, 300 XP, player-card splash, mission progress, and
-                destroyed_killstreak notification for the EMP/MOAB owner.
+                A script notify named "damage" does not invoke the engine's
+                vehicle-damage callback. Call the Harrier's registered native
+                callback directly with lethal EMP damage instead. The callback
+                halves this otherwise-unrecognized weapon damage, so 7000
+                becomes 3500 against the 3000-health aircraft while retaining
+                its normal destruction feedback and reward path.
             */
-            self notify(
-                "damage",
-                7000,
+            self [[ self.damagecallback ]](
+                self,
                 empAttacker,
+                7000,
+                self.origin,
                 ( 0.0, 0.0, 0.0 ),
-                ( 0.0, 0.0, 0.0 ),
+                "killstreak_emp_mp",
                 "MOD_EXPLOSIVE",
-                "",
-                "",
-                "",
-                undefined,
-                "killstreak_emp_mp"
+                0,
+                "none",
+                0,
+                0,
+                0
             );
             return;
         }
 
-        // Ordinary EMP and MOAB EMP maintain separate state and emit separate
-        // update events. Wake for either so both effects destroy the Harrier.
-        level common_scripts\utility::waittill_either(
-            "emp_update",
-            "nuke_emp_update"
-        );
+        // Poll authoritative state so event ordering cannot strand the watcher
+        // if an EMP update fires just before this thread reaches its wait.
+        wait 0.1;
     }
 }
 
