@@ -40,6 +40,11 @@
     - After genuinely earning the full Specialist Bonus, every firearm kill
       restores 25 percent of that weapon's magazine, rounded to the nearest
       whole round and capped at its normal clip capacity.
+    - After genuinely earning the full Specialist Bonus, firearm shots have a
+      configurable chance to deal a second copy of their final bullet damage
+      without consuming another round. All pellets and penetrations resolved
+      in the same server frame share one roll so shotguns do not roll once per
+      pellet.
     - Gives the AA-12 that same 25-percent magazine refill on every kill even
       without the full Specialist Bonus.
     - Doubles player damage from the SPAS-12, KSG 12, and AA-12, while the
@@ -107,6 +112,8 @@ Main()
     SetDvarIfNotInitialized("fun_mode_noobtube_kill_refill_enable", 1);
     SetDvarIfNotInitialized("fun_mode_specialist_mag_refill_enable", 1);
     SetDvarIfNotInitialized("fun_mode_specialist_mag_refill_percent", 0.25);
+    SetDvarIfNotInitialized("fun_mode_specialist_multishot_enable", 1);
+    SetDvarIfNotInitialized("fun_mode_specialist_multishot_chance", 0.20);
     SetDvarIfNotInitialized("fun_mode_aa12_kill_refill_enable", 1);
     SetDvarIfNotInitialized("fun_mode_quick_fix_enable", 1);
     SetDvarIfNotInitialized("fun_mode_quick_fix_heal_percent", 0.25);
@@ -347,7 +354,83 @@ ModifyPlayerDamageForFunMode(
         damage = Int(damage * weaponDamageMultiplier);
     }
 
+    multishotDamageMultiplier = GetSpecialistMultishotDamageMultiplier(
+        attacker,
+        weapon,
+        meansOfDeath
+    );
+
+    if (multishotDamageMultiplier != 1.0)
+    {
+        damage = Int(damage * multishotDamageMultiplier);
+    }
+
     return damage;
+}
+
+/*
+    Model Specialist multishot as a duplicate of the bullet damage that IW5
+    already resolved. This preserves the original shot's weapon attribution,
+    hit location, penetration loss, and ammo use without asking MagicBullet()
+    to synthesize unsupported hitscan weapon fire.
+
+    A shotgun reports several pellet hits in one server frame. Cache the roll
+    by attacker, weapon, and frame so the blast receives one decision instead
+    of an independent roll for every pellet. The same behavior also preserves
+    a proc across multiple victims hit by one penetrating bullet.
+*/
+GetSpecialistMultishotDamageMultiplier(attacker, weapon, meansOfDeath)
+{
+    if (
+        !GetDvarInt("fun_mode_specialist_multishot_enable") ||
+        !IsDefined(attacker) ||
+        !IsPlayer(attacker) ||
+        !IsDefined(weapon) ||
+        !IsSubStr(weapon, "iw5_") ||
+        (
+            meansOfDeath != "MOD_PISTOL_BULLET" &&
+            meansOfDeath != "MOD_RIFLE_BULLET"
+        ) ||
+        !attacker HasEarnedFullSpecialistBonus()
+    )
+    {
+        return 1.0;
+    }
+
+    currentFrame = GetTime();
+
+    if (
+        !IsDefined(attacker.fun_mode_multishot_frame) ||
+        attacker.fun_mode_multishot_frame != currentFrame ||
+        !IsDefined(attacker.fun_mode_multishot_weapon) ||
+        attacker.fun_mode_multishot_weapon != weapon
+    )
+    {
+        chance = GetDvarFloat("fun_mode_specialist_multishot_chance");
+
+        if (chance < 0.0)
+        {
+            chance = 0.0;
+        }
+        else if (chance > 1.0)
+        {
+            chance = 1.0;
+        }
+
+        attacker.fun_mode_multishot_frame = currentFrame;
+        attacker.fun_mode_multishot_weapon = weapon;
+        attacker.fun_mode_multishot_proc = RandomFloat(1.0) < chance;
+    }
+
+    if (
+        IsDefined(attacker.fun_mode_multishot_proc) &&
+        attacker.fun_mode_multishot_proc
+    )
+    {
+        return 2.0;
+    }
+
+    return 1.0;
 }
 
 /*
