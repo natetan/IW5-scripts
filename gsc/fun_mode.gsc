@@ -29,8 +29,8 @@
       explosive damage instead of the stock 45 percent.
     - Multiplies Javelin damage by ten against players while preserving its
       stock blast radius and earlier damage modifiers. Also doubles damage
-      from bolt-action sniper rifles, the AS50, the CM901, and the Desert
-      Eagle, and triples MP412 damage.
+      from bolt-action sniper rifles, the Barrett, the AS50, the CM901, and
+      the Desert Eagle, and triples MP412 damage.
     - Restores half of the equipped magazine after an MP412 or Desert Eagle
       kill, rounding odd capacities up and respecting the normal clip cap.
     - Reloads one Javelin missile after a Javelin kill, including delayed kills
@@ -47,12 +47,12 @@
       pellet.
     - Gives the AA-12 that same 25-percent magazine refill on every kill even
       without the full Specialist Bonus.
-    - Doubles player damage from the SPAS-12, KSG 12, and AA-12, while the
-      attachment-free Model 1887 receives quintuple damage.
+    - Doubles player damage from the SPAS-12, KSG 12, and AA-12, gives the
+      USAS-12 a 1.5 multiplier, and gives the attachment-free Model 1887
+      quintuple damage.
       Silenced shotguns instead receive dedicated multipliers: quintuple damage
-      for the SPAS-12 and KSG 12, triple damage for the AA-12 and USAS-12, and
-      double damage for the Striker. Attachment combinations, camos, and
-      reticles remain supported.
+      for the SPAS-12 and KSG 12 and triple damage for the AA-12, USAS-12, and
+      Striker. Attachment combinations, camos, and reticles remain supported.
     - Gives all players two-stage Quick Fix healing: a strong recovery burst
       below normal health, followed by non-regenerating overhealth up to a
       configurable percentage of their normal maximum. A progressively
@@ -99,11 +99,12 @@ Main()
     SetDvarIfNotInitialized("fun_mode_reaper_damage_multiplier", 1.5);
     SetDvarIfNotInitialized("fun_mode_shotgun_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_1887_damage_multiplier", 5.0);
+    SetDvarIfNotInitialized("fun_mode_usas_damage_multiplier", 1.5);
     SetDvarIfNotInitialized("fun_mode_silenced_shotgun_damage_multiplier", 5.0);
     SetDvarIfNotInitialized("fun_mode_silenced_auto_shotgun_damage_multiplier", 3.0);
-    SetDvarIfNotInitialized("fun_mode_silenced_striker_damage_multiplier", 2.0);
+    SetDvarIfNotInitialized("fun_mode_silenced_striker_damage_multiplier", 3.0);
     SetDvarIfNotInitialized("fun_mode_bolt_sniper_damage_multiplier", 2.0);
-    SetDvarIfNotInitialized("fun_mode_as50_damage_multiplier", 2.0);
+    SetDvarIfNotInitialized("fun_mode_heavy_sniper_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_mp412_damage_multiplier", 3.0);
     SetDvarIfNotInitialized("fun_mode_cm901_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_desert_eagle_damage_multiplier", 2.0);
@@ -479,10 +480,13 @@ GetFunModeWeaponDamageMultiplier(weapon, meansOfDeath)
 
     if (
         isBulletDamage &&
-        IsSubStr(weapon, "iw5_as50_mp")
+        (
+            IsSubStr(weapon, "iw5_barrett_mp") ||
+            IsSubStr(weapon, "iw5_as50_mp")
+        )
     )
     {
-        return GetDvarFloat("fun_mode_as50_damage_multiplier");
+        return GetDvarFloat("fun_mode_heavy_sniper_damage_multiplier");
     }
 
     if (
@@ -537,6 +541,14 @@ GetFunModeWeaponDamageMultiplier(weapon, meansOfDeath)
     )
     {
         return GetDvarFloat("fun_mode_1887_damage_multiplier");
+    }
+
+    if (
+        isBulletDamage &&
+        IsSubStr(weapon, "iw5_usas12_mp")
+    )
+    {
+        return GetDvarFloat("fun_mode_usas_damage_multiplier");
     }
 
     if (
