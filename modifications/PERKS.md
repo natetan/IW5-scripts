@@ -58,14 +58,6 @@ behaves after it is granted or genuinely earned.
 | Post-Specialist UAV reward | **Five-second team UAV every third additional kill** | Requires genuinely earning the full Specialist Bonus on a supported Fun Mode class. Additional kills reset on death. |
 | Specialist movement composition | **Preserves stronger active movement effects** | Applying Specialist Lightweight does not overwrite an active Juiced 1.25× movement scalar. Extreme Conditioning and other custom movement modifiers continue composing through the central movement calculation. |
 
-## Related Systems That Are Not Perks
-
-Quick Fix healing, kill momentum, weapon-specific damage multipliers, and
-heavy-sniper movement normalization apply independently of a player's chosen
-perk package. They are intentionally excluded from the tier tables. See
-[`WEAPONS.md`](./WEAPONS.md) for weapon-specific
-rules.
-
 ## Source of Truth
 
 Most perk changes and Specialist behavior are defined in

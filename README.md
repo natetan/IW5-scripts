@@ -81,8 +81,11 @@ See [modifications/PERKS.md](./modifications/PERKS.md) for the complete base-per
 roster, custom perk behavior, and Specialist-wide rewards.
 
 See [modifications/GAMEPLAY.md](./modifications/GAMEPLAY.md) for global player
-systems such as Quick Fix and kill momentum, along with killstreak reworks,
-activation changes, feedback, and gameplay stability fixes.
+systems such as Quick Fix and kill momentum, plus general gameplay stability
+fixes.
+
+See [modifications/KILLSTREAKS.md](./modifications/KILLSTREAKS.md) for Assault,
+Support, and MOAB changes ordered by their stock kill or point requirements.
 
 ### 🛠️ In-Match Class Editing
 
@@ -107,7 +110,8 @@ See [BOTNAMES.md](./BOTNAMES.md) for details.
 ├── gsc/                         Gameplay and bot modifications
 │   └── bots/                    Modified Bot Warfare scripts
 ├── modifications/               Gameplay modification references
-│   ├── GAMEPLAY.md              Global systems and killstreak changes
+│   ├── GAMEPLAY.md              Global player systems and stability fixes
+│   ├── KILLSTREAKS.md            Assault and Support streak changes
 │   ├── PERKS.md                 Perk and Specialist balance reference
 │   └── WEAPONS.md               Player-weapon balance reference
 ├── players/                     Player configuration files (.cfg)
