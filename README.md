@@ -73,12 +73,16 @@ Optional gameplay enhancements for custom classes, including:
 - Additional hidden Specialist bonuses
 - Experimental gameplay features
 
-See [WEAPON_MODIFICATIONS.md](./WEAPON_MODIFICATIONS.md) for the complete
+See [modifications/WEAPONS.md](./modifications/WEAPONS.md) for the complete
 weapon roster and the repository's current damage, ammunition, proficiency,
 movement, and special-loadout changes.
 
-See [PERK_MODIFICATIONS.md](./PERK_MODIFICATIONS.md) for the complete base-perk
+See [modifications/PERKS.md](./modifications/PERKS.md) for the complete base-perk
 roster, custom perk behavior, and Specialist-wide rewards.
+
+See [modifications/GAMEPLAY.md](./modifications/GAMEPLAY.md) for global player
+systems such as Quick Fix and kill momentum, along with killstreak reworks,
+activation changes, feedback, and gameplay stability fixes.
 
 ### 🛠️ In-Match Class Editing
 
@@ -102,11 +106,13 @@ See [BOTNAMES.md](./BOTNAMES.md) for details.
 ├── admin/                       Custom game mode recipes
 ├── gsc/                         Gameplay and bot modifications
 │   └── bots/                    Modified Bot Warfare scripts
+├── modifications/               Gameplay modification references
+│   ├── GAMEPLAY.md              Global systems and killstreak changes
+│   ├── PERKS.md                 Perk and Specialist balance reference
+│   └── WEAPONS.md               Player-weapon balance reference
 ├── players/                     Player configuration files (.cfg)
 ├── BOTNAMES.md                  Bot name generator documentation
 ├── FASTDL.md                    Dedicated-server FastDL operations
-├── PERK_MODIFICATIONS.md        Perk and Specialist balance reference
-├── WEAPON_MODIFICATIONS.md      Player-weapon balance reference
 ├── generate_iw5_bot_names.ps1
 ├── iw5_targets.ps1              Shared client/server target configuration
 ├── install_bot_scripts.ps1

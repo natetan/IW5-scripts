@@ -63,16 +63,16 @@ behaves after it is granted or genuinely earned.
 Quick Fix healing, kill momentum, weapon-specific damage multipliers, and
 heavy-sniper movement normalization apply independently of a player's chosen
 perk package. They are intentionally excluded from the tier tables. See
-[`WEAPON_MODIFICATIONS.md`](./WEAPON_MODIFICATIONS.md) for weapon-specific
+[`WEAPONS.md`](./WEAPONS.md) for weapon-specific
 rules.
 
 ## Source of Truth
 
 Most perk changes and Specialist behavior are defined in
-[`gsc/fun_mode.gsc`](./gsc/fun_mode.gsc). Assassin interactions with the
+[`gsc/fun_mode.gsc`](../gsc/fun_mode.gsc). Assassin interactions with the
 actual Advanced UAV and Recon Pulse are defined in
-[`gsc/advanced_uav_tuning.gsc`](./gsc/advanced_uav_tuning.gsc) and
-[`gsc/recon_drone_pulse.gsc`](./gsc/recon_drone_pulse.gsc). Active Scavenger
-configuration is stored in [`players/normal.cfg`](./players/normal.cfg) and
-[`players/hard.cfg`](./players/hard.cfg). When perk behavior changes, update
+[`gsc/advanced_uav_tuning.gsc`](../gsc/advanced_uav_tuning.gsc) and
+[`gsc/recon_drone_pulse.gsc`](../gsc/recon_drone_pulse.gsc). Active Scavenger
+configuration is stored in [`players/normal.cfg`](../players/normal.cfg) and
+[`players/hard.cfg`](../players/hard.cfg). When perk behavior changes, update
 this document in the same commit.

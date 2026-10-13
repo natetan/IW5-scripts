@@ -125,7 +125,7 @@ These systems apply across categories and therefore are not included in each
 individual weapon's multiplier cell.
 
 Specialist-wide weapon effects are documented in
-[`PERK_MODIFICATIONS.md`](./PERK_MODIFICATIONS.md) instead of being duplicated
+[`PERKS.md`](./PERKS.md) instead of being duplicated
 here.
 
 | System | Eligible weapons | Behavior |
@@ -143,7 +143,7 @@ here.
 ## Source of Truth
 
 Most weapon-specific damage, refill, proficiency, and movement rules are
-defined in [`gsc/fun_mode.gsc`](./gsc/fun_mode.gsc). Assault Juggernaut weapon
+defined in [`gsc/fun_mode.gsc`](../gsc/fun_mode.gsc). Assault Juggernaut weapon
 selection is defined in
-[`maps/mp/gametypes/_class.gsc`](./maps/mp/gametypes/_class.gsc). When behavior
+[`maps/mp/gametypes/_class.gsc`](../maps/mp/gametypes/_class.gsc). When behavior
 changes, update this document in the same commit.
