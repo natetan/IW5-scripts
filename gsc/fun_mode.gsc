@@ -31,8 +31,8 @@
       stock blast radius and earlier damage modifiers. Also doubles damage
       from bolt-action sniper rifles, the AS50, the CM901, and the Desert
       Eagle, and triples MP412 damage.
-    - Restores one chambered round after an MP412 or Desert Eagle kill, or one
-      round to each pistol when the killing weapon is an Akimbo variant.
+    - Restores half of the equipped magazine after an MP412 or Desert Eagle
+      kill, rounding odd capacities up and respecting the normal clip cap.
     - Reloads one Javelin missile after a Javelin kill, including delayed kills
       that occur after the player has switched back to another weapon.
     - Triples underbarrel grenade-launcher damage and restores one loaded tube
@@ -628,51 +628,67 @@ WatchKillAmmoRefills()
             self RefillWeaponClipByRounds(weapon, 1);
         }
 
-        if (
-            GetDvarInt("fun_mode_pistol_kill_refill_enable") &&
-            (
-                IsSubStr(weapon, "iw5_mp412_mp") ||
-                IsSubStr(weapon, "iw5_deserteagle_mp")
-            )
-        )
-        {
-            refillAmount = 1;
-
-            if (IsSubStr(weapon, "_akimbo"))
-            {
-                refillAmount = 2;
-            }
-
-            self RefillWeaponClipByRounds(weapon, refillAmount);
-        }
-
         if (!IsSubStr(weapon, "iw5_"))
         {
             continue;
         }
 
-        shouldRefillByPercent = (
+        refillPercent = self GetKillRefillPercent(weapon);
+
+        if (refillPercent > 0.0)
+        {
+            self RefillWeaponClipByPercent(weapon, refillPercent);
+        }
+    }
+}
+
+GetKillRefillPercent(weapon)
+{
+    refillPercent = 0.0;
+
+    if (
+        GetDvarInt("fun_mode_pistol_kill_refill_enable") &&
+        IsHighPoweredPistol(weapon)
+    )
+    {
+        refillPercent = 0.50;
+    }
+
+    standardRefillApplies = (
+        (
             GetDvarInt("fun_mode_aa12_kill_refill_enable") &&
             IsSubStr(weapon, "iw5_aa12_mp")
-        );
-
-        if (
-            !shouldRefillByPercent &&
+        ) ||
+        (
             GetDvarInt("fun_mode_specialist_mag_refill_enable") &&
             self HasEarnedFullSpecialistBonus()
         )
-        {
-            shouldRefillByPercent = true;
-        }
+    );
 
-        if (shouldRefillByPercent)
+    if (standardRefillApplies)
+    {
+        standardRefillPercent = GetDvarFloat(
+            "fun_mode_specialist_mag_refill_percent"
+        );
+
+        if (standardRefillPercent > refillPercent)
         {
-            self RefillWeaponClipByPercent(
-                weapon,
-                GetDvarFloat("fun_mode_specialist_mag_refill_percent")
-            );
+            refillPercent = standardRefillPercent;
         }
     }
+
+    return refillPercent;
+}
+
+IsHighPoweredPistol(weapon)
+{
+    return (
+        IsDefined(weapon) &&
+        (
+            IsSubStr(weapon, "iw5_mp412_mp") ||
+            IsSubStr(weapon, "iw5_deserteagle_mp")
+        )
+    );
 }
 
 RefillWeaponClipByPercent(weapon, refillPercent)
