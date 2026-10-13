@@ -11,7 +11,7 @@ Rewards absent from these tables retain their stock behavior.
 | UAV — 3 kills | Stock | Radar behavior remains stock. See [Fast Activation](#fast-activation). |
 | Precision Airstrike — 6 kills | Harrier Strike replacement | Uses IW5's dormant Harrier path while retaining the Precision Airstrike slot, icon, cost, and location-selection controls. The Harrier can engage hostile aircraft and is destroyed by EMP effects. |
 | Attack Helicopter — 7 kills | Ground-targeting rockets | Preserves the cannon and anti-Harrier behavior. With no hostile Harrier, it can fire at its current player target when line of sight, firing angle, and minimum range are valid. Ground rockets have unlimited ammunition and a nine-second cooldown. See [Fast Activation](#fast-activation). |
-| Strafe Run — 9 kills | AA Strike replacement | Harrier flybys attack hostile aircraft, UAVs, and AC-130s, temporarily deny enemy airspace, and launch two spaced guided attacks against ground targets. |
+| Strafe Run — 9 kills | AA Strike replacement | Harrier flybys attack hostile aircraft, UAVs, and AC-130s, temporarily deny enemy airspace, and launch two spaced guided attacks against ground targets. See [Fast Activation](#fast-activation). |
 | AH-6 Overwatch — 9 kills | Rocket support | Preserves stock flight, dual miniguns, health, duration, and counters. Adds one alternating FFAR against its current minigun target every eight seconds. See [Fast Activation](#fast-activation). |
 | Reaper — 9 kills | Faster, stronger missiles | Missile damage is **1.5x** and the firing interval is **2.25 seconds** instead of the stock three seconds. Ammunition, duration, health, flares, and counters remain stock. |
 | Assault Drone — 10 kills | A-10 support replacement | Removes the care-package delivery and player-controlled drone. Calls two autonomous attack passes that use shipped Harrier presentation assets, paired FFARs, and the stock A-10 cannon sweep. |
@@ -46,7 +46,7 @@ for these rewards:
 
 | Strike package | Killstreaks |
 |---|---|
-| Assault | UAV, Attack Helicopter, AH-6 Overwatch, Pave Low |
+| Assault | UAV, Attack Helicopter, Strafe Run / AA Strike, AH-6 Overwatch, Pave Low |
 | Support | UAV, Counter-UAV, Recon Drone / Recon Pulse, Advanced UAV, EMP |
 
 Only the draw animation changes. Reward validation, consumption, callbacks,

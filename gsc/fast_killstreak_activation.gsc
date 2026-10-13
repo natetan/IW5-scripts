@@ -16,6 +16,7 @@
         fun_mode_fast_recon_pulse_activation_enable
         fun_mode_fast_emp_activation_enable
         fun_mode_fast_helicopter_activation_enable
+        fun_mode_fast_strafe_run_activation_enable
         fun_mode_fast_ah6_activation_enable
         fun_mode_fast_pavelow_activation_enable
 */
@@ -31,6 +32,7 @@ main()
     setdvarifuninitialized( "fun_mode_fast_recon_pulse_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_emp_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_helicopter_activation_enable", 1 );
+    setdvarifuninitialized( "fun_mode_fast_strafe_run_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_ah6_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_pavelow_activation_enable", 1 );
 
@@ -41,6 +43,7 @@ main()
     level.fastReconPulseActivation = getdvarint( "fun_mode_fast_recon_pulse_activation_enable" );
     level.fastEmpActivation = getdvarint( "fun_mode_fast_emp_activation_enable" );
     level.fastHelicopterActivation = getdvarint( "fun_mode_fast_helicopter_activation_enable" );
+    level.fastStrafeRunActivation = getdvarint( "fun_mode_fast_strafe_run_activation_enable" );
     level.fastAh6Activation = getdvarint( "fun_mode_fast_ah6_activation_enable" );
     level.fastPavelowActivation = getdvarint( "fun_mode_fast_pavelow_activation_enable" );
 
@@ -51,17 +54,18 @@ main()
          !level.fastReconPulseActivation &&
          !level.fastEmpActivation &&
          !level.fastHelicopterActivation &&
+         !level.fastStrafeRunActivation &&
          !level.fastAh6Activation &&
          !level.fastPavelowActivation )
         return;
 
     replacefunc(
         maps\mp\killstreaks\_killstreaks::getkillstreakweapon,
-        ::getFastUavKillstreakWeapon
+        ::getFastKillstreakWeapon
     );
 }
 
-getFastUavKillstreakWeapon( streakName )
+getFastKillstreakWeapon( streakName )
 {
     if ( streakName == "uav" && level.fastUavActivation )
     {
@@ -93,10 +97,15 @@ getFastUavKillstreakWeapon( streakName )
         return "airdrop_juggernaut_mp";
 
     // These Assault streaks use distinct Support-package markers. This keeps
-    // Attack Helicopter, AH-6 Overwatch, and Pave Low separate when all three
-    // rewards are held simultaneously.
+    // Attack Helicopter, Strafe Run, AH-6 Overwatch, and Pave Low separate
+    // when several rewards are held simultaneously.
     if ( streakName == "helicopter" && level.fastHelicopterActivation )
         return "airdrop_trap_marker_mp";
+
+    // Support UAV already uses this marker, but Assault and Support rewards
+    // cannot coexist in the same selected strike package.
+    if ( streakName == "littlebird_flock" && level.fastStrafeRunActivation )
+        return "airdrop_sentry_marker_mp";
 
     if ( streakName == "littlebird_support" && level.fastAh6Activation )
         return "airdrop_juggernaut_def_mp";
