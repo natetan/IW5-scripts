@@ -63,6 +63,9 @@
       sniper-rifle 90-percent tier while composing with other speed bonuses.
     - Gives Extreme Conditioning a configurable sprint-only speed multiplier
       that composes with other movement effects without changing walking speed.
+    - Restores 100-percent weapon mobility while a standard handgun is drawn,
+      instead of retaining the slowest carried primary weapon's movement
+      penalty. Other movement bonuses continue to compose normally.
     - Gives all players brief, escalating kill momentum: consecutive kills
       refresh the timer and raise movement speed to a conservative cap, then
       momentum decays one stack at a time instead of disappearing at once.
@@ -130,6 +133,8 @@ Main()
     SetDvarIfNotInitialized("fun_mode_heavy_sniper_speed_multiplier", 1.125);
     SetDvarIfNotInitialized("fun_mode_extreme_conditioning_sprint_speed_enable", 1);
     SetDvarIfNotInitialized("fun_mode_extreme_conditioning_sprint_speed_multiplier", 1.10);
+    SetDvarIfNotInitialized("fun_mode_pistol_mobility_enable", 1);
+    SetDvarIfNotInitialized("fun_mode_pistol_mobility_target", 1.0);
     SetDvarIfNotInitialized("fun_mode_post_specialist_enable", 1);
     SetDvarIfNotInitialized("fun_mode_post_specialist_kills", 3);
     SetDvarIfNotInitialized("fun_mode_post_specialist_uav_duration", 5);
@@ -589,6 +594,7 @@ OnPlayerConnect()
         player thread WatchKillMomentumSpawns();
         player thread WatchHeavySniperMovement();
         player thread WatchExtremeConditioningSprintSpawns();
+        player thread WatchPistolMobilitySpawns();
         player thread WatchKillAmmoRefills();
 
         if (player IsBotPlayer())
@@ -1478,6 +1484,45 @@ WatchExtremeConditioningSprintLife()
     }
 }
 
+WatchPistolMobilitySpawns()
+{
+    self endon("disconnect");
+
+    for (;;)
+    {
+        self waittill("spawned_player");
+        wait 0.1;
+
+        if (!IsAlive(self))
+        {
+            continue;
+        }
+
+        self RefreshFunModeMovementSpeed();
+        self thread WatchPistolMobilityLife();
+    }
+}
+
+WatchPistolMobilityLife()
+{
+    self endon("disconnect");
+    self endon("death");
+    self endon("spawned_player");
+
+    for (;;)
+    {
+        self waittill("weapon_change");
+
+        // Let IW5 finish its own weapon-change mobility update first.
+        wait 0.05;
+
+        if (IsAlive(self))
+        {
+            self RefreshFunModeMovementSpeed();
+        }
+    }
+}
+
 GetExtremeConditioningSprintSpeedMultiplier()
 {
     if (
@@ -1522,8 +1567,67 @@ GetFunModeBaseMoveSpeed()
     }
 
     return speed *
-        (self GetHeavySniperMoveSpeedMultiplier()) *
+        (self GetCurrentWeaponMobilityMultiplier()) *
         (self GetExtremeConditioningSprintSpeedMultiplier());
+}
+
+GetCurrentWeaponMobilityMultiplier()
+{
+    pistolMultiplier = self GetPistolDrawnMobilityMultiplier();
+
+    if (pistolMultiplier > 1.0)
+    {
+        return pistolMultiplier;
+    }
+
+    return self GetHeavySniperMoveSpeedMultiplier();
+}
+
+GetPistolDrawnMobilityMultiplier()
+{
+    if (
+        !GetDvarInt("fun_mode_pistol_mobility_enable") ||
+        !IsAlive(self) ||
+        (IsDefined(self.isJuggernaut) && self.isJuggernaut) ||
+        !IsDefined(self.weaponSpeed) ||
+        self.weaponSpeed <= 0
+    )
+    {
+        return 1.0;
+    }
+
+    weapon = self GetCurrentWeapon();
+
+    if (!IsFunModeHandgun(weapon))
+    {
+        return 1.0;
+    }
+
+    targetMobility = GetDvarFloat("fun_mode_pistol_mobility_target");
+
+    if (targetMobility <= self.weaponSpeed)
+    {
+        return 1.0;
+    }
+
+    return targetMobility / self.weaponSpeed;
+}
+
+IsFunModeHandgun(weapon)
+{
+    if (!IsDefined(weapon) || weapon == "none")
+    {
+        return false;
+    }
+
+    return (
+        IsSubStr(weapon, "iw5_usp45_mp") ||
+        IsSubStr(weapon, "iw5_p99_mp") ||
+        IsSubStr(weapon, "iw5_mp412_mp") ||
+        IsSubStr(weapon, "iw5_44magnum_mp") ||
+        IsSubStr(weapon, "iw5_fnfiveseven_mp") ||
+        IsSubStr(weapon, "iw5_deserteagle_mp")
+    );
 }
 
 GetHeavySniperMoveSpeedMultiplier()
@@ -1588,7 +1692,7 @@ ApplyActiveKillMomentumSpeed()
     }
 
     speed = self.fun_mode_kill_momentum_speed *
-        (self GetHeavySniperMoveSpeedMultiplier()) *
+        (self GetCurrentWeaponMobilityMultiplier()) *
         (self GetExtremeConditioningSprintSpeedMultiplier());
     baseSpeed = self GetFunModeBaseMoveSpeed();
 

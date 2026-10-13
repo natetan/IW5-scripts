@@ -132,6 +132,7 @@ here.
 |---|---|---|
 | Shotgun proficiencies | Human loadouts containing any shotgun | Grants both Range and Damage, including when the shotgun is an Overkill secondary. |
 | Extended Scavenger | Configured secondary weapons, equipment, launchers, and underbarrel tubes | Expands stock Scavenger resupply behavior. The repository's normal and hardcore configurations enable every supported category. |
+| Drawn-handgun mobility | USP .45, P99, MP412, .44 Magnum, Five Seven, and Desert Eagle | While a standard handgun is drawn, removes the slowest carried primary weapon's mobility penalty and targets the normal **100%** weapon-mobility tier. Walking and sprinting both benefit; Lightweight, Juiced, Extreme Conditioning, and kill momentum still compose normally. Juggernauts are excluded. |
 
 ## Special Loadout Changes
 
