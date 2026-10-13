@@ -49,6 +49,22 @@ or hosting work, also consult `IW5_MAP_REFERENCE.md` or `FASTDL.md`.
 - State clearly what was verified statically, what was deployed, and what still
   requires an in-game test.
 
+## Modification Documentation
+
+When changing a documented system, update its reference in the same change:
+
+- Weapon damage, ammunition, attachments, proficiencies, or loadouts:
+  `modifications/WEAPONS.md`
+- Perks or Specialist bonuses: `modifications/PERKS.md`
+- Killstreak balance, replacements, activation, or feedback:
+  `modifications/KILLSTREAKS.md`
+- Global player mechanics or gameplay stability:
+  `modifications/GAMEPLAY.md`
+
+If a change crosses categories, update every affected reference. Keep exact
+balance values in the repository documentation rather than duplicating them in
+the external IW5 skill.
+
 ## Git Handoff
 
 Do not commit unless the user asks. After every material repository change,
