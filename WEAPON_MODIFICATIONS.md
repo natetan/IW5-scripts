@@ -124,13 +124,14 @@ percentages.
 These systems apply across categories and therefore are not included in each
 individual weapon's multiplier cell.
 
+Specialist-wide weapon effects are documented in
+[`PERK_MODIFICATIONS.md`](./PERK_MODIFICATIONS.md) instead of being duplicated
+here.
+
 | System | Eligible weapons | Behavior |
 |---|---|---|
-| Specialist multishot | Normal firearms after genuinely earning the full Specialist Bonus | Each shot has a 20% chance to deal a second copy of its final bullet damage without consuming ammunition. Shotgun pellets and same-frame penetration hits share one roll. |
-| Specialist magazine refill | Normal firearms after genuinely earning the full Specialist Bonus | Each kill restores 25% of the killing weapon's equipped magazine. The strongest applicable percentage refill wins instead of stacking. |
-| Specialist Impact | Weapons that support bullet penetration | Fun Mode super classes receive Impact in addition to their selected proficiency. |
 | Shotgun proficiencies | Human loadouts containing any shotgun | Grants both Range and Damage, including when the shotgun is an Overkill secondary. |
-| Extended Scavenger | Configured secondary weapons, equipment, launchers, and underbarrel tubes | Expands stock Scavenger resupply behavior. Standalone-launcher resupply remains disabled by default; underbarrel-tube resupply is enabled by default. |
+| Extended Scavenger | Configured secondary weapons, equipment, launchers, and underbarrel tubes | Expands stock Scavenger resupply behavior. The repository's normal and hardcore configurations enable every supported category. |
 
 ## Special Loadout Changes
 
@@ -141,7 +142,8 @@ individual weapon's multiplier cell.
 
 ## Source of Truth
 
-Most damage, refill, proficiency, movement, and Specialist rules are defined
-in [`gsc/fun_mode.gsc`](./gsc/fun_mode.gsc). Assault Juggernaut weapon
-selection is defined in [`maps/mp/gametypes/_class.gsc`](./maps/mp/gametypes/_class.gsc).
-When behavior changes, update this document in the same commit.
+Most weapon-specific damage, refill, proficiency, and movement rules are
+defined in [`gsc/fun_mode.gsc`](./gsc/fun_mode.gsc). Assault Juggernaut weapon
+selection is defined in
+[`maps/mp/gametypes/_class.gsc`](./maps/mp/gametypes/_class.gsc). When behavior
+changes, update this document in the same commit.

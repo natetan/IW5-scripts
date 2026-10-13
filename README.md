@@ -77,6 +77,9 @@ See [WEAPON_MODIFICATIONS.md](./WEAPON_MODIFICATIONS.md) for the complete
 weapon roster and the repository's current damage, ammunition, proficiency,
 movement, and special-loadout changes.
 
+See [PERK_MODIFICATIONS.md](./PERK_MODIFICATIONS.md) for the complete base-perk
+roster, custom perk behavior, and Specialist-wide rewards.
+
 ### 🛠️ In-Match Class Editing
 
 [LastDemon99's IW5 EditClassMenu](https://github.com/LastDemon99/IW5-Mods/tree/main/EditClassMenu) adds a full class editor to the in-game menu. It can edit weapons, compatible attachments, proficiencies, perks, equipment, streaks, camos, and reticles without returning to the main multiplayer menus.
@@ -102,6 +105,7 @@ See [BOTNAMES.md](./BOTNAMES.md) for details.
 ├── players/                     Player configuration files (.cfg)
 ├── BOTNAMES.md                  Bot name generator documentation
 ├── FASTDL.md                    Dedicated-server FastDL operations
+├── PERK_MODIFICATIONS.md        Perk and Specialist balance reference
 ├── WEAPON_MODIFICATIONS.md      Player-weapon balance reference
 ├── generate_iw5_bot_names.ps1
 ├── iw5_targets.ps1              Shared client/server target configuration
