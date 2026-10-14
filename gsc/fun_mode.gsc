@@ -59,10 +59,17 @@
       stronger yellow Ballistic Vest-style vignette indicates overhealth.
     - Preserves Juiced's stock 25-percent movement boost when Fun Mode grants
       the full Specialist Lightweight bonus during the same spawn sequence.
-    - Raises the Barrett and AS50's 80-percent movement speed to the standard
-      sniper-rifle 90-percent tier while composing with other speed bonuses.
+    - Restores 100-percent weapon mobility while any sniper rifle is drawn,
+      matching the normal SMG mobility tier while preserving other bonuses.
     - Gives Extreme Conditioning a configurable sprint-only speed multiplier
       that composes with other movement effects without changing walking speed.
+    - Activates Knife Runner when a human loadout combines Extreme
+      Conditioning, Quickdraw, Dead Silence, Throwing Knife, Tactical
+      Insertion, and either a Tactical Knife handgun or Akimbo USP .45s.
+      Drawing that sidearm raises active sprint speed to 1.5, and melee kills
+      grant two seconds of damage immunity. A tenths-of-a-second HUD countdown
+      shows the remaining protected time and refreshes after another melee
+      kill. A centered activation message is shown at most once per life.
     - Restores 100-percent weapon mobility while a standard handgun is drawn,
       instead of retaining the slowest carried primary weapon's movement
       penalty. Other movement bonuses continue to compose normally.
@@ -129,10 +136,16 @@ Main()
     SetDvarIfNotInitialized("fun_mode_kill_momentum_step", 0.025);
     SetDvarIfNotInitialized("fun_mode_kill_momentum_max", 1.30);
     SetDvarIfNotInitialized("fun_mode_kill_momentum_max_stacks", 5);
-    SetDvarIfNotInitialized("fun_mode_heavy_sniper_speed_enable", 1);
-    SetDvarIfNotInitialized("fun_mode_heavy_sniper_speed_multiplier", 1.125);
+    SetDvarIfNotInitialized("fun_mode_sniper_mobility_enable", 1);
+    SetDvarIfNotInitialized("fun_mode_sniper_mobility_target", 1.0);
     SetDvarIfNotInitialized("fun_mode_extreme_conditioning_sprint_speed_enable", 1);
     SetDvarIfNotInitialized("fun_mode_extreme_conditioning_sprint_speed_multiplier", 1.10);
+    SetDvarIfNotInitialized("fun_mode_knife_runner_enable", 1);
+    SetDvarIfNotInitialized("fun_mode_knife_runner_sprint_speed_multiplier", 1.50);
+    SetDvarIfNotInitialized("fun_mode_knife_runner_invulnerability_seconds", 2.00);
+    SetDvarIfNotInitialized("fun_mode_knife_runner_invulnerability_hud_enable", 1);
+    SetDvarIfNotInitialized("fun_mode_knife_runner_message_enable", 1);
+    SetDvarIfNotInitialized("fun_mode_knife_runner_message", "Knife Runner Enabled: 1.5x speed");
     SetDvarIfNotInitialized("fun_mode_pistol_mobility_enable", 1);
     SetDvarIfNotInitialized("fun_mode_pistol_mobility_target", 1.0);
     SetDvarIfNotInitialized("fun_mode_post_specialist_enable", 1);
@@ -334,6 +347,7 @@ ModifyPlayerDamageForFunMode(
     )
     {
         attacker.fun_mode_last_damage_weapon = weapon;
+        attacker.fun_mode_last_damage_means = meansOfDeath;
     }
 
     if (IsDefined(level.fun_mode_previous_modify_player_damage))
@@ -348,6 +362,16 @@ ModifyPlayerDamageForFunMode(
             direction,
             hitLocation
         );
+    }
+
+    if (
+        IsDefined(victim) &&
+        IsPlayer(victim) &&
+        IsDefined(victim.fun_mode_knife_runner_invulnerable_until) &&
+        victim.fun_mode_knife_runner_invulnerable_until > GetTime()
+    )
+    {
+        return 0;
     }
 
     weaponDamageMultiplier = GetFunModeWeaponDamageMultiplier(
@@ -592,10 +616,10 @@ OnPlayerConnect()
         player thread WatchQuickFixSpawns();
         player thread WatchKillMomentum();
         player thread WatchKillMomentumSpawns();
-        player thread WatchHeavySniperMovement();
         player thread WatchExtremeConditioningSprintSpawns();
-        player thread WatchPistolMobilitySpawns();
+        player thread WatchWeaponMobilitySpawns();
         player thread WatchKillAmmoRefills();
+        player thread WatchKnifeRunnerKills();
 
         if (player IsBotPlayer())
         {
@@ -603,6 +627,7 @@ OnPlayerConnect()
         }
 
         player thread WatchPlayerLoadout();
+        player thread WatchKnifeRunnerInvulnerabilityHudDeaths();
         player thread WatchSurvivalFunModeSpawns();
         player thread WatchScavengerPickupEligibility();
         player thread WatchTeamSwitchMenu();
@@ -1397,9 +1422,13 @@ WatchPlayerLoadout()
 
         // A new loadout invalidates any pickup reservation from the old one.
         self.fun_mode_scavenger_ammo_reserved = false;
+        self.fun_mode_knife_runner_invulnerable_until = undefined;
+        self.fun_mode_knife_runner_activation_announced = false;
+        self InvalidateKnifeRunnerInvulnerabilityHud();
 
         wait 0.1;
 
+        self UpdateKnifeRunnerLoadoutState();
         self ApplyShotgunProficiencies();
 
         if (self IsFunModeSuperClassOwner())
@@ -1484,13 +1513,14 @@ WatchExtremeConditioningSprintLife()
     }
 }
 
-WatchPistolMobilitySpawns()
+WatchWeaponMobilitySpawns()
 {
     self endon("disconnect");
 
     for (;;)
     {
         self waittill("spawned_player");
+        self InvalidateKnifeRunnerInvulnerabilityHud();
         wait 0.1;
 
         if (!IsAlive(self))
@@ -1499,11 +1529,11 @@ WatchPistolMobilitySpawns()
         }
 
         self RefreshFunModeMovementSpeed();
-        self thread WatchPistolMobilityLife();
+        self thread WatchWeaponMobilityLife();
     }
 }
 
-WatchPistolMobilityLife()
+WatchWeaponMobilityLife()
 {
     self endon("disconnect");
     self endon("death");
@@ -1535,7 +1565,18 @@ GetExtremeConditioningSprintSpeedMultiplier()
         return 1.0;
     }
 
-    multiplier = GetDvarFloat("fun_mode_extreme_conditioning_sprint_speed_multiplier");
+    if (self IsKnifeRunnerActive())
+    {
+        multiplier = GetDvarFloat(
+            "fun_mode_knife_runner_sprint_speed_multiplier"
+        );
+    }
+    else
+    {
+        multiplier = GetDvarFloat(
+            "fun_mode_extreme_conditioning_sprint_speed_multiplier"
+        );
+    }
 
     if (multiplier < 1.0)
     {
@@ -1543,6 +1584,229 @@ GetExtremeConditioningSprintSpeedMultiplier()
     }
 
     return multiplier;
+}
+
+UpdateKnifeRunnerLoadoutState()
+{
+    self.fun_mode_knife_runner_class_num = self.class_num;
+    self.fun_mode_knife_runner_loadout = (
+        GetDvarInt("fun_mode_knife_runner_enable") &&
+        IsDefined(self.loadoutPerk1) &&
+        self.loadoutPerk1 == "specialty_longersprint" &&
+        IsDefined(self.loadoutPerk2) &&
+        self.loadoutPerk2 == "specialty_quickdraw" &&
+        IsDefined(self.loadoutPerk3) &&
+        self.loadoutPerk3 == "specialty_quieter" &&
+        IsDefined(self.loadoutPerkEquipment) &&
+        self.loadoutPerkEquipment == "throwingknife_mp" &&
+        self maps\mp\_utility::_hasPerk("specialty_tacticalinsertion") &&
+        IsKnifeRunnerWeapon(self.secondaryWeapon)
+    );
+
+    self UpdateKnifeRunnerActivationFeedback();
+}
+
+IsKnifeRunnerActive()
+{
+    if (
+        !GetDvarInt("fun_mode_knife_runner_enable") ||
+        !IsAlive(self) ||
+        !IsDefined(self.fun_mode_knife_runner_loadout) ||
+        !self.fun_mode_knife_runner_loadout ||
+        !IsDefined(self.fun_mode_knife_runner_class_num) ||
+        !IsDefined(self.class_num) ||
+        self.fun_mode_knife_runner_class_num != self.class_num ||
+        (IsDefined(self.isJuggernaut) && self.isJuggernaut)
+    )
+    {
+        return false;
+    }
+
+    return IsKnifeRunnerWeapon(self GetCurrentWeapon());
+}
+
+IsKnifeRunnerWeapon(weapon)
+{
+    if (!IsDefined(weapon) || weapon == "none")
+    {
+        return false;
+    }
+
+    if (IsSubStr(weapon, "iw5_") && IsSubStr(weapon, "_tactical"))
+    {
+        return true;
+    }
+
+    return (
+        IsSubStr(weapon, "iw5_usp45_mp") &&
+        IsSubStr(weapon, "_akimbo")
+    );
+}
+
+UpdateKnifeRunnerActivationFeedback()
+{
+    if (
+        self IsBotPlayer() ||
+        !GetDvarInt("fun_mode_knife_runner_message_enable") ||
+        !self IsKnifeRunnerActive() ||
+        (
+            IsDefined(self.fun_mode_knife_runner_activation_announced) &&
+            self.fun_mode_knife_runner_activation_announced
+        )
+    )
+    {
+        return;
+    }
+
+    self.fun_mode_knife_runner_activation_announced = true;
+    self ShowFunModeCenterMessage(GetDvar("fun_mode_knife_runner_message"));
+}
+
+ShowFunModeCenterMessage(message)
+{
+    if (!IsDefined(message) || message == "")
+    {
+        return;
+    }
+
+    self IPrintLnBold(message);
+}
+
+WatchKnifeRunnerKills()
+{
+    self endon("disconnect");
+
+    for (;;)
+    {
+        self waittill("killed_enemy");
+
+        if (
+            !IsAlive(self) ||
+            !IsDefined(self.fun_mode_last_damage_means) ||
+            self.fun_mode_last_damage_means != "MOD_MELEE" ||
+            !self IsKnifeRunnerActive()
+        )
+        {
+            continue;
+        }
+
+        duration = GetDvarFloat(
+            "fun_mode_knife_runner_invulnerability_seconds"
+        );
+
+        if (duration <= 0)
+        {
+            continue;
+        }
+
+        self.fun_mode_knife_runner_invulnerable_until = GetTime() + Int(duration * 1000);
+        self ShowKnifeRunnerInvulnerabilityHud(duration);
+    }
+}
+
+WatchKnifeRunnerInvulnerabilityHudDeaths()
+{
+    self endon("disconnect");
+
+    for (;;)
+    {
+        self waittill("death");
+        self InvalidateKnifeRunnerInvulnerabilityHud();
+    }
+}
+
+ShowKnifeRunnerInvulnerabilityHud(duration)
+{
+    if (
+        self IsBotPlayer() ||
+        !GetDvarInt("fun_mode_knife_runner_invulnerability_hud_enable") ||
+        !IsDefined(duration) ||
+        duration <= 0
+    )
+    {
+        return;
+    }
+
+    self InvalidateKnifeRunnerInvulnerabilityHud();
+    generation = self.fun_mode_knife_runner_invulnerability_hud_generation;
+
+    self.fun_mode_knife_runner_invulnerability_label = NewClientHudElem(self);
+    self.fun_mode_knife_runner_invulnerability_label.alignX = "center";
+    self.fun_mode_knife_runner_invulnerability_label.alignY = "middle";
+    self.fun_mode_knife_runner_invulnerability_label.horzAlign = "center";
+    self.fun_mode_knife_runner_invulnerability_label.vertAlign = "middle";
+    self.fun_mode_knife_runner_invulnerability_label.x = 0;
+    self.fun_mode_knife_runner_invulnerability_label.y = 62;
+    self.fun_mode_knife_runner_invulnerability_label.font = "default";
+    self.fun_mode_knife_runner_invulnerability_label.fontScale = 1.3;
+    self.fun_mode_knife_runner_invulnerability_label SetText("INVULNERABLE");
+    self.fun_mode_knife_runner_invulnerability_label.color = (1, 0.75, 0.2);
+    self.fun_mode_knife_runner_invulnerability_label.foreground = true;
+    self.fun_mode_knife_runner_invulnerability_label.hideWhenInMenu = true;
+    self.fun_mode_knife_runner_invulnerability_label.sort = 1000;
+
+    self.fun_mode_knife_runner_invulnerability_timer = NewClientHudElem(self);
+    self.fun_mode_knife_runner_invulnerability_timer.alignX = "center";
+    self.fun_mode_knife_runner_invulnerability_timer.alignY = "middle";
+    self.fun_mode_knife_runner_invulnerability_timer.horzAlign = "center";
+    self.fun_mode_knife_runner_invulnerability_timer.vertAlign = "middle";
+    self.fun_mode_knife_runner_invulnerability_timer.x = 0;
+    self.fun_mode_knife_runner_invulnerability_timer.y = 80;
+    self.fun_mode_knife_runner_invulnerability_timer.font = "hudbig";
+    self.fun_mode_knife_runner_invulnerability_timer.fontScale = 0.8;
+    self.fun_mode_knife_runner_invulnerability_timer.color = (1, 1, 1);
+    self.fun_mode_knife_runner_invulnerability_timer.foreground = true;
+    self.fun_mode_knife_runner_invulnerability_timer.hideWhenInMenu = true;
+    self.fun_mode_knife_runner_invulnerability_timer.sort = 1000;
+    self.fun_mode_knife_runner_invulnerability_timer SetTenthsTimer(duration);
+
+    self thread ClearKnifeRunnerInvulnerabilityHudAfterDelay(
+        duration,
+        generation
+    );
+}
+
+ClearKnifeRunnerInvulnerabilityHudAfterDelay(duration, generation)
+{
+    self endon("disconnect");
+
+    wait duration + 0.05;
+
+    if (
+        !IsDefined(self.fun_mode_knife_runner_invulnerability_hud_generation) ||
+        self.fun_mode_knife_runner_invulnerability_hud_generation != generation
+    )
+    {
+        return;
+    }
+
+    self DestroyKnifeRunnerInvulnerabilityHud();
+}
+
+InvalidateKnifeRunnerInvulnerabilityHud()
+{
+    if (!IsDefined(self.fun_mode_knife_runner_invulnerability_hud_generation))
+    {
+        self.fun_mode_knife_runner_invulnerability_hud_generation = 0;
+    }
+
+    self.fun_mode_knife_runner_invulnerability_hud_generation++;
+    self DestroyKnifeRunnerInvulnerabilityHud();
+}
+
+DestroyKnifeRunnerInvulnerabilityHud()
+{
+    if (IsDefined(self.fun_mode_knife_runner_invulnerability_label))
+    {
+        self.fun_mode_knife_runner_invulnerability_label Destroy();
+        self.fun_mode_knife_runner_invulnerability_label = undefined;
+    }
+
+    if (IsDefined(self.fun_mode_knife_runner_invulnerability_timer))
+    {
+        self.fun_mode_knife_runner_invulnerability_timer Destroy();
+        self.fun_mode_knife_runner_invulnerability_timer = undefined;
+    }
 }
 
 GetFunModeBaseMoveSpeed()
@@ -1573,6 +1837,13 @@ GetFunModeBaseMoveSpeed()
 
 GetCurrentWeaponMobilityMultiplier()
 {
+    sniperMultiplier = self GetSniperDrawnMobilityMultiplier();
+
+    if (sniperMultiplier > 1.0)
+    {
+        return sniperMultiplier;
+    }
+
     pistolMultiplier = self GetPistolDrawnMobilityMultiplier();
 
     if (pistolMultiplier > 1.0)
@@ -1580,7 +1851,37 @@ GetCurrentWeaponMobilityMultiplier()
         return pistolMultiplier;
     }
 
-    return self GetHeavySniperMoveSpeedMultiplier();
+    return 1.0;
+}
+
+GetSniperDrawnMobilityMultiplier()
+{
+    if (
+        !GetDvarInt("fun_mode_sniper_mobility_enable") ||
+        !IsAlive(self) ||
+        (IsDefined(self.isJuggernaut) && self.isJuggernaut) ||
+        !IsDefined(self.weaponSpeed) ||
+        self.weaponSpeed <= 0
+    )
+    {
+        return 1.0;
+    }
+
+    weapon = self GetCurrentWeapon();
+
+    if (!IsDefined(weapon) || weapon == "none" || WeaponClass(weapon) != "sniper")
+    {
+        return 1.0;
+    }
+
+    targetMobility = GetDvarFloat("fun_mode_sniper_mobility_target");
+
+    if (targetMobility <= self.weaponSpeed)
+    {
+        return 1.0;
+    }
+
+    return targetMobility / self.weaponSpeed;
 }
 
 GetPistolDrawnMobilityMultiplier()
@@ -1630,54 +1931,6 @@ IsFunModeHandgun(weapon)
     );
 }
 
-GetHeavySniperMoveSpeedMultiplier()
-{
-    if (
-        !GetDvarInt("fun_mode_heavy_sniper_speed_enable") ||
-        !IsDefined(self.primaryWeapon) ||
-        (
-            !IsSubStr(self.primaryWeapon, "iw5_barrett_mp") &&
-            !IsSubStr(self.primaryWeapon, "iw5_as50_mp")
-        )
-    )
-    {
-        return 1.0;
-    }
-
-    multiplier = GetDvarFloat("fun_mode_heavy_sniper_speed_multiplier");
-
-    if (multiplier < 1.0)
-    {
-        multiplier = 1.0;
-    }
-
-    return multiplier;
-}
-
-/*
-    Barrett/AS50 use a stock 0.80 movement scalar while the L118A, Dragunov,
-    and MSR use 0.90. Multiplying by 0.90 / 0.80 (1.125) closes only that gap.
-    Reapply after every loadout so class initialization cannot overwrite it.
-*/
-WatchHeavySniperMovement()
-{
-    self endon("disconnect");
-
-    for (;;)
-    {
-        self waittill("changed_kit");
-        wait 0.15;
-
-        if (!IsAlive(self))
-        {
-            continue;
-        }
-
-        self RestoreFunModeBaseMoveSpeed();
-        self ApplyActiveKillMomentumSpeed();
-    }
-}
-
 RestoreFunModeBaseMoveSpeed()
 {
     self.moveSpeedScaler = self GetFunModeBaseMoveSpeed();
@@ -1709,6 +1962,7 @@ RefreshFunModeMovementSpeed()
 {
     self RestoreFunModeBaseMoveSpeed();
     self ApplyActiveKillMomentumSpeed();
+    self UpdateKnifeRunnerActivationFeedback();
 }
 
 WatchKillMomentum()

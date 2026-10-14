@@ -15,7 +15,7 @@ perk's Pro mapping from `mp/perktable.csv`.
 | Recon | Stock | No direct change to the selectable perk. The custom Recon Pulse is a Support streak replacement, not a Recon perk modification. |
 | Sleight of Hand | Stock | No direct changes. |
 | Blind Eye | Stock | No direct effect change. Fun Mode super classes restore their granted Blind Eye after the stock temporary spawn-protection cleanup finishes. |
-| Extreme Conditioning | **1.10× sprint-speed multiplier** | Applies only while actively sprinting with Extreme Conditioning. It composes with other movement effects and does not change walking speed or the underlying stamina duration. |
+| Extreme Conditioning | **1.10× sprint-speed multiplier** | Applies only while actively sprinting with Extreme Conditioning. It composes with other movement effects and does not change walking speed or the underlying stamina duration. A qualifying Knife Runner loadout replaces this with its **1.50×** sprint multiplier while its eligible sidearm is drawn. |
 | Scavenger | **Expanded resupply** | Bags can replenish secondary ammunition, lethal equipment, tactical equipment, underbarrel grenade launchers, and standalone launchers. C4 is re-armed correctly before its charge is restored. |
 
 The repository's `normal.cfg` and `hard.cfg` enable every expanded Scavenger
@@ -27,7 +27,7 @@ cap. Primary-weapon ammunition still follows the normal MW3 Scavenger path.
 
 | Perk | Modification | Notes |
 |---|---|---|
-| Quickdraw | Stock | No direct changes. |
+| Quickdraw | **Knife Runner component** | Retains its stock behavior. It must be originally selected alongside the other Knife Runner requirements; receiving Quickdraw later cannot activate the build. |
 | Blast Shield | **Takes 25% of normal explosive damage** | Replaces IW5's stock `0.45` damage scalar with `0.25`, increasing explosive resistance while the perk is active. |
 | Hardline | Stock | No direct changes. Its normal one-point Specialist cost reduction is respected by the custom Specialist checks. |
 | Assassin | **Partially countered by custom intelligence streaks** | The actual Advanced UAV reveals Assassin users globally as ordinary red dots while preserving protection from directional arrows. Recon Pulse can apply the real Recon Drone tag to Assassin users within its radius. Ordinary and naturally stacked UAVs remain stock. |
@@ -41,7 +41,7 @@ cap. Primary-weapon ammunition still follows the normal MW3 Scavenger path.
 | Stalker | Stock | No direct changes. |
 | SitRep | Stock | No direct changes. |
 | Steady Aim | Stock | No direct changes. |
-| Dead Silence | Stock | No direct changes. |
+| Dead Silence | **Knife Runner component** | Retains its stock behavior, including suppressing Bot Warfare's movement-hearing detection. It must be originally selected alongside the other Knife Runner requirements. |
 
 ## Specialist Bonus Systems
 

@@ -52,13 +52,13 @@ variants inherit the rule associated with their base weapon.
 
 | Weapon | Player damage multiplier | Other modifications |
 |---|---:|---|
-| Barrett .50cal | **2×** | Movement scalar is raised from the stock heavy-sniper 80% tier to the standard sniper 90% tier. |
-| L118A | **2×** | Multiplier applies to rifle-bullet damage. |
-| Dragunov | Stock (1×) | None. |
-| AS50 | **2×** | Movement scalar is raised from the stock heavy-sniper 80% tier to the standard sniper 90% tier. |
-| RSASS | Stock (1×) | None. |
-| MSR | **2×** | Multiplier applies to rifle-bullet damage. |
-| Intervention *(Plutonium custom weapon)* | **2×** | Covered through its `iw5_cheytac` runtime weapon name. |
+| Barrett .50cal | **2×** | Multiplier applies to rifle-bullet damage. Receives 100% mobility while drawn. |
+| L118A | **2×** | Multiplier applies to rifle-bullet damage. Receives 100% mobility while drawn. |
+| Dragunov | Stock (1×) | Receives 100% mobility while drawn. |
+| AS50 | **2×** | Multiplier applies to rifle-bullet damage. Receives 100% mobility while drawn. |
+| RSASS | Stock (1×) | Receives 100% mobility while drawn. |
+| MSR | **2×** | Multiplier applies to rifle-bullet damage. Receives 100% mobility while drawn. |
+| Intervention *(Plutonium custom weapon)* | **2×** | Covered through its `iw5_cheytac` runtime weapon name. Receives 100% mobility while drawn. |
 
 ## Shotguns
 
@@ -133,6 +133,7 @@ here.
 | Shotgun proficiencies | Human loadouts containing any shotgun | Grants both Range and Damage, including when the shotgun is an Overkill secondary. |
 | Extended Scavenger | Configured secondary weapons, equipment, launchers, and underbarrel tubes | Expands stock Scavenger resupply behavior. The repository's normal and hardcore configurations enable every supported category. |
 | Drawn-handgun mobility | USP .45, P99, MP412, .44 Magnum, Five Seven, and Desert Eagle | While a standard handgun is drawn, removes the slowest carried primary weapon's mobility penalty and targets the normal **100%** weapon-mobility tier. Walking and sprinting both benefit; Lightweight, Juiced, Extreme Conditioning, and kill momentum still compose normally. Juggernauts are excluded. |
+| Knife Runner | Handguns equipped with Tactical Knife, plus Akimbo USP .45s | Requires an original loadout containing Extreme Conditioning, Quickdraw, Dead Silence, Throwing Knife, and Tactical Insertion. The eligible sidearm receives **1.50×** sprint speed while drawn, and a confirmed melee kill grants **2.00 seconds** of damage immunity with a visible tenths-of-a-second HUD countdown. Throwing the knife or placing the insertion does not disable the build. Juggernauts are excluded. |
 
 ## Special Loadout Changes
 
