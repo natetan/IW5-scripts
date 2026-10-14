@@ -376,6 +376,8 @@ ModifyPlayerDamageForFunMode(
         return 0;
     }
 
+    damage = RestoreMatchStartExplosiveDamage(damage, meansOfDeath);
+
     weaponDamageMultiplier = GetFunModeWeaponDamageMultiplier(
         weapon,
         meansOfDeath
@@ -398,6 +400,41 @@ ModifyPlayerDamageForFunMode(
     }
 
     return damage;
+}
+
+/*
+    Stock IW5 applies level.armorVestMod (0.08) to every explosive hit during
+    the first 10 seconds after the opening countdown. Undo only that second,
+    match-start application. Any earlier Blast Shield or Juggernaut reduction
+    remains in the damage value and therefore stays effective.
+*/
+RestoreMatchStartExplosiveDamage(damage, meansOfDeath)
+{
+    if (GetDvarInt("fun_mode_match_start_explosive_protection_enable"))
+    {
+        return damage;
+    }
+
+    if (!IsExplosiveDamageMod(meansOfDeath))
+    {
+        return damage;
+    }
+
+    if (
+        !IsDefined(level.gracePeriod) ||
+        !IsDefined(level.inGracePeriod) ||
+        10 - (level.gracePeriod - level.inGracePeriod) <= 0
+    )
+    {
+        return damage;
+    }
+
+    if (!IsDefined(level.armorVestMod) || level.armorVestMod <= 0.0)
+    {
+        return damage;
+    }
+
+    return Int(damage / level.armorVestMod);
 }
 
 /*
