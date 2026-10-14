@@ -47,7 +47,7 @@ cap. Primary-weapon ammunition still follows the normal MW3 Scavenger path.
 
 | Deathstreak | Modification | Notes |
 |---|---|---|
-| Juiced | **Knife Runner component** | Must be selected on the original loadout alongside the other Knife Runner requirements. Its stock deathstreak effect does not need to be active. |
+| Juiced | **10-second duration; Knife Runner component** | Extends the stock seven-second effect to **10 seconds** while retaining its **1.25×** movement scalar, timer HUD, and normal early cancellation. Juiced must also be selected on the original loadout alongside the other Knife Runner requirements, although its effect does not need to be active for that build. |
 
 ## Specialist Bonus Systems
 

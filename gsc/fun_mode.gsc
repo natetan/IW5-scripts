@@ -57,8 +57,8 @@
       below normal health, followed by non-regenerating overhealth up to a
       configurable percentage of their normal maximum. A progressively
       stronger yellow Ballistic Vest-style vignette indicates overhealth.
-    - Preserves Juiced's stock 25-percent movement boost when Fun Mode grants
-      the full Specialist Lightweight bonus during the same spawn sequence.
+    - Preserves Juiced's movement boost when Fun Mode grants Specialist
+      Lightweight during the same spawn sequence.
     - Restores 100-percent weapon mobility while any sniper rifle is drawn,
       matching the normal SMG mobility tier while preserving other bonuses.
     - Gives Extreme Conditioning a configurable sprint-only speed multiplier
