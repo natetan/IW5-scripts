@@ -70,7 +70,8 @@
       Throwing Knife kills grant two seconds of damage immunity. A
       tenths-of-a-second HUD countdown shows the remaining protected time and
       refreshes after another qualifying kill. A centered activation message
-      is shown at most once per life.
+      is shown at most once per life. The build removes its primary, empties
+      its sidearm, and disables battlefield weapon pickup interactions.
     - Restores 100-percent weapon mobility while a standard handgun is drawn,
       instead of retaining the slowest carried primary weapon's movement
       penalty. Other movement bonuses continue to compose normally.
@@ -689,6 +690,15 @@ WatchKillAmmoRefills()
 GetKillRefillPercent(weapon)
 {
     refillPercent = 0.0;
+
+    if (
+        IsDefined(self.fun_mode_knife_runner_loadout) &&
+        self.fun_mode_knife_runner_loadout &&
+        IsKnifeRunnerWeapon(weapon)
+    )
+    {
+        return refillPercent;
+    }
 
     if (
         GetDvarInt("fun_mode_pistol_kill_refill_enable") &&
@@ -1423,6 +1433,7 @@ WatchPlayerLoadout()
 
         // A new loadout invalidates any pickup reservation from the old one.
         self.fun_mode_scavenger_ammo_reserved = false;
+        self.fun_mode_knife_runner_loadout = false;
         self.fun_mode_knife_runner_invulnerable_until = undefined;
         self.fun_mode_knife_runner_activation_announced = false;
         self InvalidateKnifeRunnerInvulnerabilityHud();
@@ -1614,7 +1625,51 @@ UpdateKnifeRunnerLoadoutState()
         IsKnifeRunnerWeapon(self.secondaryWeapon)
     );
 
+    self ApplyKnifeRunnerLoadoutRestrictions();
     self UpdateKnifeRunnerActivationFeedback();
+}
+
+ApplyKnifeRunnerLoadoutRestrictions()
+{
+    if (
+        !IsDefined(self.fun_mode_knife_runner_loadout) ||
+        !self.fun_mode_knife_runner_loadout
+    )
+    {
+        if (
+            IsDefined(self.fun_mode_knife_runner_pickup_disabled) &&
+            self.fun_mode_knife_runner_pickup_disabled
+        )
+        {
+            self EnableWeaponPickup();
+            self.fun_mode_knife_runner_pickup_disabled = false;
+        }
+
+        return;
+    }
+
+    self DisableWeaponPickup();
+    self.fun_mode_knife_runner_pickup_disabled = true;
+
+    if (
+        IsDefined(self.primaryWeapon) &&
+        self.primaryWeapon != "none" &&
+        self HasWeapon(self.primaryWeapon)
+    )
+    {
+        self TakeWeapon(self.primaryWeapon);
+    }
+
+    if (
+        IsDefined(self.secondaryWeapon) &&
+        self.secondaryWeapon != "none" &&
+        self HasWeapon(self.secondaryWeapon)
+    )
+    {
+        self SetWeaponAmmoClip(self.secondaryWeapon, 0);
+        self SetWeaponAmmoStock(self.secondaryWeapon, 0);
+        self SwitchToWeapon(self.secondaryWeapon);
+    }
 }
 
 IsKnifeRunnerActive()
@@ -2494,6 +2549,10 @@ HandleScavengerBagPickupCustom(scrPlayer)
     player.fun_mode_scavenger_ammo_reserved = false;
 
     extraScavenger = GetDvarInt("fun_mode_scavenger_enable");
+    knifeRunner = (
+        IsDefined(player.fun_mode_knife_runner_loadout) &&
+        player.fun_mode_knife_runner_loadout
+    );
 
     if (GetDvarInt("fun_mode_scavenger_debug"))
     {
@@ -2604,6 +2663,11 @@ HandleScavengerBagPickupCustom(scrPlayer)
 
     foreach (weapon in weapons)
     {
+        if (knifeRunner && IsKnifeRunnerWeapon(weapon))
+        {
+            continue;
+        }
+
         refillWeapon = false;
 
         if (IsScavengerNoobTube(weapon))
