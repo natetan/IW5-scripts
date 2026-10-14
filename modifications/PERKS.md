@@ -43,6 +43,12 @@ cap. Primary-weapon ammunition still follows the normal MW3 Scavenger path.
 | Steady Aim | Stock | No direct changes. |
 | Dead Silence | **Knife Runner component** | Retains its stock behavior, including suppressing Bot Warfare's movement-hearing detection. It must be originally selected alongside the other Knife Runner requirements. |
 
+## Deathstreak Interactions
+
+| Deathstreak | Modification | Notes |
+|---|---|---|
+| Juiced | **Knife Runner component** | Must be selected on the original loadout alongside the other Knife Runner requirements. Its stock deathstreak effect does not need to be active. |
+
 ## Specialist Bonus Systems
 
 These are Specialist-wide rewards rather than modifications to one selectable

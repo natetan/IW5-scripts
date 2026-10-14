@@ -65,8 +65,8 @@
       that composes with other movement effects without changing walking speed.
     - Activates Knife Runner when a human loadout combines Extreme
       Conditioning, Quickdraw, Dead Silence, Throwing Knife, Tactical
-      Insertion, and either a Tactical Knife handgun or Akimbo USP .45s.
-      Drawing that sidearm raises active sprint speed to 1.5. Melee and
+      Insertion, Juiced, and either a Tactical Knife handgun or Akimbo USP
+      .45s. Drawing that sidearm raises active sprint speed to 1.5. Melee and
       Throwing Knife kills grant two seconds of damage immunity. A
       tenths-of-a-second HUD countdown shows the remaining protected time and
       refreshes after another qualifying kill. A centered activation message
@@ -1590,6 +1590,14 @@ GetExtremeConditioningSprintSpeedMultiplier()
 UpdateKnifeRunnerLoadoutState()
 {
     self.fun_mode_knife_runner_class_num = self.class_num;
+    self.fun_mode_knife_runner_deathstreak = undefined;
+
+    if (IsDefined(self.class_num))
+    {
+        self.fun_mode_knife_runner_deathstreak =
+            self maps\mp\gametypes\_class::cac_getDeathstreak(self.class_num);
+    }
+
     self.fun_mode_knife_runner_loadout = (
         GetDvarInt("fun_mode_knife_runner_enable") &&
         IsDefined(self.loadoutPerk1) &&
@@ -1600,6 +1608,8 @@ UpdateKnifeRunnerLoadoutState()
         self.loadoutPerk3 == "specialty_quieter" &&
         IsDefined(self.loadoutPerkEquipment) &&
         self.loadoutPerkEquipment == "throwingknife_mp" &&
+        IsDefined(self.fun_mode_knife_runner_deathstreak) &&
+        self.fun_mode_knife_runner_deathstreak == "specialty_juiced" &&
         self maps\mp\_utility::_hasPerk("specialty_tacticalinsertion") &&
         IsKnifeRunnerWeapon(self.secondaryWeapon)
     );
