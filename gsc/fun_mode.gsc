@@ -66,10 +66,11 @@
     - Activates Knife Runner when a human loadout combines Extreme
       Conditioning, Quickdraw, Dead Silence, Throwing Knife, Tactical
       Insertion, and either a Tactical Knife handgun or Akimbo USP .45s.
-      Drawing that sidearm raises active sprint speed to 1.5, and melee kills
-      grant two seconds of damage immunity. A tenths-of-a-second HUD countdown
-      shows the remaining protected time and refreshes after another melee
-      kill. A centered activation message is shown at most once per life.
+      Drawing that sidearm raises active sprint speed to 1.5. Melee and
+      Throwing Knife kills grant two seconds of damage immunity. A
+      tenths-of-a-second HUD countdown shows the remaining protected time and
+      refreshes after another qualifying kill. A centered activation message
+      is shown at most once per life.
     - Restores 100-percent weapon mobility while a standard handgun is drawn,
       instead of retaining the slowest carried primary weapon's movement
       penalty. Other movement bonuses continue to compose normally.
@@ -1682,8 +1683,7 @@ WatchKnifeRunnerKills()
 
         if (
             !IsAlive(self) ||
-            !IsDefined(self.fun_mode_last_damage_means) ||
-            self.fun_mode_last_damage_means != "MOD_MELEE" ||
+            !self IsKnifeRunnerInvulnerabilityKill() ||
             !self IsKnifeRunnerActive()
         )
         {
@@ -1702,6 +1702,22 @@ WatchKnifeRunnerKills()
         self.fun_mode_knife_runner_invulnerable_until = GetTime() + Int(duration * 1000);
         self ShowKnifeRunnerInvulnerabilityHud(duration);
     }
+}
+
+IsKnifeRunnerInvulnerabilityKill()
+{
+    if (
+        IsDefined(self.fun_mode_last_damage_means) &&
+        self.fun_mode_last_damage_means == "MOD_MELEE"
+    )
+    {
+        return true;
+    }
+
+    return (
+        IsDefined(self.fun_mode_last_damage_weapon) &&
+        IsSubStr(self.fun_mode_last_damage_weapon, "throwingknife_mp")
+    );
 }
 
 WatchKnifeRunnerInvulnerabilityHudDeaths()
