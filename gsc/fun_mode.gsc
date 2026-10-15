@@ -63,6 +63,8 @@
       matching the normal SMG mobility tier while preserving other bonuses.
     - Gives Extreme Conditioning a configurable sprint-only speed multiplier
       that composes with other movement effects without changing walking speed.
+      Players who originally select Extreme Conditioning also receive IW5's
+      hidden Marathon perk, registered by the repository's perk-table overlay.
     - Activates Knife Runner when a human loadout combines Extreme
       Conditioning, Quickdraw, Dead Silence, Throwing Knife, Tactical
       Insertion, Juiced, and either a Tactical Knife handgun or Akimbo USP
@@ -142,6 +144,7 @@ Main()
     SetDvarIfNotInitialized("fun_mode_sniper_mobility_target", 1.0);
     SetDvarIfNotInitialized("fun_mode_extreme_conditioning_sprint_speed_enable", 1);
     SetDvarIfNotInitialized("fun_mode_extreme_conditioning_sprint_speed_multiplier", 1.10);
+    SetDvarIfNotInitialized("fun_mode_extreme_conditioning_marathon_enable", 1);
     SetDvarIfNotInitialized("fun_mode_knife_runner_enable", 1);
     SetDvarIfNotInitialized("fun_mode_knife_runner_sprint_speed_multiplier", 1.50);
     SetDvarIfNotInitialized("fun_mode_knife_runner_invulnerability_seconds", 2.00);
@@ -1477,6 +1480,7 @@ WatchPlayerLoadout()
 
         wait 0.1;
 
+        self ApplyExtremeConditioningMarathon();
         self UpdateKnifeRunnerLoadoutState();
         self ApplyShotgunProficiencies();
 
@@ -1491,6 +1495,21 @@ WatchPlayerLoadout()
             // self ApplyFullSpecialistState();
         }
     }
+}
+
+ApplyExtremeConditioningMarathon()
+{
+    if (
+        !GetDvarInt("fun_mode_extreme_conditioning_marathon_enable") ||
+        !IsDefined(self.loadoutPerk1) ||
+        self.loadoutPerk1 != "specialty_longersprint"
+    )
+    {
+        return;
+    }
+
+    // Do not let a Specialist-granted copy activate the hidden perk.
+    self SetPerk("specialty_marathon", true, false);
 }
 
 ApplyShotgunProficiencies()

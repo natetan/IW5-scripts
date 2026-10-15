@@ -24,7 +24,8 @@ $sourceMappings = @(
     [pscustomobject]@{ Source = "gsc"; Destination = "scripts" },
     [pscustomobject]@{ Source = "players"; Destination = "players" },
     [pscustomobject]@{ Source = "admin"; Destination = "admin" },
-    [pscustomobject]@{ Source = "maps"; Destination = "maps" }
+    [pscustomobject]@{ Source = "maps"; Destination = "maps" },
+    [pscustomobject]@{ Source = "mp"; Destination = "mp" }
 )
 
 function Merge-NormalConfigIntoServerConfig {

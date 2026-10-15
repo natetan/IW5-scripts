@@ -114,6 +114,7 @@ See [BOTNAMES.md](./BOTNAMES.md) for details.
 │   ├── KILLSTREAKS.md            Assault and Support streak changes
 │   ├── PERKS.md                 Perk and Specialist balance reference
 │   └── WEAPONS.md               Player-weapon balance reference
+├── mp/                          Raw multiplayer table overlays
 ├── players/                     Player configuration files (.cfg)
 ├── BOTNAMES.md                  Bot name generator documentation
 ├── FASTDL.md                    Dedicated-server FastDL operations
@@ -177,6 +178,7 @@ gsc/     -> <target>\scripts\
 players/ -> <target>\players\
 admin/   -> <target>\admin\
 maps/    -> <target>\maps\
+mp/      -> <target>\mp\
 ```
 
 The targets are `%LOCALAPPDATA%\Plutonium\storage\iw5` and
