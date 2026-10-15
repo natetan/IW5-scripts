@@ -15,7 +15,7 @@ perk's Pro mapping from `mp/perktable.csv`.
 | Recon | Stock | No direct change to the selectable perk. The custom Recon Pulse is a Support streak replacement, not a Recon perk modification. |
 | Sleight of Hand | Stock | No direct changes. |
 | Blind Eye | Stock | No direct effect change. Fun Mode super classes restore their granted Blind Eye after the stock temporary spawn-protection cleanup finishes. |
-| Extreme Conditioning | **Unlimited sprint; 1.10× sprint-speed multiplier** | Originally selecting Extreme Conditioning grants IW5's hidden `specialty_marathon` perk through the repository's `mp/perkTable.csv` overlay. Specialist-granted copies do not qualify. The speed multiplier applies only while actively sprinting and composes with other movement effects without changing walking speed. A qualifying Knife Runner loadout replaces it with **1.50×** while its eligible sidearm is drawn. |
+| Extreme Conditioning | **Unlimited sprint; 1.10× sprint-speed multiplier** | Originally selecting Extreme Conditioning grants IW5's hidden `specialty_marathon` perk through the repository's `mp/perkTable.csv` overlay. Authorized Fun Mode super classes also receive Marathon; ordinary Specialist-granted copies do not qualify. The speed multiplier applies only while actively sprinting and composes with other movement effects without changing walking speed. A qualifying Knife Runner loadout replaces it with **1.50×** while its eligible sidearm is drawn. |
 | Scavenger | **Expanded resupply** | Bags can replenish secondary ammunition, lethal equipment, tactical equipment, underbarrel grenade launchers, and standalone launchers. C4 is re-armed correctly before its charge is restored. |
 
 The repository's `normal.cfg` and `hard.cfg` enable every expanded Scavenger
@@ -57,7 +57,7 @@ behaves after it is granted or genuinely earned.
 
 | Perk / system | Modification | Notes |
 |---|---|---|
-| Fun Mode super-class package | **Grants every base perk and its Pro mapping** | Human custom classes 13–15 receive the package in private matches. Dedicated servers restrict it to GUIDs configured outside the repository. The package also grants the stock hidden Specialist bonuses and Impact proficiency. |
+| Fun Mode super-class package | **Grants every base perk, its Pro mapping, and Marathon** | Human custom classes 13–15 receive the package and unlimited sprint in private matches. Dedicated servers restrict both to GUIDs configured outside the repository. The package also grants the stock hidden Specialist bonuses and Impact proficiency. |
 | Survival Reimagined Specialist package | **Reapplies the Fun Mode package** | Human survivors receive the same package after Survival finishes rebuilding their spawn loadout. |
 | Specialist multishot | **20% chance to duplicate final firearm damage** | Consumes no additional ammunition. Shotgun pellets and same-frame penetration hits share one roll. |
 | Specialist magazine refill | **Restores 25% of the killing firearm's magazine** | Rounds to a whole round and respects clip capacity. If another percentage refill applies, the strongest rule wins instead of stacking. |
