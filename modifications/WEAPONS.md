@@ -146,15 +146,17 @@ here.
 
 Human players can queue a match-temporary loadout with chat commands. The
 choice reapplies on every spawn until `!default` is entered, which restores the
-selected saved class on the following spawn. Sniper and Gunner preserve the
-saved class's lethal, tactical, deathstreak, and complete strike package. Knife
-preserves its strike package but explicitly selects Throwing Knife, Tactical
-Insertion, and Juiced so it qualifies for Knife Runner.
+selected saved class on the following spawn. Sniper, Gunner, SMG, and Boom
+preserve the saved class's lethal, tactical, deathstreak, and complete strike
+package. Knife preserves its strike package but explicitly selects Throwing
+Knife, Tactical Insertion, and Juiced so it qualifies for Knife Runner.
 
 | Command | Primary | Secondary | Perks | Other behavior |
 |---|---|---|---|---|
 | `!sniper` | Barrett .50cal with Impact and Heartbeat Sensor | MP9 with Silencer | Scavenger, Quickdraw, SitRep | Preserves equipment and streak configuration. |
 | `!gunner` | ACR 6.8 with Impact and Red Dot Sight | MP412 with Tactical Knife | Scavenger, Quickdraw, SitRep | Preserves equipment and streak configuration. |
+| `!smg` | MP7 with Focus and Silencer | MP9 with Silencer | Extreme Conditioning, Quickdraw, SitRep | Preserves equipment and streak configuration. |
+| `!boom` | ACR 6.8 with Focus and M320 Grenade Launcher | Javelin | Sleight of Hand, Quickdraw, SitRep | Preserves equipment and streak configuration. |
 | `!knife` | MSR, used to select the sniper character model before Knife Runner removes it | .44 Magnum with Tactical Knife | Extreme Conditioning, Quickdraw, Dead Silence | Selects Throwing Knife, Tactical Insertion, and Juiced; Knife Runner then enforces its normal weapon and ammo restrictions. |
 
 The presets use the standard loadout pipeline, so compatible weapons receive

@@ -9,6 +9,8 @@
     Commands:
         !sniper  Barrett / MP9 long-range preset
         !gunner  ACR / MP412 general-purpose preset
+        !smg     MP7 / MP9 mobile preset
+        !boom    ACR grenade-launcher / Javelin explosive preset
         !knife   Knife Runner preset
         !default Return to the selected saved class on the next spawn
 
@@ -51,6 +53,14 @@ WatchTemporaryLoadoutCommands()
         else if (message == "!gunner")
         {
             player SetTemporaryLoadoutPreset("gunner", "Gunner");
+        }
+        else if (message == "!smg")
+        {
+            player SetTemporaryLoadoutPreset("smg", "SMG");
+        }
+        else if (message == "!boom")
+        {
+            player SetTemporaryLoadoutPreset("boom", "Boom");
         }
         else if (message == "!knife")
         {
@@ -190,6 +200,40 @@ ApplyTemporaryLoadoutPreset(loadout, preset)
             loadout,
             "specialty_detectexplosive"
         );
+        return loadout;
+    }
+
+    if (preset == "smg")
+    {
+        loadout = SetTemporaryPrimary(
+            loadout,
+            "iw5_mp7",
+            "silencer",
+            "specialty_sharp_focus"
+        );
+        loadout = SetTemporarySecondary(
+            loadout,
+            "iw5_mp9",
+            "silencer02"
+        );
+        loadout["loadoutPerk1"] = "specialty_longersprint";
+        loadout["loadoutPerk2"] = "specialty_quickdraw";
+        loadout["loadoutPerk3"] = "specialty_detectexplosive";
+        return loadout;
+    }
+
+    if (preset == "boom")
+    {
+        loadout = SetTemporaryPrimary(
+            loadout,
+            "iw5_acr",
+            "m320",
+            "specialty_sharp_focus"
+        );
+        loadout = SetTemporarySecondary(loadout, "javelin", "none");
+        loadout["loadoutPerk1"] = "specialty_fastreload";
+        loadout["loadoutPerk2"] = "specialty_quickdraw";
+        loadout["loadoutPerk3"] = "specialty_detectexplosive";
         return loadout;
     }
 
