@@ -9,7 +9,7 @@ Rewards absent from these tables retain their stock behavior.
 | Killstreak | Mod | Notes |
 |---|---|---|
 | UAV — 3 kills | Stock | Radar behavior remains stock. See [Fast Activation](#fast-activation). |
-| Precision Airstrike — 6 kills | Harrier Strike replacement | Uses IW5's dormant Harrier path while retaining the Precision Airstrike slot, icon, cost, and location-selection controls. The Harrier can engage hostile aircraft and is destroyed by EMP effects. |
+| Precision Airstrike — 6 kills | Harrier Strike replacement | Uses IW5's dormant Harrier path while retaining the Precision Airstrike slot, icon, cost, and location-selection controls. Both the opening airstrike and Harrier cannon kills extend the owner's same-life Assault streak. The Harrier can engage hostile aircraft and is destroyed by EMP effects. |
 | Attack Helicopter — 7 kills | Ground-targeting rockets | Preserves the cannon and anti-Harrier behavior. With no hostile Harrier, it can fire at its current player target when line of sight, firing angle, and minimum range are valid. Ground rockets have unlimited ammunition and a nine-second cooldown. See [Fast Activation](#fast-activation). |
 | Strafe Run — 9 kills | AA Strike replacement | Harrier flybys attack hostile aircraft, UAVs, and AC-130s, temporarily deny enemy airspace, and launch two spaced guided attacks against ground targets. See [Fast Activation](#fast-activation). |
 | AH-6 Overwatch — 9 kills | Rocket support | Preserves stock flight, dual miniguns, health, duration, and counters. Adds one alternating FFAR against its current minigun target every eight seconds. See [Fast Activation](#fast-activation). |

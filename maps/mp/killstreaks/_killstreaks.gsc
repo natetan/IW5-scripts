@@ -23,6 +23,8 @@
     - Defer post-spawn streak restoration until the end of the frame so mods
       such as lb_server can finish their second giveLoadout() pass without
       subsequently stripping the retained streak weapons.
+    - Attribute dormant Harrier cannon kills to the Precision Airstrike reward
+      so they can extend the same-life Assault streak like its opening strike.
     - Set scr_killstreakStackDuplicates to 0 before map load to restore the
       original overwrite behavior.
 */
@@ -119,6 +121,7 @@ init()
     level.killstreakchainingweapons["ims_projectile_mp"] = "ims";
     level.killstreakchainingweapons["sentry_minigun_mp"] = "airdrop_sentry_minigun";
     level.killstreakchainingweapons["artillery_mp"] = "precision_airstrike";
+    level.killstreakchainingweapons["harrier_20mm_mp"] = "precision_airstrike";
     level.killstreakchainingweapons["cobra_20mm_mp"] = "helicopter";
     level.killstreakchainingweapons["apache_minigun_mp"] = "littlebird_flock";
     level.killstreakchainingweapons["littlebird_guard_minigun_mp"] = "littlebird_support";
