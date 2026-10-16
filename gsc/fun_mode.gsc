@@ -1664,7 +1664,17 @@ UpdateKnifeRunnerLoadoutState()
     self.fun_mode_knife_runner_class_num = self.class_num;
     self.fun_mode_knife_runner_deathstreak = undefined;
 
-    if (IsDefined(self.class_num))
+    if (
+        IsDefined(self.pers["fun_mode_temporary_loadout_active"]) &&
+        self.pers["fun_mode_temporary_loadout_active"] == "knife" &&
+        IsDefined(self.pers["gamemodeLoadout"]) &&
+        IsDefined(self.pers["gamemodeLoadout"]["loadoutDeathstreak"])
+    )
+    {
+        self.fun_mode_knife_runner_deathstreak =
+            self.pers["gamemodeLoadout"]["loadoutDeathstreak"];
+    }
+    else if (IsDefined(self.class_num))
     {
         self.fun_mode_knife_runner_deathstreak =
             self maps\mp\gametypes\_class::cac_getDeathstreak(self.class_num);

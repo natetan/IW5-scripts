@@ -142,10 +142,34 @@ here.
 | Assault Juggernaut | Replaces the stock ACR and MP9 with a silenced extended-mag KSG 12 and a Desert Eagle with Tactical Knife. |
 | Recon Juggernaut | Retains the Riot Shield and Five Seven loadout. |
 
+## Temporary In-Match Presets
+
+Human players can queue a match-temporary loadout with chat commands. The
+choice reapplies on every spawn until `!default` is entered, which restores the
+selected saved class on the following spawn. Sniper and Gunner preserve the
+saved class's lethal, tactical, deathstreak, and complete strike package. Knife
+preserves its strike package but explicitly selects Throwing Knife, Tactical
+Insertion, and Juiced so it qualifies for Knife Runner.
+
+| Command | Primary | Secondary | Perks | Other behavior |
+|---|---|---|---|---|
+| `!sniper` | Barrett .50cal with Impact and Heartbeat Sensor | MP9 with Silencer | Scavenger, Quickdraw, SitRep | Preserves equipment and streak configuration. |
+| `!gunner` | ACR 6.8 with Impact and Red Dot Sight | MP412 with Tactical Knife | Scavenger, Quickdraw, SitRep | Preserves equipment and streak configuration. |
+| `!knife` | MSR, used to select the sniper character model before Knife Runner removes it | .44 Magnum with Tactical Knife | Extreme Conditioning, Quickdraw, Dead Silence | Selects Throwing Knife, Tactical Insertion, and Juiced; Knife Runner then enforces its normal weapon and ammo restrictions. |
+
+The presets use the standard loadout pipeline, so compatible weapons receive
+the repository's automatic extended-mag attachment. After the swap, the stock
+killstreak reconciler restores activation weapons, action slots, queued extra
+rewards, selection state, and HUD data without re-awarding or consuming a
+reward. The presets do not rewrite saved custom classes and reset with the
+match.
+
 ## Source of Truth
 
 Most weapon-specific damage, refill, proficiency, and movement rules are
 defined in [`gsc/fun_mode.gsc`](../gsc/fun_mode.gsc). Assault Juggernaut weapon
 selection is defined in
-[`maps/mp/gametypes/_class.gsc`](../maps/mp/gametypes/_class.gsc). When behavior
+[`maps/mp/gametypes/_class.gsc`](../maps/mp/gametypes/_class.gsc). Temporary
+presets are defined in
+[`gsc/temporary_loadouts.gsc`](../gsc/temporary_loadouts.gsc). When behavior
 changes, update this document in the same commit.
