@@ -53,6 +53,20 @@ Only the draw animation changes. Reward validation, consumption, callbacks,
 audio, and effects remain intact. Each reward has its own `fun_mode_fast_*`
 enable dvar, allowing its stock animation to be restored independently.
 
+## MOAB Counter
+
+A small `STREAK` value above the bottom-right ammunition HUD displays IW5's
+authoritative `cur_kill_streak_for_nuke` value. It counts qualifying
+non-killstreak-weapon kills toward the MOAB and resets on death, independently
+of Assault reward cycling and Support point persistence. The stock requirement
+remains 25 qualifying kills, or 24 with Hardline.
+
+The counter can be disabled before loading a map with
+`fun_mode_killstreak_counter_enable 0`. Its default position is
+`BOTTOMRIGHT -92 -82`; the `fun_mode_killstreak_counter_x`,
+`fun_mode_killstreak_counter_y`, and `fun_mode_killstreak_counter_scale` dvars
+allow visual adjustment without editing the script.
+
 ## Shared Behavior
 
 Player-controlled streaks are exempt from MW3's temporary post-spawn damage
