@@ -268,7 +268,7 @@ SetTemporaryPrimary(loadout, weapon, attachment, proficiency)
     loadout["loadoutPrimaryAttachment"] = attachment;
     loadout["loadoutPrimaryAttachment2"] = "none";
     loadout["loadoutPrimaryBuff"] = proficiency;
-    loadout["loadoutPrimaryCamo"] = "none";
+    loadout["loadoutPrimaryCamo"] = "gold";
     loadout["loadoutPrimaryReticle"] = "none";
     return loadout;
 }

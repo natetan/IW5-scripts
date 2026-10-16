@@ -160,11 +160,11 @@ Knife, Tactical Insertion, and Juiced so it qualifies for Knife Runner.
 | `!knife` | MSR, used to select the sniper character model before Knife Runner removes it | .44 Magnum with Tactical Knife | Extreme Conditioning, Quickdraw, Dead Silence | Selects Throwing Knife, Tactical Insertion, and Juiced; Knife Runner then enforces its normal weapon and ammo restrictions. |
 
 The presets use the standard loadout pipeline, so compatible weapons receive
-the repository's automatic extended-mag attachment. After the swap, the stock
-killstreak reconciler restores activation weapons, action slots, queued extra
-rewards, selection state, and HUD data without re-awarding or consuming a
-reward. The presets do not rewrite saved custom classes and reset with the
-match.
+the repository's automatic extended-mag attachment. Every preset primary uses
+Gold camo; secondaries retain no camo. After the swap, the stock killstreak
+reconciler restores activation weapons, action slots, queued extra rewards,
+selection state, and HUD data without re-awarding or consuming a reward. The
+presets do not rewrite saved custom classes and reset with the match.
 
 ## Source of Truth
 
