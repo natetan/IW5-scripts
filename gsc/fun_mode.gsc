@@ -1069,6 +1069,9 @@ RunTemporaryTeamUAV(team)
     uav.team = team;
     uav.value = 1;
     uav.uavtype = "standard";
+    // Stock launchUAV() adds five seconds to every active same-team UAV.
+    // Keep this synthetic model compatible with that stacking path.
+    uav.timetoadd = 0;
     uav maps\mp\killstreaks\_uav::addUAVModel();
     uav maps\mp\killstreaks\_uav::addActiveUAV();
     level notify("uav_update");
