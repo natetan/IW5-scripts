@@ -17,6 +17,7 @@ operations are documented separately.
 | Drawn-sniper mobility | Drawing any standard or custom sniper rifle raises its weapon mobility to the SMG-like maximum tier. Existing perk, deathstreak, sprint, and momentum bonuses continue to compose. Juggernauts are excluded. | Targets **1.0x** weapon mobility while the sniper is equipped. Does not change sprint duration or recovery. |
 | Knife Runner | A human loadout must originally select Extreme Conditioning, Quickdraw, Dead Silence, Throwing Knife, Tactical Insertion, Juiced, and either a Tactical Knife handgun or Akimbo USP .45s. When detected, the build removes the primary weapon, empties the eligible sidearm's magazine and reserve, and disables battlefield weapon pickup interactions so it remains committed to melee and Throwing Knife play. The build remains eligible after throwing the knife or placing the insertion, but its movement and protection benefits apply only while the eligible sidearm is drawn. Walking speed remains unchanged, sprint speed composes with existing movement systems, and a confirmed melee or Throwing Knife kill while active briefly blocks incoming damage. Granted perks cannot activate the build, and Juggernauts are excluded. A centered activation notice appears only the first time the eligible sidearm is drawn during each life. Each qualifying kill also displays an `INVULNERABLE` HUD with a native tenths-of-a-second countdown; another qualifying kill refreshes both immunity and the timer. Juiced only needs to be selected; its stock deathstreak effect does not need to be currently active. | **1.50×** active-sprint multiplier and **2.00 seconds** of post-kill damage immunity. |
 | Explosive spawn protection | Enemy grenades and projectiles can damage players immediately after spawning. This removes both the nearby-explosive protection after an ordinary spawn and the separate opening-match damage reduction. Blast Shield, Juggernaut resistance, bullet damage, and spawn selection are unchanged. | Per-spawn protection defaults to **0 ms** instead of **3500 ms** and is configurable with `fun_mode_explosive_spawn_protection_ms`. The stock opening **10-second / 8% damage** protection is disabled by default; set `fun_mode_match_start_explosive_protection_enable 1` before map load to restore it. |
+| Death-loop command | A human player can type `!death` to toggle a personal loop that suicides them shortly after every spawn. Typing it again disables the loop. It is intended for rapid death/statistics testing and never targets bots or other players. | Enabled by default; set `fun_mode_death_loop_command_enable 0` before loading the map to remove the command. |
 
 Quick Fix and kill momentum are independent of the selected class, perk
 package, and strike package. Their values are controlled by the corresponding
@@ -36,6 +37,8 @@ Global combat and player systems are defined primarily in
 [`gsc/fun_mode.gsc`](../gsc/fun_mode.gsc). Gametype and engine stability hooks
 live in their named files under [`gsc/`](../gsc/), including explosive spawn
 protection in
-[`gsc/spawn_protection_tuning.gsc`](../gsc/spawn_protection_tuning.gsc). When
+[`gsc/spawn_protection_tuning.gsc`](../gsc/spawn_protection_tuning.gsc) and the
+testing-only death loop in
+[`gsc/death_loop_command.gsc`](../gsc/death_loop_command.gsc). When
 gameplay behavior or a default value changes, update this document in the same
 commit.
