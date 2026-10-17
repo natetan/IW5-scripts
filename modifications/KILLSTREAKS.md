@@ -36,7 +36,7 @@ Rewards absent from these tables retain their stock behavior.
 
 | Killstreak | Mod | Notes |
 |---|---|---|
-| MOAB — 25 weapon kills | Presentation, EMP integration, and countdown feedback | Removes the stock vision, slow-motion, and miscellaneous presentation effects while retaining the EMP. Its EMP clears custom Harriers and shares the same effective-duration countdown logic as Support EMP, so overlapping effects announce only the longer timer. |
+| MOAB — 25 weapon kills | Presentation, EMP integration, countdown feedback, and repeat awards | Removes the stock vision, slow-motion, and miscellaneous presentation effects while retaining the EMP. Its EMP clears custom Harriers and shares the same effective-duration countdown logic as Support EMP, so overlapping effects announce only the longer timer. Additional MOABs are awarded at the same per-cycle cost. Normal milestones are 25, 50, and 75; Hardline milestones are 24, 48, and 72. |
 
 ## Fast Activation
 
@@ -58,8 +58,13 @@ enable dvar, allowing its stock animation to be restored independently.
 A small `STREAK` value above the bottom-right ammunition HUD displays IW5's
 authoritative `cur_kill_streak_for_nuke` value. It counts qualifying
 non-killstreak-weapon kills toward the MOAB and resets on death, independently
-of Assault reward cycling and Support point persistence. The stock requirement
-remains 25 qualifying kills, or 24 with Hardline.
+of Assault reward cycling and Support point persistence. It remains cumulative
+after a MOAB is earned, so a player on their second cycle sees the complete gun
+streak rather than a counter reset to zero.
+
+Each award requires 25 qualifying kills, or 24 with Hardline. Repeat behavior
+can be disabled before loading a map with
+`fun_mode_repeat_moabs_enable 0`.
 
 The counter can be disabled before loading a map with
 `fun_mode_killstreak_counter_enable 0`. Its default position is
