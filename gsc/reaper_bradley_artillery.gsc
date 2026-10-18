@@ -22,6 +22,7 @@
 */
 
 #include maps\mp\killstreaks\_mobilemortar;
+#include common_scripts\_destructible;
 
 main()
 {
@@ -64,6 +65,10 @@ main()
         maps\mp\killstreaks\_mobilemortar::watchdeath,
         ::watchBradleyDeath
     );
+    replacefunc(
+        common_scripts\_destructible::hideapart,
+        ::hideDestructiblePartWithBradleyGuard
+    );
 
     // Populate the shipped entrance coordinates and precache the vehicle.
     maps\mp\killstreaks\_mobilemortar::init();
@@ -79,6 +84,25 @@ main()
     level.tankdust2 = loadfx( "impacts/large_metal_painted_hit" );
 
     level thread installBradleyCallback();
+}
+
+hideDestructiblePartWithBradleyGuard( partName )
+{
+    // Carbon contains a multipart destructible state whose requested part is
+    // absent from the active model. Bradley salvos reach that otherwise-rare
+    // state repeatedly, and stock hideapart() forwards it to hidepart()
+    // without validation. IW5 exposes no model-part predicate, so suppress
+    // only those transitions while this streak is active on Carbon.
+    if (
+        isdefined( level.script ) &&
+        level.script == "mp_carbon" &&
+        isdefined( level.mobilemortar )
+    )
+    {
+        return;
+    }
+
+    self hidepart( partName );
 }
 
 installBradleyCallback()
