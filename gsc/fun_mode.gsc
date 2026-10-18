@@ -85,8 +85,8 @@
       classes with a refreshable five-second UAV for the player's team.
     - Disables MW3's post-spawn killstreak damage cap for more lethal,
       MW2-style player-controlled streaks.
-    - Multiplies Reaper missile damage by a configurable amount so accurate
-      strikes are less likely to produce nonlethal hitmarkers.
+    - Tunes Reaper and Bradley artillery missile damage independently so both
+      paths remain worthy of the nine-kill slot.
     - Assists team changes in full 9v9 bot lobbies by temporarily removing a
       destination-team bot, then restoring the configured fill target so Bot
       Warfare replaces it on the team the human left.
@@ -112,6 +112,14 @@ Main()
     SetDvarIfNotInitialized("fun_mode_javelin_damage_multiplier", 10.0);
     SetDvarIfNotInitialized("fun_mode_noobtube_damage_multiplier", 3.0);
     SetDvarIfNotInitialized("fun_mode_reaper_damage_multiplier", 1.5);
+    SetDvarIfNotInitialized("fun_mode_bradley_missile_damage_multiplier", 2.0);
+
+    // Migrate the first experimental Bradley value while retaining any other
+    // value as an intentional operator override.
+    if (GetDvarFloat("fun_mode_bradley_missile_damage_multiplier") == 1.5)
+    {
+        SetDvar("fun_mode_bradley_missile_damage_multiplier", 2.0);
+    }
     SetDvarIfNotInitialized("fun_mode_shotgun_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_1887_damage_multiplier", 5.0);
     SetDvarIfNotInitialized("fun_mode_usas_damage_multiplier", 1.5);
@@ -525,6 +533,16 @@ GetFunModeWeaponDamageMultiplier(weapon, meansOfDeath)
 
     if (weapon == "remote_mortar_missile_mp")
     {
+        if (
+            GetDvarInt("fun_mode_bradley_artillery_enable") &&
+            IsDefined(level.ground_support_locs) &&
+            IsDefined(level.script) &&
+            IsDefined(level.ground_support_locs[level.script])
+        )
+        {
+            return GetDvarFloat("fun_mode_bradley_missile_damage_multiplier");
+        }
+
         return GetDvarFloat("fun_mode_reaper_damage_multiplier");
     }
 

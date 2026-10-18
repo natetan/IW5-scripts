@@ -3,17 +3,12 @@
 
     Reduces the delay between guided Reaper missiles by 25 percent while
     preserving the stock ammunition, duration, health, flare, and counter
-    behavior. Missile damage is tuned separately through Fun Mode's existing
-    player-damage chain.
+    behavior. This applies whenever the player-controlled Reaper is used,
+    including Bradley fallback maps and when Bradley artillery is disabled.
 
     Defaults:
         Missile interval: 2.25 seconds (stock: 3.0)
         Missile damage:   1.5x (configured in fun_mode.gsc)
-
-    Set fun_mode_reaper_interval_tuning_enable to 0 before loading a map to
-    retain the stock firing interval. The interval can also be adjusted with:
-
-        fun_mode_reaper_missile_interval_ms
 */
 
 #include maps\mp\killstreaks\_remotemortar;
@@ -41,8 +36,6 @@ fireReaperMissilesWithTunedInterval( remote )
 
     now = gettime();
     missileInterval = getdvarint( "fun_mode_reaper_missile_interval_ms" );
-    // Preserve the stock relationship between the initial ready delay and
-    // the recurring interval: 0.6 seconds here versus stock's 0.8 seconds.
     lastShotTime = now - int( missileInterval * 0.733333 );
     missilesRemaining = 14;
     self.firingreaper = 0;
@@ -52,10 +45,7 @@ fireReaperMissilesWithTunedInterval( remote )
         now = gettime();
         missileInterval = getdvarint( "fun_mode_reaper_missile_interval_ms" );
 
-        if (
-            self attackbuttonpressed() &&
-            now - lastShotTime > missileInterval
-        )
+        if ( self attackbuttonpressed() && now - lastShotTime > missileInterval )
         {
             missilesRemaining--;
             self setclientdvar( "ui_reaper_ammoCount", missilesRemaining );
