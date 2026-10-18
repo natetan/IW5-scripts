@@ -26,6 +26,7 @@ Rewards absent from these tables retain their stock behavior.
 | Killstreak | Mod | Notes |
 |---|---|---|
 | UAV — 4 points | Stock | Radar behavior remains stock. See [Fast Activation](#fast-activation). |
+| Ballistic Vests — 5 points | Team armor pulse | Replaces the deployable vest bag with an immediate pulse centered on the user. The user and every living teammate within **1,200 units** receive armor through IW5's native Ballistic Vest callback, preserving its normal health, HUD, and damage behavior. Each armored teammate awards the stock **50 Support XP** to the user. See [Fast Activation](#fast-activation). |
 | Counter-UAV — 5 points | Stock | Duration and radar-jamming behavior remain stock. See [Fast Activation](#fast-activation). |
 | Recon Drone — 10 points | Recon Pulse replacement | Replaces manual flight with a pulse centered on the user. Enemies within **2,400 units** receive the genuine Recon Drone tag for ten seconds, including tagged-kill assists, without flash or damage. Maps with malformed remote-UAV height metadata are also guarded against runtime loops. See [Fast Activation](#fast-activation). |
 | Advanced UAV — 12 points | Longer duration and Assassin reveal | Extends the actual reward from 30 to **40 seconds**. Assassin users appear globally as ordinary red dots but retain protection from directional arrows. Naturally stacked UAVs remain stock. See [Fast Activation](#fast-activation). |
@@ -48,7 +49,7 @@ for these rewards:
 | Strike package | Killstreaks |
 |---|---|
 | Assault | UAV, Attack Helicopter, Strafe Run / AA Strike, AH-6 Overwatch, Pave Low |
-| Support | UAV, Counter-UAV, Recon Drone / Recon Pulse, Advanced UAV, EMP |
+| Support | UAV, Ballistic Vests / Team Armor Pulse, Counter-UAV, Recon Drone / Recon Pulse, Advanced UAV, EMP |
 
 Only the draw animation changes. Reward validation, consumption, callbacks,
 audio, and effects remain intact. Each reward has its own `fun_mode_fast_*`

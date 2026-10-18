@@ -14,6 +14,7 @@
         fun_mode_fast_counter_uav_activation_enable
         fun_mode_fast_advanced_uav_activation_enable
         fun_mode_fast_recon_pulse_activation_enable
+        fun_mode_fast_ballistic_vest_pulse_activation_enable
         fun_mode_fast_emp_activation_enable
         fun_mode_fast_helicopter_activation_enable
         fun_mode_fast_strafe_run_activation_enable
@@ -30,6 +31,7 @@ main()
     setdvarifuninitialized( "fun_mode_fast_counter_uav_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_advanced_uav_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_recon_pulse_activation_enable", 1 );
+    setdvarifuninitialized( "fun_mode_fast_ballistic_vest_pulse_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_emp_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_helicopter_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_strafe_run_activation_enable", 1 );
@@ -41,6 +43,7 @@ main()
     level.fastCounterUavActivation = getdvarint( "fun_mode_fast_counter_uav_activation_enable" );
     level.fastAdvancedUavActivation = getdvarint( "fun_mode_fast_advanced_uav_activation_enable" );
     level.fastReconPulseActivation = getdvarint( "fun_mode_fast_recon_pulse_activation_enable" );
+    level.fastBallisticVestPulseActivation = getdvarint( "fun_mode_fast_ballistic_vest_pulse_activation_enable" );
     level.fastEmpActivation = getdvarint( "fun_mode_fast_emp_activation_enable" );
     level.fastHelicopterActivation = getdvarint( "fun_mode_fast_helicopter_activation_enable" );
     level.fastStrafeRunActivation = getdvarint( "fun_mode_fast_strafe_run_activation_enable" );
@@ -52,6 +55,7 @@ main()
          !level.fastCounterUavActivation &&
          !level.fastAdvancedUavActivation &&
          !level.fastReconPulseActivation &&
+         !level.fastBallisticVestPulseActivation &&
          !level.fastEmpActivation &&
          !level.fastHelicopterActivation &&
          !level.fastStrafeRunActivation &&
@@ -92,6 +96,12 @@ getFastKillstreakWeapon( streakName )
     // marker so it remains distinct from every other held Support reward.
     if ( streakName == "remote_uav" && level.fastReconPulseActivation )
         return "airdrop_trap_marker_mp";
+
+    // Vest Pulse is a Support reward. This shipped Assault-package marker is
+    // already proven by AH-6 fast activation and remains distinct from every
+    // other fast-activated Support reward.
+    if ( streakName == "deployable_vest" && level.fastBallisticVestPulseActivation )
+        return "airdrop_juggernaut_def_mp";
 
     if ( streakName == "emp" && level.fastEmpActivation )
         return "airdrop_juggernaut_mp";
