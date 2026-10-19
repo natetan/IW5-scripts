@@ -36,6 +36,13 @@ main()
     if ( !getdvarint( "fun_mode_bradley_artillery_enable" ) )
         return;
 
+    // Custom maps and stock maps without authored ground entrances use the
+    // tuned Reaper directly. Exit before Mobile Mortar initialization and
+    // Bradley-specific precaches so asset-heavy maps do not waste scarce
+    // configstring slots on an unavailable replacement.
+    if ( !isBradleySupportedMap( level.script ) )
+        return;
+
     precacheshader( "compass_objpoint_airstrike_friendly" );
     precacheshader( "compass_objpoint_airstrike_busy" );
     precachemodel( "vehicle_ugv_talon_mp" );
@@ -84,6 +91,32 @@ main()
     level.tankdust2 = loadfx( "impacts/large_metal_painted_hit" );
 
     level thread installBradleyCallback();
+}
+
+isBradleySupportedMap( mapName )
+{
+    if ( !isdefined( mapName ) )
+        return 0;
+
+    switch ( mapName )
+    {
+        case "mp_alpha":
+        case "mp_bootleg":
+        case "mp_bravo":
+        case "mp_carbon":
+        case "mp_dome":
+        case "mp_hardhat":
+        case "mp_interchange":
+        case "mp_lambeth":
+        case "mp_meteora":
+        case "mp_paris":
+        case "mp_plaza2":
+        case "mp_radar":
+        case "mp_seatown":
+            return 1;
+    }
+
+    return 0;
 }
 
 hideDestructiblePartWithBradleyGuard( partName )
