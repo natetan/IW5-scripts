@@ -59,6 +59,7 @@ useBallisticVestPulse( lifeId )
 
         player [[ level.killstreakfuncs["light_armor"] ]]();
         player playlocalsound( "ammo_crate_use" );
+        player iprintlnbold( "Received Ballistic Vest" );
         armoredCount++;
 
         // Match the stock bag's reward for each teammate who takes a vest.
