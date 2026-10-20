@@ -40,7 +40,10 @@ main()
     // tuned Reaper directly. Exit before Mobile Mortar initialization and
     // Bradley-specific precaches so asset-heavy maps do not waste scarce
     // configstring slots on an unavailable replacement.
-    if ( !isBradleySupportedMap( level.script ) )
+    // level.script is not guaranteed to exist yet when loose-script main()
+    // functions run. The engine mapname dvar is already initialized and is
+    // stable during this phase, so use it for the startup-only asset guard.
+    if ( !isBradleySupportedMap( getdvar( "mapname" ) ) )
         return;
 
     precacheshader( "compass_objpoint_airstrike_friendly" );
