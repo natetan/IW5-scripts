@@ -66,7 +66,7 @@ TrackKillstreakCounter()
         getdvarint("fun_mode_killstreak_counter_x"),
         getdvarint("fun_mode_killstreak_counter_y")
     );
-    counter.label = &"^5STREAK: ^7";
+    counter.label = &"^5MOAB STREAK: ^7";
     counter.sort = 1;
     counter.foreground = true;
 

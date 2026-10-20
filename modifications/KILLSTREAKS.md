@@ -57,7 +57,7 @@ enable dvar, allowing its stock animation to be restored independently.
 
 ## MOAB Counter
 
-A small `STREAK` value above the bottom-right ammunition HUD displays IW5's
+A small `MOAB STREAK` value above the bottom-right ammunition HUD displays IW5's
 authoritative `cur_kill_streak_for_nuke` value. It counts qualifying
 non-killstreak-weapon kills toward the MOAB and resets on death, independently
 of Assault reward cycling and Support point persistence. It remains cumulative
