@@ -17,7 +17,7 @@ Rewards absent from these tables retain their stock behavior.
 | AH-6 Overwatch — 9 kills | Rocket support | Preserves stock flight, dual miniguns, health, duration, and counters. Adds one alternating FFAR against its current minigun target every eight seconds. See [Fast Activation](#fast-activation). |
 | Reaper — 9 kills | Automated Reaper | Preserves the stock Reaper aircraft, health, flare, anti-air counters, destruction credit, 40-second timeout, and **14 missiles**, but removes player control. Fast activation launches the aircraft while its owner remains mobile. It randomly targets living, visible enemies from the aircraft's position, respects Blind Eye, and fires at a **2.25-second** interval. Missile damage remains **1.5x**. The behavior is identical on every map. Set `fun_mode_automated_reaper_enable 0` before map load to restore the player-controlled Reaper. See [Fast Activation](#fast-activation). |
 | Assault Drone — 10 kills | A-10 support replacement | Removes the care-package delivery and player-controlled drone. Calls two autonomous attack passes that use shipped Harrier presentation assets, paired FFARs, and the stock A-10 cannon sweep. |
-| AC-130 — 12 kills | Faster cannon reloads | Reloads are **2.5 seconds** for the 105 mm, **1.5 seconds** for the 40 mm, and **0.5 seconds** for the 25 mm. Damage, duration, flares, and vulnerability remain stock. |
+| AC-130 — 12 kills | Automated gunship | Fast activation launches an autonomous AC-130 while its owner remains mobile. The gunship selects visible non-Blind Eye enemies and cycles through its 105 mm, 40 mm, and 25 mm weapons. Its **40-second** duration, weapon damage, health, two flares, AA vulnerability, and owner attribution remain stock. Existing reload tuning remains **2.5 seconds** for the 105 mm, **1.5 seconds** for the 40 mm, and **0.5 seconds** for the 25 mm. Set `fun_mode_automated_ac130_enable 0` before map load to restore the player-controlled AC-130. See [Fast Activation](#fast-activation). |
 | Pave Low — 12 kills | Rocket salvos | Preserves stock flight, health, flares, and dual miniguns. Adds a three-rocket ground-suppression salvo against visible enemy clusters every ten seconds. See [Fast Activation](#fast-activation). |
 | Assault Juggernaut — 15 kills | Custom loadout | Replaces the stock loadout with a silenced extended-mag KSG 12, Desert Eagle with Tactical Knife, Semtex, and Concussion Grenades. Weapon balance is detailed in [`WEAPONS.md`](./WEAPONS.md). |
 | Osprey Gunner — 17 kills | Safe aircraft initialization | Restores missing missile-attractor defaults on affected maps. Its balance and player-controlled gunner behavior remain stock. |
@@ -49,7 +49,7 @@ for these rewards:
 
 | Strike package | Killstreaks |
 |---|---|
-| Assault | UAV, Attack Helicopter, Strafe Run / AA Strike, AH-6 Overwatch, Reaper, Pave Low |
+| Assault | UAV, Attack Helicopter, Strafe Run / AA Strike, AH-6 Overwatch, Reaper, AC-130, Pave Low |
 | Support | UAV, Ballistic Vests / Team Armor Pulse, Counter-UAV, Recon Drone / Recon Pulse, Advanced UAV, EMP |
 
 Only the draw animation changes. Reward validation, consumption, callbacks,
