@@ -19,6 +19,7 @@
         fun_mode_fast_helicopter_activation_enable
         fun_mode_fast_strafe_run_activation_enable
         fun_mode_fast_ah6_activation_enable
+        fun_mode_fast_reaper_activation_enable
         fun_mode_fast_pavelow_activation_enable
 */
 
@@ -36,6 +37,7 @@ main()
     setdvarifuninitialized( "fun_mode_fast_helicopter_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_strafe_run_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_ah6_activation_enable", 1 );
+    setdvarifuninitialized( "fun_mode_fast_reaper_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_pavelow_activation_enable", 1 );
 
     level.fastUavActivation = getdvarint( "fun_mode_fast_uav_activation_enable" );
@@ -48,6 +50,7 @@ main()
     level.fastHelicopterActivation = getdvarint( "fun_mode_fast_helicopter_activation_enable" );
     level.fastStrafeRunActivation = getdvarint( "fun_mode_fast_strafe_run_activation_enable" );
     level.fastAh6Activation = getdvarint( "fun_mode_fast_ah6_activation_enable" );
+    level.fastReaperActivation = getdvarint( "fun_mode_fast_reaper_activation_enable" );
     level.fastPavelowActivation = getdvarint( "fun_mode_fast_pavelow_activation_enable" );
 
     if ( !level.fastUavActivation &&
@@ -60,6 +63,7 @@ main()
          !level.fastHelicopterActivation &&
          !level.fastStrafeRunActivation &&
          !level.fastAh6Activation &&
+         !level.fastReaperActivation &&
          !level.fastPavelowActivation )
         return;
 
@@ -118,6 +122,11 @@ getFastKillstreakWeapon( streakName )
         return "airdrop_sentry_marker_mp";
 
     if ( streakName == "littlebird_support" && level.fastAh6Activation )
+        return "airdrop_juggernaut_def_mp";
+
+    // Reaper and AH-6 occupy the same nine-kill tier and cannot coexist in one
+    // Assault loadout, so the automated Reaper can safely share this marker.
+    if ( streakName == "remote_mortar" && level.fastReaperActivation )
         return "airdrop_juggernaut_def_mp";
 
     if ( streakName == "helicopter_flares" && level.fastPavelowActivation )

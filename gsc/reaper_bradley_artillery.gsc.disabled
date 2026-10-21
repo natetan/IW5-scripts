@@ -1,0 +1,611 @@
+/*
+    INACTIVE REFERENCE IMPLEMENTATION
+
+    This file intentionally uses a non-.gsc extension so Plutonium does not
+    compile or load it. The map-dependent Bradley replacement was retired in
+    favor of the map-independent automated Reaper in reaper_tuning.gsc.
+
+    Reaper -> Bradley Artillery - IW5 / Plutonium
+
+    Replaces the nine-kill player-controlled Reaper with IW5's dormant Mobile
+    Mortar Bradley. Activation randomly chooses one of three authored entrance
+    lanes; the Bradley then attacks autonomously with top-down missiles.
+
+    The dormant implementation is polished for normal multiplayer:
+        Duration:         30 seconds (stock dormant value: 90)
+        Salvo size:       3 missiles
+        Salvo interval:   5 seconds
+        Missile spacing:  0.35 seconds
+        Missile damage:   2x (configured in fun_mode.gsc)
+
+    Missing dormant objective shaders are replaced with shipped airstrike
+    icons and missing Bradley muzzle/dust effects are omitted.
+
+    Maps without authored Bradley entrances automatically retain the stock
+    player-controlled Reaper. Set fun_mode_bradley_artillery_enable to 0 before
+    loading a map to retain it everywhere.
+*/
+
+#include maps\mp\killstreaks\_mobilemortar;
+#include common_scripts\_destructible;
+
+main()
+{
+    setdvarifuninitialized( "fun_mode_bradley_artillery_enable", 1 );
+    setdvarifuninitialized( "fun_mode_bradley_duration_seconds", 30 );
+    setdvarifuninitialized( "fun_mode_bradley_salvo_size", 3 );
+    setdvarifuninitialized( "fun_mode_bradley_salvo_interval_seconds", 5 );
+    setdvarifuninitialized( "fun_mode_bradley_salvo_spacing_seconds", 0.35 );
+    setdvarifuninitialized( "fun_mode_bradley_salvo_spread", 160 );
+
+    level.funModeBradleyArtilleryActive = 0;
+
+    if ( !getdvarint( "fun_mode_bradley_artillery_enable" ) )
+        return;
+
+    // Custom maps and stock maps without authored ground entrances use the
+    // tuned Reaper directly. Exit before Mobile Mortar initialization and
+    // Bradley-specific precaches so asset-heavy maps do not waste scarce
+    // configstring slots on an unavailable replacement.
+    // level.script is not guaranteed to exist yet when loose-script main()
+    // functions run. The engine mapname dvar is already initialized and is
+    // stable during this phase, so use it for the startup-only asset guard.
+    if ( !isBradleySupportedMap( getdvar( "mapname" ) ) )
+        return;
+
+    level.funModeBradleyArtilleryActive = 1;
+
+    precacheshader( "compass_objpoint_airstrike_friendly" );
+    precacheshader( "compass_objpoint_airstrike_busy" );
+    precachemodel( "vehicle_ugv_talon_mp" );
+    precachemodel( "vehicle_ugv_talon_gun_mp" );
+
+    replacefunc(
+        common_scripts\_destructible::hideapart,
+        ::hideDestructiblePartWithBradleyGuard
+    );
+
+    // Stock Mobile Mortar init also registers missing Bradley models, five FX,
+    // three shaders, and three localized strings. Only copy its authored lane
+    // data; our implementation owns every presentation and lifecycle path.
+    initializeBradleyEntrances();
+
+    level thread installBradleyCallback();
+}
+
+initializeBradleyEntrances()
+{
+    level.ground_support_locs = [];
+
+    level.ground_support_locs["mp_alpha"][0]["origin"] = ( -2748.91, 2921.33, 125.394 );
+    level.ground_support_locs["mp_alpha"][0]["angles"] = ( 0, 16, 0 );
+    level.ground_support_locs["mp_alpha"][1]["origin"] = ( 707.795, -499.191, -7.875 );
+    level.ground_support_locs["mp_alpha"][1]["angles"] = ( 0, 90, 0 );
+    level.ground_support_locs["mp_alpha"][2]["origin"] = ( 81.8557, 2343.87, -7.875 );
+    level.ground_support_locs["mp_alpha"][2]["angles"] = ( 0, -90.1, 0 );
+
+    level.ground_support_locs["mp_bootleg"][0]["origin"] = ( -988.964, 1833.74, -99.9509 );
+    level.ground_support_locs["mp_bootleg"][0]["angles"] = ( 0, -78.8909, 0 );
+    level.ground_support_locs["mp_bootleg"][1]["origin"] = ( 1105.84, -1116.13, -72.3048 );
+    level.ground_support_locs["mp_bootleg"][1]["angles"] = ( 0, 176.558, 0 );
+    level.ground_support_locs["mp_bootleg"][2]["origin"] = ( -2027.31, 84.2235, -51.875 );
+    level.ground_support_locs["mp_bootleg"][2]["angles"] = ( 0, -5.12868, 0 );
+
+    level.ground_support_locs["mp_bravo"][0]["origin"] = ( -761.529, 1221.7, 1212.13 );
+    level.ground_support_locs["mp_bravo"][0]["angles"] = ( 0, -92.373, 0 );
+    level.ground_support_locs["mp_bravo"][1]["origin"] = ( 1474.99, 971.865, 1140.13 );
+    level.ground_support_locs["mp_bravo"][1]["angles"] = ( 0, -178.401, 0 );
+    level.ground_support_locs["mp_bravo"][2]["origin"] = ( -1366.57, -370.995, 975.807 );
+    level.ground_support_locs["mp_bravo"][2]["angles"] = ( 0, 0.807495, 0 );
+
+    level.ground_support_locs["mp_carbon"][0]["origin"] = ( -47.1408, -2841.26, 3940.01 );
+    level.ground_support_locs["mp_carbon"][0]["angles"] = ( 0, -101.667, 0 );
+    level.ground_support_locs["mp_carbon"][1]["origin"] = ( -1686.2, -4727.09, 3756.16 );
+    level.ground_support_locs["mp_carbon"][1]["angles"] = ( 0, 87.6436, 0 );
+    level.ground_support_locs["mp_carbon"][2]["origin"] = ( -3761.18, -3716.69, 3568.91 );
+    level.ground_support_locs["mp_carbon"][2]["angles"] = ( 0, -4.20761, 0 );
+
+    level.ground_support_locs["mp_dome"][0]["origin"] = ( 960.279, -482.564, -388.872 );
+    level.ground_support_locs["mp_dome"][0]["angles"] = ( 0, 100.536, 0 );
+    level.ground_support_locs["mp_dome"][1]["origin"] = ( -921.941, 166.449, -418.131 );
+    level.ground_support_locs["mp_dome"][1]["angles"] = ( 0, 25.4524, 0 );
+    level.ground_support_locs["mp_dome"][2]["origin"] = ( 43.3564, 2102.85, -290.875 );
+    level.ground_support_locs["mp_dome"][2]["angles"] = ( 0, -95.0347, 0 );
+
+    level.ground_support_locs["mp_hardhat"][0]["origin"] = ( 2033.65, -1428.62, 299.86 );
+    level.ground_support_locs["mp_hardhat"][0]["angles"] = ( 0, 177.979, 0 );
+    level.ground_support_locs["mp_hardhat"][1]["origin"] = ( -1044.73, 82.9179, 181.022 );
+    level.ground_support_locs["mp_hardhat"][1]["angles"] = ( 0, -2.68066, 0 );
+    level.ground_support_locs["mp_hardhat"][2]["origin"] = ( 1248.95, 1322.56, 304.125 );
+    level.ground_support_locs["mp_hardhat"][2]["angles"] = ( 0, -93.4772, 0 );
+
+    level.ground_support_locs["mp_interchange"][0]["origin"] = ( -2067.08, 1218.17, -82.0487 );
+    level.ground_support_locs["mp_interchange"][0]["angles"] = ( 0, -26.2946, 0 );
+    level.ground_support_locs["mp_interchange"][1]["origin"] = ( -1198.2, -1782.62, 103.665 );
+    level.ground_support_locs["mp_interchange"][1]["angles"] = ( 0, 23.3544, 0 );
+    level.ground_support_locs["mp_interchange"][2]["origin"] = ( 2391.95, 899.034, 87.7839 );
+    level.ground_support_locs["mp_interchange"][2]["angles"] = ( 0, -136.134, 0 );
+
+    level.ground_support_locs["mp_lambeth"][0]["origin"] = ( 1641.37, -1318.01, -260.173 );
+    level.ground_support_locs["mp_lambeth"][0]["angles"] = ( 0, 133.329, 0 );
+    level.ground_support_locs["mp_lambeth"][1]["origin"] = ( -1346.56, -880.226, -191.875 );
+    level.ground_support_locs["mp_lambeth"][1]["angles"] = ( 0, 0.432892, 0 );
+    level.ground_support_locs["mp_lambeth"][2]["origin"] = ( 1403.95, 3083.4, -287.354 );
+    level.ground_support_locs["mp_lambeth"][2]["angles"] = ( 0, -106.321, 0 );
+
+    level.ground_support_locs["mp_meteora"][0]["origin"] = ( -590.972, 1667.65, -99.6187 );
+    level.ground_support_locs["mp_meteora"][0]["angles"] = ( 0, -89.7745, 0 );
+    level.ground_support_locs["mp_meteora"][1]["origin"] = ( -1371.02, -1095.66, 4.125 );
+    level.ground_support_locs["mp_meteora"][1]["angles"] = ( 0, 179.879, 0 );
+    level.ground_support_locs["mp_meteora"][2]["origin"] = ( 938.851, -1376.99, -60.0877 );
+    level.ground_support_locs["mp_meteora"][2]["angles"] = ( 0, 110.545, 0 );
+
+    level.ground_support_locs["mp_paris"][0]["origin"] = ( -2427.42, 619.217, 188.826 );
+    level.ground_support_locs["mp_paris"][0]["angles"] = ( 0, -2.90588, 0 );
+    level.ground_support_locs["mp_paris"][1]["origin"] = ( 2066.95, 796.542, -88.322 );
+    level.ground_support_locs["mp_paris"][1]["angles"] = ( 0, 177.292, 0 );
+    level.ground_support_locs["mp_paris"][2]["origin"] = ( 506.406, -2165.36, -64.1201 );
+    level.ground_support_locs["mp_paris"][2]["angles"] = ( 0, 89.5715, 0 );
+
+    level.ground_support_locs["mp_plaza2"][0]["origin"] = ( -1579.34, -2349.41, 556.125 );
+    level.ground_support_locs["mp_plaza2"][0]["angles"] = ( 0, 5.32288, 0 );
+    level.ground_support_locs["mp_plaza2"][1]["origin"] = ( -135.286, 1622.04, 607.13 );
+    level.ground_support_locs["mp_plaza2"][1]["angles"] = ( 0, 173.639, 0 );
+    level.ground_support_locs["mp_plaza2"][2]["origin"] = ( -1544.55, 1966.84, 632.024 );
+    level.ground_support_locs["mp_plaza2"][2]["angles"] = ( 0, 0.796509, 0 );
+
+    level.ground_support_locs["mp_radar"][0]["origin"] = ( 896.685, 2692.74, 1208.13 );
+    level.ground_support_locs["mp_radar"][0]["angles"] = ( 0, -178.313, 0 );
+    level.ground_support_locs["mp_radar"][1]["origin"] = ( -2455.87, 1564.41, 1308.9 );
+    level.ground_support_locs["mp_radar"][1]["angles"] = ( 0, 1.93471, 0 );
+    level.ground_support_locs["mp_radar"][2]["origin"] = ( 1609, -1098.99, 1162.13 );
+    level.ground_support_locs["mp_radar"][2]["angles"] = ( 0, 170.421, 0 );
+
+    level.ground_support_locs["mp_seatown"][0]["origin"] = ( 1339.87, 763.592, 175.114 );
+    level.ground_support_locs["mp_seatown"][0]["angles"] = ( 0, 178.551, 0 );
+    level.ground_support_locs["mp_seatown"][1]["origin"] = ( 1317.92, -725.589, 232.125 );
+    level.ground_support_locs["mp_seatown"][1]["angles"] = ( 0, 177.738, 0 );
+    level.ground_support_locs["mp_seatown"][2]["origin"] = ( -961.699, -1581.56, 144.125 );
+    level.ground_support_locs["mp_seatown"][2]["angles"] = ( 0, 90.0176, 0 );
+}
+
+isBradleySupportedMap( mapName )
+{
+    if ( !isdefined( mapName ) )
+        return 0;
+
+    switch ( mapName )
+    {
+        case "mp_alpha":
+        case "mp_bootleg":
+        case "mp_bravo":
+        case "mp_carbon":
+        case "mp_dome":
+        case "mp_hardhat":
+        case "mp_interchange":
+        case "mp_lambeth":
+        case "mp_meteora":
+        case "mp_paris":
+        case "mp_plaza2":
+        case "mp_radar":
+        case "mp_seatown":
+            return 1;
+    }
+
+    return 0;
+}
+
+hideDestructiblePartWithBradleyGuard( partName )
+{
+    // Carbon contains a multipart destructible state whose requested part is
+    // absent from the active model. Bradley salvos reach that otherwise-rare
+    // state repeatedly, and stock hideapart() forwards it to hidepart()
+    // without validation. IW5 exposes no model-part predicate, so suppress
+    // only those transitions while this streak is active on Carbon.
+    if (
+        isdefined( level.script ) &&
+        level.script == "mp_carbon" &&
+        isdefined( level.mobilemortar )
+    )
+    {
+        return;
+    }
+
+    self hidepart( partName );
+}
+
+installBradleyCallback()
+{
+    level endon( "game_ended" );
+
+    while (
+        !isdefined( level.killstreakfuncs ) ||
+        !isdefined( level.killstreakfuncs["remote_mortar"] )
+    )
+    {
+        wait 0.05;
+    }
+
+    // Retain the callback installed by _remotemortar::init so unsupported
+    // maps can still use the player-controlled Reaper instead of holding an
+    // unusable nine-kill reward.
+    level.funModeStockReaperCallback = level.killstreakfuncs["remote_mortar"];
+    level.killstreakfuncs["remote_mortar"] = ::tryUseBradleyArtillery;
+}
+
+tryUseBradleyArtillery( lifeId )
+{
+    if ( !isdefined( level.ground_support_locs[level.script] ) )
+    {
+        if ( isdefined( level.funModeStockReaperCallback ) )
+            return self [[ level.funModeStockReaperCallback ]]( lifeId );
+
+        return 0;
+    }
+
+    if (
+        isdefined( self.laststand ) &&
+        !self maps\mp\_utility::_hasperk( "specialty_finalstand" )
+    )
+    {
+        self iprintlnbold( &"MP_UNAVILABLE_IN_LASTSTAND" );
+        return 0;
+    }
+
+    if ( isdefined( level.mobilemortar ) )
+    {
+        self iprintlnbold( &"MP_GROUND_APPROACHES_TOO_CROWDED" );
+        return 0;
+    }
+
+    if ( self maps\mp\_utility::isusingremote() )
+        return 0;
+
+    // Each supported map has exactly three shipped ground-support entrances.
+    // Random selection removes the slow laptop UI without inventing unsafe
+    // world coordinates or changing the vehicle's authored approach paths.
+    entranceIndex = randomint( 3 );
+
+    bradley = createBradleyVehicle( self, entranceIndex );
+
+    if ( !isdefined( bradley ) )
+        return 0;
+
+    // vehicle_bradley is referenced by the dormant script but absent from the
+    // shipped MP zone. Its missing-model proxy is the damaging red FX object
+    // seen in-world. Assemble the real UGV chassis and turret models while
+    // preserving the Bradley entity's movement, health, and targeting logic.
+    bradley.presentationTurret = spawn( "script_model", bradley.origin );
+
+    if ( isdefined( bradley.presentationTurret ) )
+    {
+        bradley.presentationTurret setmodel( "vehicle_ugv_talon_gun_mp" );
+        bradley.presentationTurret linkto(
+            bradley,
+            "tag_turret_attach",
+            ( 0, 0, 0 ),
+            ( 0, 0, 0 )
+        );
+    }
+
+    bradley thread moveBradleyToPosition( "entrance" );
+    self thread restoreWeaponAfterBradleyActivation();
+    return 1;
+}
+
+createBradleyVehicle( owner, entranceIndex )
+{
+    entrance = level.ground_support_locs[level.script][entranceIndex];
+    heightOffset = maps\mp\killstreaks\_airdrop::getflyheightoffset(
+        entrance["origin"]
+    );
+    groundTrace = bullettrace(
+        entrance["origin"] + ( 0, 0, heightOffset ),
+        entrance["origin"] - ( 0, 0, heightOffset ),
+        0
+    );
+    spawnOrigin = groundTrace["position"] +
+        anglestoforward( entrance["angles"] ) * -1000;
+    bradley = spawn( "script_model", spawnOrigin );
+
+    if ( !isdefined( bradley ) )
+        return undefined;
+
+    bradley.angles = entrance["angles"];
+    bradley setmodel( "vehicle_ugv_talon_mp" );
+    bradley setcandamage( 1 );
+    bradley.maxhealth = level.heli_maxhealth * 2;
+    bradley.health = bradley.maxhealth;
+    bradley.owner = owner;
+    bradley.playersattacked = [];
+    bradley.lasttarget = bradley.origin;
+    bradley.helitype = "helicopter";
+    bradley.heli_type = "helicopter";
+
+    if ( level.teambased )
+        bradley.team = owner.team;
+
+    bradley.lowx = level.spawnpoints[0].origin[0];
+    bradley.highx = level.spawnpoints[0].origin[0];
+    bradley.lowy = level.spawnpoints[0].origin[1];
+    bradley.highy = level.spawnpoints[0].origin[1];
+    boundsInset = 200;
+
+    if ( level.spawnpoints.size > 1 )
+    {
+        for ( index = 1; index < level.spawnpoints.size; index++ )
+        {
+            spawnpoint = level.spawnpoints[index].origin;
+
+            if ( spawnpoint[0] < bradley.lowx )
+                bradley.lowx = spawnpoint[0];
+            else if ( spawnpoint[0] > bradley.highx )
+                bradley.highx = spawnpoint[0];
+
+            if ( spawnpoint[1] < bradley.lowy )
+                bradley.lowy = spawnpoint[1];
+            else if ( spawnpoint[1] > bradley.highy )
+                bradley.highy = spawnpoint[1];
+        }
+    }
+    else
+        boundsInset = -2000;
+
+    bradley.lowx += boundsInset;
+    bradley.highx -= boundsInset;
+    bradley.lowy += boundsInset;
+    bradley.highy -= boundsInset;
+
+    if ( level.teambased )
+    {
+        friendlyObjective = maps\mp\gametypes\_gameobjects::getnextobjid();
+        objective_add( friendlyObjective, "invisible", ( 0, 0, 0 ) );
+        objective_position( friendlyObjective, groundTrace["position"] );
+        objective_state( friendlyObjective, "active" );
+        objective_team( friendlyObjective, bradley.team );
+        objective_icon( friendlyObjective, "compass_objpoint_airstrike_friendly" );
+        bradley.objidfriendly = friendlyObjective;
+
+        enemyObjective = maps\mp\gametypes\_gameobjects::getnextobjid();
+        objective_add( enemyObjective, "invisible", ( 0, 0, 0 ) );
+        objective_position( enemyObjective, groundTrace["position"] );
+        objective_state( enemyObjective, "active" );
+        objective_team( enemyObjective, level.otherteam[bradley.team] );
+        objective_icon( enemyObjective, "compass_objpoint_airstrike_busy" );
+        bradley.objidenemy = enemyObjective;
+    }
+
+    bradley thread watchBradleyTimeout();
+    bradley thread maps\mp\killstreaks\_helicopter::heli_damage_monitor();
+    bradley thread watchBradleyDeath();
+    bradley thread maps\mp\killstreaks\_mobilemortar::watchproximity();
+    level.mobilemortar = bradley;
+    return bradley;
+}
+
+restoreWeaponAfterBradleyActivation()
+{
+    self endon( "disconnect" );
+    self endon( "death" );
+    level endon( "game_ended" );
+
+    waittillframeend;
+    returnWeapon = common_scripts\utility::getlastweapon();
+
+    if (
+        !isdefined( returnWeapon ) ||
+        returnWeapon == "none" ||
+        !self hasweapon( returnWeapon )
+    )
+    {
+        primaryWeapons = self getweaponslistprimaries();
+
+        if ( !primaryWeapons.size )
+            return;
+
+        returnWeapon = primaryWeapons[0];
+    }
+
+    self switchtoweapon( returnWeapon );
+}
+
+moveBradleyToPosition( direction )
+{
+    level endon( "game_ended" );
+    self endon( "death" );
+
+    if ( direction == "entrance" )
+        destination = self.origin + anglestoforward( self.angles ) * 1000;
+    else
+    {
+        self notify( "leaving" );
+        destination = self.origin + anglestoforward( self.angles ) * -1000;
+    }
+
+    travelTime = 3.0;
+    self moveto( destination, travelTime, travelTime * 0.6, travelTime * 0.4 );
+    wait( travelTime );
+
+    if ( direction == "entrance" )
+    {
+        self thread runBradleyArtillery();
+        return;
+    }
+
+    cleanupBradleyObjectives();
+
+    if ( isdefined( self.presentationTurret ) )
+        self.presentationTurret delete();
+
+    level.mobilemortar = undefined;
+    self delete();
+}
+
+runBradleyArtillery()
+{
+    level endon( "game_ended" );
+    self endon( "death" );
+    self endon( "leaving" );
+
+    for (;;)
+    {
+        salvoStartTime = gettime();
+        target = self maps\mp\killstreaks\_mobilemortar::findtarget();
+
+        if ( !isdefined( target ) )
+            target = self maps\mp\killstreaks\_mobilemortar::findrandomtarget();
+
+        salvoSize = getdvarint( "fun_mode_bradley_salvo_size" );
+        spacing = getdvarfloat( "fun_mode_bradley_salvo_spacing_seconds" );
+        spread = getdvarfloat( "fun_mode_bradley_salvo_spread" );
+
+        if ( salvoSize < 1 )
+            salvoSize = 1;
+        else if ( salvoSize > 6 )
+            salvoSize = 6;
+
+        if ( spacing < 0.05 )
+            spacing = 0.05;
+
+        if ( spread < 0 )
+            spread = 0;
+
+        for ( shot = 0; shot < salvoSize; shot++ )
+        {
+            strikeTarget = target;
+
+            if ( shot > 0 && spread > 0 )
+            {
+                strikeTarget += (
+                    randomfloatrange( spread * -1, spread ),
+                    randomfloatrange( spread * -1, spread ),
+                    0
+                );
+            }
+
+            height = self.origin[2] + 3500;
+            groundTrace = bullettrace(
+                strikeTarget + ( 0, 0, height ),
+                strikeTarget - ( 0, 0, height ),
+                0
+            );
+            apex = strikeTarget + ( 0, 0, height );
+            impact = strikeTarget + ( 0, 0, groundTrace["position"][2] );
+
+            self playsound( "bmp_fire" );
+            self thread maps\mp\killstreaks\_mobilemortar::mortarrecoil();
+            level thread fireBradleyMissile( self, apex, impact );
+
+            if ( shot < salvoSize - 1 )
+                wait spacing;
+        }
+
+        salvoInterval = getdvarfloat( "fun_mode_bradley_salvo_interval_seconds" );
+
+        if ( salvoInterval < 1 )
+            salvoInterval = 1;
+
+        elapsedSeconds = ( gettime() - salvoStartTime ) / 1000.0;
+        remainingDelay = salvoInterval - elapsedSeconds;
+
+        if ( remainingDelay < 0.05 )
+            remainingDelay = 0.05;
+
+        wait remainingDelay;
+    }
+}
+
+fireBradleyMissile( bradley, apex, impact )
+{
+    level endon( "game_ended" );
+
+    if ( !isdefined( bradley ) || !isdefined( bradley.owner ) )
+        return;
+
+    owner = bradley.owner;
+    ascent = magicbullet(
+        "javelin_mp",
+        bradley.origin + ( 0, 0, 150 ),
+        apex,
+        owner
+    );
+
+    elapsed = 0;
+
+    while (
+        isdefined( ascent ) &&
+        elapsed <= 115 &&
+        distancesquared( ascent.origin, apex ) >= 500
+    )
+    {
+        wait 0.05;
+        elapsed++;
+    }
+
+    if ( isdefined( ascent ) )
+        ascent delete();
+
+    if ( !isdefined( bradley ) || !isdefined( owner ) )
+        return;
+
+    missile = magicbullet(
+        "remote_mortar_missile_mp",
+        apex + ( 0, 0, 200 ),
+        impact,
+        owner
+    );
+}
+
+watchBradleyTimeout()
+{
+    level endon( "game_ended" );
+    self endon( "death" );
+
+    duration = getdvarfloat( "fun_mode_bradley_duration_seconds" );
+
+    if ( duration < 5 )
+        duration = 5;
+
+    maps\mp\gametypes\_hostmigration::waitlongdurationwithhostmigrationpause(
+        duration
+    );
+    self setcandamage( 0 );
+    self thread moveBradleyToPosition( "exit" );
+}
+
+watchBradleyDeath()
+{
+    level endon( "game_ended" );
+    self endon( "leaving" );
+    self waittill( "death" );
+
+    destroyedBradley = spawn( "script_model", self.origin );
+
+    if ( isdefined( destroyedBradley ) )
+    {
+        destroyedBradley setmodel( "vehicle_ugv_talon_mp" );
+        destroyedBradley.angles = self.angles;
+    }
+
+    cleanupBradleyObjectives();
+
+    if ( isdefined( self.presentationTurret ) )
+        self.presentationTurret delete();
+
+    self delete();
+    wait 3.5;
+
+    if ( isdefined( destroyedBradley ) )
+        destroyedBradley delete();
+
+    level.mobilemortar = undefined;
+}
+
+cleanupBradleyObjectives()
+{
+    if ( isdefined( self.objidfriendly ) )
+        maps\mp\_utility::_objective_delete( self.objidfriendly );
+
+    if ( isdefined( self.objidenemy ) )
+        maps\mp\_utility::_objective_delete( self.objidenemy );
+}
