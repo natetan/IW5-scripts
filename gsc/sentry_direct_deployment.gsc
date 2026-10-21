@@ -99,6 +99,7 @@ sentryBurstFireStartWithGrenades()
 
         if (
             self.sentrytype == "minigun_turret" &&
+            !isdefined( self.funModeSupportGuardian ) &&
             getdvarint( "fun_mode_sentry_grenade_secondary_enable" )
         )
         {
