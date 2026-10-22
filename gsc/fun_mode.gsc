@@ -82,7 +82,10 @@
       refresh the timer and raise movement speed to a conservative cap, then
       momentum decays one stack at a time instead of disappearing at once.
     - Rewards every third kill after genuinely earning Specialist on Fun Mode
-      classes with a refreshable five-second UAV for the player's team.
+      classes with a refreshable five-second UAV for the player's team. The
+      random normal killstreak reward is GUID-restricted for human classes
+      13-15 on dedicated servers, while Specialist bots receive it without a
+      class or GUID restriction.
     - Disables MW3's post-spawn killstreak damage cap for more lethal,
       MW2-style player-controlled streaks.
     - Tunes automated Reaper missile damage so the autonomous aircraft remains
@@ -157,6 +160,7 @@ Main()
     SetDvarIfNotInitialized("fun_mode_post_specialist_enable", 1);
     SetDvarIfNotInitialized("fun_mode_post_specialist_kills", 3);
     SetDvarIfNotInitialized("fun_mode_post_specialist_uav_duration", 5);
+    SetDvarIfNotInitialized("fun_mode_post_specialist_random_streak_enable", 1);
 
     /*
         _escortairdrop::createAirship passes these values directly to
@@ -1110,10 +1114,16 @@ WatchPostSpecialistRewards()
     {
         self waittill("killed_enemy");
 
+        uavEligible = self HasEarnedRealSpecialistBonus();
+        randomStreakEligible = (
+            GetDvarInt("fun_mode_post_specialist_random_streak_enable") &&
+            self CanReceiveRandomPostSpecialistKillstreak()
+        );
+
         if (
             !GetDvarInt("fun_mode_post_specialist_enable") ||
             !IsAlive(self) ||
-            !self HasEarnedRealSpecialistBonus()
+            (!uavEligible && !randomStreakEligible)
         )
         {
             self.fun_mode_real_specialist_bonus_seen = false;
@@ -1145,15 +1155,101 @@ WatchPostSpecialistRewards()
         }
 
         self.fun_mode_post_specialist_kills = 0;
-        duration = GetDvarFloat("fun_mode_post_specialist_uav_duration");
 
-        if (duration <= 0)
+        if (uavEligible)
         {
-            continue;
+            duration = GetDvarFloat("fun_mode_post_specialist_uav_duration");
+
+            if (duration > 0)
+            {
+                self GrantTemporaryTeamUAV(duration);
+            }
         }
 
-        self GrantTemporaryTeamUAV(duration);
+        if (randomStreakEligible)
+        {
+            self GrantRandomPostSpecialistKillstreak();
+        }
     }
+}
+
+CanReceiveRandomPostSpecialistKillstreak()
+{
+    if (!self HasEarnedFullSpecialistBonus())
+    {
+        return false;
+    }
+
+    // Bots may use any class, but still have to run Specialist and genuinely
+    // earn its full bonus before post-bonus kills can grant random streaks.
+    if (self IsBotPlayer())
+    {
+        return true;
+    }
+
+    // Reuse the established Fun Mode policy: classes 13-15 are unrestricted
+    // in private matches and require the configured GUID on dedicated servers.
+    return self IsFunModeSuperClassOwner();
+}
+
+GrantRandomPostSpecialistKillstreak()
+{
+    /*
+        Use the stock gimme-reward path so the reward occupies slot zero and
+        additional rewards queue behind it. Avoid MOAB, Specialist perks, and
+        Juggernauts that would replace the player's active Specialist loadout.
+    */
+    rewardPool = [];
+    rewardPool[rewardPool.size] = "uav";
+    rewardPool[rewardPool.size] = "uav_support";
+    rewardPool[rewardPool.size] = "counter_uav";
+    rewardPool[rewardPool.size] = "deployable_vest";
+    rewardPool[rewardPool.size] = "airdrop_trap";
+    rewardPool[rewardPool.size] = "predator_missile";
+    rewardPool[rewardPool.size] = "ims";
+    rewardPool[rewardPool.size] = "precision_airstrike";
+    rewardPool[rewardPool.size] = "helicopter";
+    rewardPool[rewardPool.size] = "sam_turret";
+    rewardPool[rewardPool.size] = "littlebird_flock";
+    rewardPool[rewardPool.size] = "littlebird_support";
+    rewardPool[rewardPool.size] = "remote_mortar";
+    rewardPool[rewardPool.size] = "remote_uav";
+    rewardPool[rewardPool.size] = "remote_tank";
+    rewardPool[rewardPool.size] = "triple_uav";
+    rewardPool[rewardPool.size] = "remote_mg_turret";
+    rewardPool[rewardPool.size] = "ac130";
+    rewardPool[rewardPool.size] = "helicopter_flares";
+    rewardPool[rewardPool.size] = "stealth_airstrike";
+    rewardPool[rewardPool.size] = "emp";
+    rewardPool[rewardPool.size] = "escort_airdrop";
+    rewardPool[rewardPool.size] = "osprey_gunner";
+
+    availableRewards = [];
+
+    foreach (reward in rewardPool)
+    {
+        if (
+            IsDefined(level.killstreakfuncs) &&
+            IsDefined(level.killstreakfuncs[reward])
+        )
+        {
+            availableRewards[availableRewards.size] = reward;
+        }
+    }
+
+    if (!availableRewards.size)
+    {
+        return;
+    }
+
+    reward = availableRewards[RandomInt(availableRewards.size)];
+    self thread maps\mp\killstreaks\_killstreaks::givekillstreak(
+        reward,
+        0,
+        0,
+        self,
+        0
+    );
 }
 
 /*
