@@ -1196,8 +1196,9 @@ GrantRandomPostSpecialistKillstreak()
 {
     /*
         Use the stock gimme-reward path so the reward occupies slot zero and
-        additional rewards queue behind it. Avoid MOAB, Specialist perks, and
-        Juggernauts that would replace the player's active Specialist loadout.
+        additional rewards queue behind it. Avoid MOAB and Specialist perks.
+        Juggernauts remain their native care-package rewards, so the package
+        may be claimed by its owner, a teammate, or an enemy.
     */
     rewardPool = [];
     rewardPool[rewardPool.size] = "uav";
@@ -1205,6 +1206,8 @@ GrantRandomPostSpecialistKillstreak()
     rewardPool[rewardPool.size] = "counter_uav";
     rewardPool[rewardPool.size] = "deployable_vest";
     rewardPool[rewardPool.size] = "airdrop_trap";
+    rewardPool[rewardPool.size] = "airdrop_juggernaut";
+    rewardPool[rewardPool.size] = "airdrop_juggernaut_recon";
     rewardPool[rewardPool.size] = "predator_missile";
     rewardPool[rewardPool.size] = "ims";
     rewardPool[rewardPool.size] = "precision_airstrike";
