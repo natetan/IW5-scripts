@@ -22,6 +22,7 @@
         fun_mode_fast_reaper_activation_enable
         fun_mode_fast_ac130_activation_enable
         fun_mode_fast_pavelow_activation_enable
+        fun_mode_fast_assault_juggernaut_swarm_activation_enable
 */
 
 #include maps\mp\killstreaks\_killstreaks;
@@ -41,6 +42,7 @@ main()
     setdvarifuninitialized( "fun_mode_fast_reaper_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_ac130_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_pavelow_activation_enable", 1 );
+    setdvarifuninitialized( "fun_mode_fast_assault_juggernaut_swarm_activation_enable", 1 );
 
     level.fastUavActivation = getdvarint( "fun_mode_fast_uav_activation_enable" );
     level.fastSupportUavActivation = getdvarint( "fun_mode_fast_support_uav_activation_enable" );
@@ -55,6 +57,7 @@ main()
     level.fastReaperActivation = getdvarint( "fun_mode_fast_reaper_activation_enable" );
     level.fastAc130Activation = getdvarint( "fun_mode_fast_ac130_activation_enable" );
     level.fastPavelowActivation = getdvarint( "fun_mode_fast_pavelow_activation_enable" );
+    level.fastAssaultJuggernautSwarmActivation = getdvarint( "fun_mode_fast_assault_juggernaut_swarm_activation_enable" );
 
     if ( !level.fastUavActivation &&
          !level.fastSupportUavActivation &&
@@ -68,7 +71,8 @@ main()
          !level.fastAh6Activation &&
          !level.fastReaperActivation &&
          !level.fastAc130Activation &&
-         !level.fastPavelowActivation )
+         !level.fastPavelowActivation &&
+         !level.fastAssaultJuggernautSwarmActivation )
         return;
 
     replacefunc(
@@ -140,6 +144,17 @@ getFastKillstreakWeapon( streakName )
 
     if ( streakName == "helicopter_flares" && level.fastPavelowActivation )
         return "airdrop_escort_marker_mp";
+
+    // The Assault Juggernaut replacement has no package to place. Reuse a
+    // Support marker that cannot collide with another Assault reward.
+    if (
+        streakName == "airdrop_juggernaut" &&
+        getdvarint( "fun_mode_assault_juggernaut_swarm_enable" ) &&
+        level.fastAssaultJuggernautSwarmActivation
+    )
+    {
+        return "airdrop_tank_marker_mp";
+    }
 
     return tablelookup( "mp/killstreakTable.csv", 1, streakName, 12 );
 }

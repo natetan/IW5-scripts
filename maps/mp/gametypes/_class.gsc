@@ -3,9 +3,6 @@
 
 /*
 	Custom changes:
-	- Assault Juggernaut uses an ACR and MP9 with Red Dot Sight plus Extended
-	  Mags, along with Semtex and Concussion Grenades, replacing its weak stock
-	  M60/MP412 and Frag/Smoke loadout.
 	- Support/Recon Juggernaut keeps its built-in moving radar but uses Semtex
 	  and Concussion Grenades instead of its stock equipment combination.
 	- Its Five-Seven uses a Tactical Knife and receives Extended Mags from the
@@ -763,26 +760,24 @@ giveLoadout( team, class, allowCopycat, setPrimarySpawnWeapon )
 	}
 	else if ( class == "juggernaut" )
 	{
-		// Keep the Assault Juggernaut dangerous up close without giving its
-		// enormous health pool the stock ACR's effortless ranged pressure.
-		loadoutPrimary = "iw5_ksg";
-		loadoutPrimaryAttachment = "silencer03";
-		loadoutPrimaryAttachment2 = "xmags";
+		loadoutPrimary = "iw5_m60jugg";
+		loadoutPrimaryAttachment = "none";
+		loadoutPrimaryAttachment2 = "none";
 		loadoutPrimaryBuff = "specialty_null";
 		loadoutPrimaryCamo = "none";
 		loadoutPrimaryReticle = "none";
-		loadoutSecondary = "iw5_deserteagle";
-		loadoutSecondaryAttachment = "tactical";
+		loadoutSecondary = "iw5_mp412jugg";
+		loadoutSecondaryAttachment = "none";
 		loadoutSecondaryAttachment2 = "none";
 		loadoutSecondaryBuff = "specialty_null";
 		loadoutSecondaryCamo = "none";
 		loadoutSecondaryReticle = "none";
-		loadoutEquipment = "semtex_mp";
+		loadoutEquipment = "frag_grenade_mp";
 		loadoutPerk1 = "specialty_scavenger";
 		loadoutPerk2 = "specialty_quickdraw";
 		loadoutPerk3 = "specialty_detectexplosive";
 		loadoutStreakType = getLoadoutStreakTypeFromStreakType( self.streakType );
-		loadoutOffhand = "concussion_grenade_mp";
+		loadoutOffhand = "smoke_grenade_mp";
 		loadoutDeathStreak = "specialty_null";
 	}
 	else if ( class == "juggernaut_recon" )

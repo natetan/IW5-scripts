@@ -19,7 +19,7 @@ Rewards absent from these tables retain their stock behavior.
 | Assault Drone — 10 kills | A-10 support replacement | Removes the care-package delivery and player-controlled drone. Calls two autonomous attack passes that use shipped Harrier presentation assets, paired FFARs, and the stock A-10 cannon sweep. |
 | AC-130 — 12 kills | Automated gunship | Fast activation launches an autonomous AC-130 while its owner remains mobile. The gunship selects visible non-Blind Eye enemies and cycles through its 105 mm, 40 mm, and 25 mm weapons. Its **40-second** duration, weapon damage, health, two flares, AA vulnerability, and owner attribution remain stock. Existing reload tuning remains **2.5 seconds** for the 105 mm, **1.5 seconds** for the 40 mm, and **0.5 seconds** for the 25 mm. Set `fun_mode_automated_ac130_enable 0` before map load to restore the player-controlled AC-130. See [Fast Activation](#fast-activation). |
 | Pave Low — 12 kills | Rocket salvos | Preserves stock flight, health, flares, and dual miniguns. Adds a three-rocket ground-suppression salvo against visible enemy clusters every ten seconds. See [Fast Activation](#fast-activation). |
-| Assault Juggernaut — 15 kills | Custom loadout | Replaces the stock loadout with a silenced extended-mag KSG 12, Desert Eagle with Tactical Knife, Semtex, and Concussion Grenades. Its native care package is eligible for the random post-Specialist reward pool and may be claimed by any player. Weapon balance is detailed in [`WEAPONS.md`](./WEAPONS.md). |
+| Assault Juggernaut — 15 kills | Predator Swarm replacement | Removes the care package and Juggernaut loadout. Fast activation starts **seven three-missile salvos** at **four-second intervals** using autonomous Reaper-guided missiles in a Predator-style top-down barrage. Missiles select living enemies with a clear overhead approach and respect Blind Eye. The replacement also applies when this reward is granted randomly after Specialist Bonus. Set `fun_mode_assault_juggernaut_swarm_enable 0` before map load to restore the stock Assault Juggernaut package. See [Fast Activation](#fast-activation). |
 | Osprey Gunner — 17 kills | Safe aircraft initialization | Restores missing missile-attractor defaults on affected maps. Its balance and player-controlled gunner behavior remain stock. |
 
 ## Support Strike Package
@@ -44,18 +44,20 @@ Rewards absent from these tables retain their stock behavior.
 
 ## Fast Activation
 
-Fast activation is a quality-of-life change, not a killstreak balance mod. It
-replaces the slow stock radio-device animation with a quick marker-weapon draw
-for these rewards:
+Fast activation is normally a quality-of-life change rather than a killstreak
+balance mod. The Assault Juggernaut's Predator Swarm replacement also uses it
+because that streak no longer deploys a package. It replaces the slow stock
+radio-device animation with a quick marker-weapon draw for these rewards:
 
 | Strike package | Killstreaks |
 |---|---|
-| Assault | UAV, Attack Helicopter, Strafe Run / AA Strike, AH-6 Overwatch, Reaper, AC-130, Pave Low |
+| Assault | UAV, Attack Helicopter, Strafe Run / AA Strike, AH-6 Overwatch, Reaper, AC-130, Pave Low, Assault Juggernaut / Predator Swarm |
 | Support | UAV, Ballistic Vests / Team Armor Pulse, Counter-UAV, Recon Drone / Recon Pulse, Advanced UAV, EMP |
 
-Only the draw animation changes. Reward validation, consumption, callbacks,
-audio, and effects remain intact. Each reward has its own `fun_mode_fast_*`
-enable dvar, allowing its stock animation to be restored independently.
+Except for the explicitly documented Predator Swarm replacement, only the draw
+animation changes. Reward validation, consumption, callbacks, audio, and
+effects remain intact. Each reward has its own `fun_mode_fast_*` enable dvar,
+allowing its stock animation to be restored independently.
 
 ## MOAB Counter
 

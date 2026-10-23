@@ -6744,7 +6744,7 @@ bot_killstreak_think_loop( data )
 	}
 	else
 	{
-		if ( streakName == "escort_airdrop" || streakName == "airdrop_juggernaut_recon" || streakName == "airdrop_trap" || streakName == "airdrop_juggernaut" || streakName == "airdrop_remote_tank" || streakName == "airdrop_sentry_minigun" || streakName == "airdrop_assault" )
+		if ( streakName == "escort_airdrop" || streakName == "airdrop_juggernaut_recon" || streakName == "airdrop_trap" || ( streakName == "airdrop_juggernaut" && !getdvarint( "fun_mode_assault_juggernaut_swarm_enable" ) ) || streakName == "airdrop_remote_tank" || streakName == "airdrop_sentry_minigun" || streakName == "airdrop_assault" )
 		{
 			if ( self HasScriptAimPos() )
 			{
@@ -6891,6 +6891,7 @@ bot_killstreak_think_loop( data )
 				case "triple_uav":
 				case "nuke":
 				case "emp":
+				case "airdrop_juggernaut":
 					self BotStopMoving( true );
 					
 					self BotNotifyBotEvent( "killstreak", "call", streakName, location, directionYaw );

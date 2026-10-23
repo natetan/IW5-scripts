@@ -70,7 +70,7 @@ proficiencies.
 | Weapon | Player damage multiplier | Other modifications |
 |---|---:|---|
 | USAS-12 | **1.5×** unsilenced; **3×** silenced | Silencer combinations retain the stronger multiplier even with a second attachment. |
-| KSG 12 | **2×** unsilenced; **5×** silenced | Assault Juggernaut uses a silenced, extended-mag KSG. |
+| KSG 12 | **2×** unsilenced; **5×** silenced | Silencer combinations retain the stronger multiplier even with a second attachment. |
 | SPAS-12 | **2×** unsilenced; **5×** silenced | Silencer combinations retain the stronger multiplier even with a second attachment. |
 | AA-12 | **2×** unsilenced; **3×** silenced | Each kill restores 25% of the equipped magazine, rounded to a whole round and capped at its clip size. |
 | Striker | Stock (1×) unsilenced; **3×** silenced | Only silenced variants receive a script multiplier. |
@@ -94,7 +94,7 @@ proficiencies.
 | MP412 | **3×** | Each kill restores 50% of the equipped magazine; odd capacities round up. |
 | .44 Magnum | Stock (1×) | None. |
 | Five Seven | Stock (1×) | Recon Juggernaut uses the Tactical Knife variant. |
-| Desert Eagle | **2×** | Each kill restores 50% of the equipped magazine; odd capacities round up. Assault Juggernaut carries the Tactical Knife variant. |
+| Desert Eagle | **2×** | Each kill restores 50% of the equipped magazine; odd capacities round up. |
 
 The MP412 and Desert Eagle refill uses the equipped weapon's actual clip size,
 so Akimbo and extended-mag variants scale automatically. If another refill
@@ -135,13 +135,6 @@ here.
 | Drawn-handgun mobility | USP .45, P99, MP412, .44 Magnum, Five Seven, and Desert Eagle | While a standard handgun is drawn, removes the slowest carried primary weapon's mobility penalty and targets the normal **100%** weapon-mobility tier. Walking and sprinting both benefit; Lightweight, Juiced, Extreme Conditioning, and kill momentum still compose normally. Juggernauts are excluded. |
 | Knife Runner | Handguns equipped with Tactical Knife, plus Akimbo USP .45s | Requires an original loadout containing Extreme Conditioning, Quickdraw, Dead Silence, Throwing Knife, Tactical Insertion, and the Juiced deathstreak. The primary is removed, the eligible sidearm's magazine and reserve are forced to zero, firearm ammo refills are suppressed, and battlefield weapon pickup interactions are disabled. The sidearm receives **1.50×** sprint speed while drawn, and a confirmed melee or Throwing Knife kill while active grants **2.00 seconds** of damage immunity with a visible tenths-of-a-second HUD countdown. Throwing the knife or placing the insertion does not disable future activation. Juiced only needs to be selected, not currently active. Juggernauts are excluded. |
 
-## Special Loadout Changes
-
-| Loadout | Modification |
-|---|---|
-| Assault Juggernaut | Replaces the stock ACR and MP9 with a silenced extended-mag KSG 12 and a Desert Eagle with Tactical Knife. |
-| Recon Juggernaut | Retains the Riot Shield and Five Seven loadout. |
-
 ## Temporary In-Match Presets
 
 Human players can queue a match-temporary loadout with chat commands. The
@@ -169,9 +162,6 @@ presets do not rewrite saved custom classes and reset with the match.
 ## Source of Truth
 
 Most weapon-specific damage, refill, proficiency, and movement rules are
-defined in [`gsc/fun_mode.gsc`](../gsc/fun_mode.gsc). Assault Juggernaut weapon
-selection is defined in
-[`maps/mp/gametypes/_class.gsc`](../maps/mp/gametypes/_class.gsc). Temporary
-presets are defined in
+defined in [`gsc/fun_mode.gsc`](../gsc/fun_mode.gsc). Temporary presets are defined in
 [`gsc/temporary_loadouts.gsc`](../gsc/temporary_loadouts.gsc). When behavior
 changes, update this document in the same commit.
