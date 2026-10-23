@@ -87,6 +87,9 @@ fixes.
 See [modifications/KILLSTREAKS.md](./modifications/KILLSTREAKS.md) for Assault,
 Support, and MOAB changes ordered by their stock kill or point requirements.
 
+See [COMMANDS.md](./COMMANDS.md) for chat-command permissions, usage, aliases,
+and the complete list of killstreak names accepted by `!give`.
+
 ### 🛠️ In-Match Class Editing
 
 [LastDemon99's IW5 EditClassMenu](https://github.com/LastDemon99/IW5-Mods/tree/main/EditClassMenu) adds a full class editor to the in-game menu. It can edit weapons, compatible attachments, proficiencies, perks, equipment, streaks, camos, and reticles without returning to the main multiplayer menus.
@@ -117,6 +120,7 @@ See [BOTNAMES.md](./BOTNAMES.md) for details.
 ├── mp/                          Raw multiplayer table overlays
 ├── players/                     Player configuration files (.cfg)
 ├── BOTNAMES.md                  Bot name generator documentation
+├── COMMANDS.md                  Permissioned chat-command reference
 ├── FASTDL.md                    Dedicated-server FastDL operations
 ├── generate_iw5_bot_names.ps1
 ├── iw5_targets.ps1              Shared client/server target configuration
@@ -295,6 +299,28 @@ with commas and no spaces. Keep the actual GUID in the local server config
 rather than committing it to the repository. On a dedicated server, unlisted
 players may select classes 13–15, but they receive only their ordinary class
 loadout.
+
+### Permissioned Testing Commands
+
+Hosts of non-dedicated private sessions automatically receive the maximum
+chat-command permission level of 3. On a dedicated server, GUIDs listed in
+`fun_mode_super_class_guids` also receive level 3. Separate command-only access
+can instead be configured outside the installer-managed block in the server's
+local `admin\server.cfg`:
+
+```cfg
+set fun_mode_chat_permission_1_guids ""
+set fun_mode_chat_permission_2_guids ""
+set fun_mode_chat_permission_3_guids "YOUR_GUID"
+```
+
+Separate multiple GUIDs with commas and no spaces, and never commit the real
+values. `!commands` lists commands available to the current player,
+`!permission` displays their level, and the initial owner command is
+`!give <killstreak> [player]`. The target is optional and defaults to the
+command issuer; for example, `!give swarm` grants the Assault Juggernaut slot's
+Predator Swarm replacement. See [COMMANDS.md](./COMMANDS.md) for the complete
+command and killstreak-name reference.
 
 ---
 
