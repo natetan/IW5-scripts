@@ -88,6 +88,8 @@
       class or GUID restriction.
     - Gives authorized Fun Mode super classes 50 percent resistance to melee
       damage and direct projectile impacts. Rocket splash remains unchanged.
+    - Gives authorized Fun Mode super classes a line-of-sight melee cleave:
+      one knife hit repeats its normal damage against other nearby players.
     - Disables MW3's post-spawn killstreak damage cap for more lethal,
       MW2-style player-controlled streaks.
     - Tunes automated Reaper missile damage so the autonomous aircraft remains
@@ -112,6 +114,9 @@ Main()
     SetDvarIfNotInitialized("fun_mode_super_class_guids", "");
     SetDvarIfNotInitialized("fun_mode_super_class_melee_damage_multiplier", 0.50);
     SetDvarIfNotInitialized("fun_mode_super_class_direct_projectile_damage_multiplier", 0.50);
+    SetDvarIfNotInitialized("fun_mode_super_class_melee_cleave_enable", 1);
+    SetDvarIfNotInitialized("fun_mode_super_class_melee_cleave_radius", 192);
+    SetDvarIfNotInitialized("fun_mode_super_class_melee_cleave_damage_multiplier", 1.0);
     SetDvarIfNotInitialized("fun_mode_survival_specialist_bonus", 1);
     SetDvarIfNotInitialized("fun_mode_team_switch_assist", 1);
     SetDvarIfNotInitialized("fun_mode_team_switch_fill", 18);
@@ -353,6 +358,8 @@ ModifyPlayerDamageForFunMode(
     hitLocation
 )
 {
+    baseDamage = damage;
+
     if (
         IsDefined(attacker) &&
         IsPlayer(attacker) &&
@@ -421,7 +428,141 @@ ModifyPlayerDamageForFunMode(
         damage = Int(damage * incomingDamageMultiplier);
     }
 
+    if (
+        ShouldTriggerFunModeMeleeCleave(
+            victim,
+            attacker,
+            meansOfDeath
+        )
+    )
+    {
+        attacker thread ApplyFunModeMeleeCleave(
+            victim,
+            baseDamage,
+            weapon
+        );
+    }
+
     return damage;
+}
+
+ShouldTriggerFunModeMeleeCleave(victim, attacker, meansOfDeath)
+{
+    return (
+        GetDvarInt("fun_mode_super_class_melee_cleave_enable") &&
+        meansOfDeath == "MOD_MELEE" &&
+        IsDefined(victim) &&
+        IsPlayer(victim) &&
+        IsDefined(attacker) &&
+        IsPlayer(attacker) &&
+        attacker != victim &&
+        attacker IsFunModeSuperClassOwner() &&
+        (
+            !level.teamBased ||
+            victim.team != attacker.team ||
+            level.friendlyFire != 0
+        ) &&
+        (
+            !IsDefined(attacker.fun_mode_melee_cleave_active) ||
+            !attacker.fun_mode_melee_cleave_active
+        )
+    );
+}
+
+ApplyFunModeMeleeCleave(originalVictim, baseDamage, weapon)
+{
+    self endon("disconnect");
+    level endon("game_ended");
+
+    if (
+        baseDamage <= 0 ||
+        !IsDefined(weapon) ||
+        weapon == "none" ||
+        !IsDefined(level.callbackPlayerDamage)
+    )
+    {
+        return;
+    }
+
+    cleaveOrigin = self.origin;
+    cleaveEye = self GetEye();
+    radius = GetDvarFloat("fun_mode_super_class_melee_cleave_radius");
+    cleaveDamage = Int(
+        baseDamage *
+        GetDvarFloat("fun_mode_super_class_melee_cleave_damage_multiplier")
+    );
+
+    if (radius <= 0 || cleaveDamage <= 0)
+    {
+        return;
+    }
+
+    targets = [];
+
+    foreach (candidate in level.players)
+    {
+        if (
+            !IsDefined(candidate) ||
+            !IsPlayer(candidate) ||
+            !IsAlive(candidate) ||
+            candidate == self ||
+            candidate == originalVictim ||
+            DistanceSquared(cleaveOrigin, candidate.origin) > radius * radius
+        )
+        {
+            continue;
+        }
+
+        targetPoint = candidate.origin + (0, 0, 40);
+
+        if (!BulletTracePassed(cleaveEye, targetPoint, false, candidate))
+        {
+            continue;
+        }
+
+        targets[targets.size] = candidate;
+    }
+
+    if (!targets.size)
+    {
+        return;
+    }
+
+    // Defer until the original knife callback has completed, then guard the
+    // synthetic melee callbacks so they cannot recursively create new cleaves.
+    wait 0.05;
+
+    if (!IsDefined(self) || !IsPlayer(self))
+    {
+        return;
+    }
+
+    self.fun_mode_melee_cleave_active = true;
+
+    foreach (target in targets)
+    {
+        if (!IsDefined(target) || !IsPlayer(target) || !IsAlive(target))
+        {
+            continue;
+        }
+
+        direction = VectorNormalize(target.origin - cleaveOrigin);
+
+        target [[level.callbackPlayerDamage]](
+            self,
+            self,
+            cleaveDamage,
+            0,
+            "MOD_MELEE",
+            weapon,
+            target.origin,
+            direction,
+            "none",
+            0
+        );
+    }
+
+    self.fun_mode_melee_cleave_active = false;
 }
 
 /*
