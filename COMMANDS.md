@@ -35,6 +35,7 @@ GUIDs to this repository.
 | `!commands` | 0 | Lists the commands available at the issuing player's current permission level. Alias: `!cmds`. |
 | `!help <command>` | 0 | Displays the command's usage and required permission level. |
 | `!permission` | 0 | Displays the issuing player's current command permission. Alias: `!perm`. |
+| `!random` | 3 | Immediately loads a random map from the complete configured mapvote pool while retaining the current Domination, Drop Zone, or Kill Confirmed recipe. Alias: `!randommap`. The current map is excluded when alternatives exist. Unsafe Drop Zone combinations use the same fallback rules as normal map voting. |
 
 ## Give Killstreak
 

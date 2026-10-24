@@ -642,41 +642,8 @@ ListenForEndVote()
     modeDsr = level.mapvote["modes"]["by_name"][level.mapvote["modes"]["by_index"][mostVotedModeIndex]];
     mapName = level.mapvote["maps"]["by_name"][level.mapvote["maps"]["by_index"][mostVotedMapIndex]];
 
-    // Broadcast crashes when loaded with Drop Zone. Keep it in rotation, but
-    // replace a selected DZ recipe with one of its verified modes.
-    if (mapName == "mp_broadcast" && IsSubStr(modeDsr, "DZ_"))
-    {
-        if (RandomInt(2) == 0)
-        {
-            modeName = "Domination";
-            modeDsr = "DOM_HC_100hp";
-        }
-        else
-        {
-            modeName = "Kill Confirmed";
-            modeDsr = "KC_HC";
-        }
-
-        Print("[MAPVOTE] mp_broadcast does not support Drop Zone; forcing " + modeDsr + ".");
-    }
-
-    // These maps do not provide the grnd_dropZone entities required by Drop
-    // Zone. Match the recipe family so renamed DZ recipes stay safe.
-    if (
-        (
-            mapName == "mp_rust" ||
-            mapName == "mp_rust_long" ||
-            mapName == "mp_crash" ||
-            mapName == "mp_strike_sh"
-        ) &&
-        IsSubStr(modeDsr, "DZ_")
-    )
-    {
-        modeName = "Domination";
-        modeDsr = "DOM_HC_100hp";
-
-        Print("[MAPVOTE] " + mapName + " does not support Drop Zone; forcing DOM_HC_100hp.");
-    }
+    modeDsr = GetCompatibleMapvoteModeDsr(mapName, modeDsr);
+    modeName = GetConfiguredMapvoteModeName(modeDsr);
 
     if (GetDvarInt("mapvote_debug"))
     {
@@ -687,6 +654,137 @@ ListenForEndVote()
     }
 
     DoRotation(modeDsr, mapName);
+}
+
+/*
+    Return every map codename configured for map voting, including maps stored
+    in the additional split dvars. This is intentionally independent of the
+    smaller randomized set displayed by the current vote.
+*/
+GetConfiguredMapvoteMapPool()
+{
+    configuredMaps = StrTok(GetDvar("mapvote_maps"), ":");
+
+    foreach (mapDvar in StrTok(GetDvar("mapvote_additional_maps_dvars"), ":"))
+    {
+        foreach (additionalMap in StrTok(GetDvar(mapDvar), ":"))
+        {
+            configuredMaps[configuredMaps.size] = additionalMap;
+        }
+    }
+
+    mapPool = [];
+
+    foreach (configuredMap in configuredMaps)
+    {
+        mapParts = StrTok(configuredMap, ",");
+
+        if (mapParts.size >= 2 && mapParts[1] != "")
+        {
+            mapPool[mapPool.size] = mapParts[1];
+        }
+    }
+
+    return mapPool;
+}
+
+GetConfiguredMapvoteModeDsr(modeDisplayName)
+{
+    foreach (configuredMode in StrTok(GetDvar("mapvote_modes"), ":"))
+    {
+        modeParts = StrTok(configuredMode, ",");
+
+        if (
+            modeParts.size >= 2 &&
+            ToLower(modeParts[0]) == ToLower(modeDisplayName)
+        )
+        {
+            return modeParts[1];
+        }
+    }
+
+    return undefined;
+}
+
+GetConfiguredMapvoteModeName(modeDsr)
+{
+    foreach (configuredMode in StrTok(GetDvar("mapvote_modes"), ":"))
+    {
+        modeParts = StrTok(configuredMode, ",");
+
+        if (modeParts.size >= 2 && modeParts[1] == modeDsr)
+        {
+            return modeParts[0];
+        }
+    }
+
+    return modeDsr;
+}
+
+GetCurrentMapvoteModeDsr()
+{
+    if (!IsDefined(level.gameType))
+    {
+        return undefined;
+    }
+
+    switch (level.gameType)
+    {
+        case "dom":
+            return GetConfiguredMapvoteModeDsr("Domination");
+        case "grnd":
+            return GetConfiguredMapvoteModeDsr("Drop Zone");
+        case "conf":
+            return GetConfiguredMapvoteModeDsr("Kill Confirmed");
+        default:
+            return undefined;
+    }
+}
+
+/*
+    Keep map/mode safety in one place so normal voting and administrative
+    random-map transitions follow the same verified compatibility rules.
+*/
+GetCompatibleMapvoteModeDsr(mapName, modeDsr)
+{
+    if (!IsDefined(modeDsr) || !IsSubStr(modeDsr, "DZ_"))
+    {
+        return modeDsr;
+    }
+
+    if (mapName == "mp_broadcast")
+    {
+        if (RandomInt(2) == 0)
+        {
+            compatibleDsr = GetConfiguredMapvoteModeDsr("Domination");
+        }
+        else
+        {
+            compatibleDsr = GetConfiguredMapvoteModeDsr("Kill Confirmed");
+        }
+
+        if (!IsDefined(compatibleDsr) || compatibleDsr == "")
+        {
+            compatibleDsr = GetConfiguredMapvoteModeDsr("Domination");
+        }
+
+        Print("[MAPVOTE] mp_broadcast does not support Drop Zone; forcing " + compatibleDsr + ".");
+        return compatibleDsr;
+    }
+
+    if (
+        mapName == "mp_rust" ||
+        mapName == "mp_rust_long" ||
+        mapName == "mp_crash" ||
+        mapName == "mp_strike_sh"
+    )
+    {
+        compatibleDsr = GetConfiguredMapvoteModeDsr("Domination");
+        Print("[MAPVOTE] " + mapName + " does not support Drop Zone; forcing " + compatibleDsr + ".");
+        return compatibleDsr;
+    }
+
+    return modeDsr;
 }
 
 SetMapvoteData(type, elements)

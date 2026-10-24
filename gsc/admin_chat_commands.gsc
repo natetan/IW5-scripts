@@ -57,6 +57,12 @@ main()
         ::giveKillstreakAdminChatCommand,
         "!give <killstreak> [player]"
     );
+    registerAdminChatCommand(
+        "random",
+        3,
+        ::randomMapAdminChatCommand,
+        "!random"
+    );
 
     level.funModeChatAliases["commands"] = "commands";
     level.funModeChatAliases["cmds"] = "commands";
@@ -66,6 +72,8 @@ main()
     level.funModeChatAliases["give"] = "give";
     level.funModeChatAliases["givekillstreak"] = "give";
     level.funModeChatAliases["giveks"] = "give";
+    level.funModeChatAliases["random"] = "random";
+    level.funModeChatAliases["randommap"] = "random";
 
     level thread watchAdminChatCommands();
 }
@@ -246,6 +254,66 @@ giveKillstreakAdminChatCommand( args )
         self tell( "^2Granted killstreak:^7 " + streakName );
     else
         self tell( "^2Granted " + streakName + " to:^7 " + target.name );
+}
+
+randomMapAdminChatCommand( args )
+{
+    mapPool = scripts\mapvote::GetConfiguredMapvoteMapPool();
+
+    if (!IsDefined(mapPool) || !mapPool.size)
+    {
+        self tell("^1No maps are configured for map voting.");
+        return;
+    }
+
+    candidates = [];
+    currentMap = GetDvar("mapname");
+
+    foreach (mapName in mapPool)
+    {
+        if (mapName != currentMap || mapPool.size == 1)
+        {
+            candidates[candidates.size] = mapName;
+        }
+    }
+
+    if (!candidates.size)
+    {
+        self tell("^1No alternate map is available.");
+        return;
+    }
+
+    selectedMap = candidates[RandomInt(candidates.size)];
+    modeDsr = scripts\mapvote::GetCurrentMapvoteModeDsr();
+
+    if (!IsDefined(modeDsr) || modeDsr == "")
+    {
+        self tell("^1The current mode is not configured in map voting.");
+        return;
+    }
+
+    compatibleDsr = scripts\mapvote::GetCompatibleMapvoteModeDsr(
+        selectedMap,
+        modeDsr
+    );
+
+    if (!IsDefined(compatibleDsr) || compatibleDsr == "")
+    {
+        self tell("^1No compatible recipe is configured for that map.");
+        return;
+    }
+
+    modeName = scripts\mapvote::GetConfiguredMapvoteModeName(compatibleDsr);
+    self tell("^2Random map:^7 " + selectedMap + " ^2Mode:^7 " + modeName);
+
+    level thread RunRandomMapRotation(compatibleDsr, selectedMap);
+}
+
+RunRandomMapRotation(modeDsr, mapName)
+{
+    // Allow the confirmation chat line to reach clients before map teardown.
+    wait 0.5;
+    scripts\mapvote::DoRotation(modeDsr, mapName);
 }
 
 resolveTestingKillstreakName( requestedName )
