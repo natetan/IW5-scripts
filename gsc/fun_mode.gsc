@@ -90,6 +90,7 @@
       damage and direct projectile impacts. Rocket splash remains unchanged.
     - Gives authorized Fun Mode super classes a line-of-sight melee cleave:
       one knife hit repeats its normal damage against other nearby players.
+      Throwing Knife player hits create a larger pulse around the victim.
     - Disables MW3's post-spawn killstreak damage cap for more lethal,
       MW2-style player-controlled streaks.
     - Tunes automated Reaper missile damage so the autonomous aircraft remains
@@ -117,6 +118,9 @@ Main()
     SetDvarIfNotInitialized("fun_mode_super_class_melee_cleave_enable", 1);
     SetDvarIfNotInitialized("fun_mode_super_class_melee_cleave_radius", 192);
     SetDvarIfNotInitialized("fun_mode_super_class_melee_cleave_damage_multiplier", 1.0);
+    SetDvarIfNotInitialized("fun_mode_super_class_throwing_knife_aoe_enable", 1);
+    SetDvarIfNotInitialized("fun_mode_super_class_throwing_knife_aoe_radius", 382);
+    SetDvarIfNotInitialized("fun_mode_super_class_throwing_knife_aoe_damage_multiplier", 1.0);
     SetDvarIfNotInitialized("fun_mode_survival_specialist_bonus", 1);
     SetDvarIfNotInitialized("fun_mode_team_switch_assist", 1);
     SetDvarIfNotInitialized("fun_mode_team_switch_fill", 18);
@@ -436,10 +440,40 @@ ModifyPlayerDamageForFunMode(
         )
     )
     {
-        attacker thread ApplyFunModeMeleeCleave(
+        meleeCenter = attacker.origin;
+        meleeTraceOrigin = attacker GetEye();
+
+        attacker thread ApplyFunModePlayerAoeDamage(
             victim,
+            meleeCenter,
+            meleeTraceOrigin,
             baseDamage,
+            weapon,
+            "MOD_MELEE",
+            GetDvarFloat("fun_mode_super_class_melee_cleave_radius"),
+            GetDvarFloat("fun_mode_super_class_melee_cleave_damage_multiplier")
+        );
+    }
+
+    if (
+        ShouldTriggerFunModeThrowingKnifeAoe(
+            victim,
+            attacker,
             weapon
+        )
+    )
+    {
+        throwingKnifeCenter = victim.origin + (0, 0, 40);
+
+        attacker thread ApplyFunModePlayerAoeDamage(
+            victim,
+            throwingKnifeCenter,
+            throwingKnifeCenter,
+            baseDamage,
+            weapon,
+            meansOfDeath,
+            GetDvarFloat("fun_mode_super_class_throwing_knife_aoe_radius"),
+            GetDvarFloat("fun_mode_super_class_throwing_knife_aoe_damage_multiplier")
         );
     }
 
@@ -463,13 +497,52 @@ ShouldTriggerFunModeMeleeCleave(victim, attacker, meansOfDeath)
             level.friendlyFire != 0
         ) &&
         (
-            !IsDefined(attacker.fun_mode_melee_cleave_active) ||
-            !attacker.fun_mode_melee_cleave_active
+            !IsDefined(attacker.fun_mode_player_aoe_damage_active) ||
+            !attacker.fun_mode_player_aoe_damage_active
         )
     );
 }
 
-ApplyFunModeMeleeCleave(originalVictim, baseDamage, weapon)
+ShouldTriggerFunModeThrowingKnifeAoe(victim, attacker, weapon)
+{
+    return (
+        GetDvarInt("fun_mode_super_class_throwing_knife_aoe_enable") &&
+        IsDefined(weapon) &&
+        IsSubStr(weapon, "throwingknife_mp") &&
+        IsDefined(victim) &&
+        IsPlayer(victim) &&
+        IsDefined(attacker) &&
+        IsPlayer(attacker) &&
+        attacker != victim &&
+        attacker IsFunModeSuperClassOwner() &&
+        (
+            !level.teamBased ||
+            victim.team != attacker.team ||
+            level.friendlyFire != 0
+        ) &&
+        (
+            !IsDefined(attacker.fun_mode_player_aoe_damage_active) ||
+            !attacker.fun_mode_player_aoe_damage_active
+        )
+    );
+}
+
+/*
+    Reusable player-centered area-damage path for Fun Mode attacks. Every
+    secondary hit re-enters IW5's active damage callback, preserving Bot
+    Warfare, friendly fire, target defenses, attribution, scoring, and the
+    original weapon's killfeed presentation.
+*/
+ApplyFunModePlayerAoeDamage(
+    originalVictim,
+    centerOrigin,
+    traceOrigin,
+    baseDamage,
+    weapon,
+    meansOfDeath,
+    radius,
+    damageMultiplier
+)
 {
     self endon("disconnect");
     level endon("game_ended");
@@ -484,15 +557,15 @@ ApplyFunModeMeleeCleave(originalVictim, baseDamage, weapon)
         return;
     }
 
-    cleaveOrigin = self.origin;
-    cleaveEye = self GetEye();
-    radius = GetDvarFloat("fun_mode_super_class_melee_cleave_radius");
-    cleaveDamage = Int(
-        baseDamage *
-        GetDvarFloat("fun_mode_super_class_melee_cleave_damage_multiplier")
-    );
+    areaDamage = Int(baseDamage * damageMultiplier);
 
-    if (radius <= 0 || cleaveDamage <= 0)
+    if (
+        !IsDefined(centerOrigin) ||
+        !IsDefined(traceOrigin) ||
+        !IsDefined(meansOfDeath) ||
+        radius <= 0 ||
+        areaDamage <= 0
+    )
     {
         return;
     }
@@ -507,7 +580,7 @@ ApplyFunModeMeleeCleave(originalVictim, baseDamage, weapon)
             !IsAlive(candidate) ||
             candidate == self ||
             candidate == originalVictim ||
-            DistanceSquared(cleaveOrigin, candidate.origin) > radius * radius
+            DistanceSquared(centerOrigin, candidate.origin) > radius * radius
         )
         {
             continue;
@@ -515,7 +588,7 @@ ApplyFunModeMeleeCleave(originalVictim, baseDamage, weapon)
 
         targetPoint = candidate.origin + (0, 0, 40);
 
-        if (!BulletTracePassed(cleaveEye, targetPoint, false, candidate))
+        if (!BulletTracePassed(traceOrigin, targetPoint, false, candidate))
         {
             continue;
         }
@@ -528,8 +601,8 @@ ApplyFunModeMeleeCleave(originalVictim, baseDamage, weapon)
         return;
     }
 
-    // Defer until the original knife callback has completed, then guard the
-    // synthetic melee callbacks so they cannot recursively create new cleaves.
+    // Defer until the original hit callback has completed, then guard every
+    // synthetic callback so area damage cannot recursively create another AoE.
     wait 0.05;
 
     if (!IsDefined(self) || !IsPlayer(self))
@@ -537,7 +610,7 @@ ApplyFunModeMeleeCleave(originalVictim, baseDamage, weapon)
         return;
     }
 
-    self.fun_mode_melee_cleave_active = true;
+    self.fun_mode_player_aoe_damage_active = true;
 
     foreach (target in targets)
     {
@@ -546,14 +619,14 @@ ApplyFunModeMeleeCleave(originalVictim, baseDamage, weapon)
             continue;
         }
 
-        direction = VectorNormalize(target.origin - cleaveOrigin);
+        direction = VectorNormalize(target.origin - centerOrigin);
 
         target [[level.callbackPlayerDamage]](
             self,
             self,
-            cleaveDamage,
+            areaDamage,
             0,
-            "MOD_MELEE",
+            meansOfDeath,
             weapon,
             target.origin,
             direction,
@@ -562,7 +635,7 @@ ApplyFunModeMeleeCleave(originalVictim, baseDamage, weapon)
         );
     }
 
-    self.fun_mode_melee_cleave_active = false;
+    self.fun_mode_player_aoe_damage_active = false;
 }
 
 /*
