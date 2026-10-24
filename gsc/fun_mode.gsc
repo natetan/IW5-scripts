@@ -86,6 +86,8 @@
       random normal killstreak reward is GUID-restricted for human classes
       13-15 on dedicated servers, while Specialist bots receive it without a
       class or GUID restriction.
+    - Gives authorized Fun Mode super classes 50 percent resistance to melee
+      damage and direct projectile impacts. Rocket splash remains unchanged.
     - Disables MW3's post-spawn killstreak damage cap for more lethal,
       MW2-style player-controlled streaks.
     - Tunes automated Reaper missile damage so the autonomous aircraft remains
@@ -108,6 +110,8 @@ Main()
     SetDvarIfNotInitialized("fun_mode_enable", 1);
     SetDvarIfNotInitialized("fun_mode_specialist_class_index", 14);
     SetDvarIfNotInitialized("fun_mode_super_class_guids", "");
+    SetDvarIfNotInitialized("fun_mode_super_class_melee_damage_multiplier", 0.50);
+    SetDvarIfNotInitialized("fun_mode_super_class_direct_projectile_damage_multiplier", 0.50);
     SetDvarIfNotInitialized("fun_mode_survival_specialist_bonus", 1);
     SetDvarIfNotInitialized("fun_mode_team_switch_assist", 1);
     SetDvarIfNotInitialized("fun_mode_team_switch_fill", 18);
@@ -407,7 +411,54 @@ ModifyPlayerDamageForFunMode(
         damage = Int(damage * multishotDamageMultiplier);
     }
 
+    incomingDamageMultiplier = GetFunModeSuperClassIncomingDamageMultiplier(
+        victim,
+        meansOfDeath
+    );
+
+    if (incomingDamageMultiplier != 1.0)
+    {
+        damage = Int(damage * incomingDamageMultiplier);
+    }
+
     return damage;
+}
+
+/*
+    Keep these defensive bonuses on the same eligibility path as the rest of
+    the classes 13-15 package. Non-dedicated sessions allow all three classes;
+    dedicated servers additionally require fun_mode_super_class_guids.
+
+    IW5 reports a projectile's physical collision as MOD_PROJECTILE and its
+    surrounding explosion separately as MOD_PROJECTILE_SPLASH. Reducing only
+    the former preserves normal Blast Shield and splash-damage behavior.
+*/
+GetFunModeSuperClassIncomingDamageMultiplier(victim, meansOfDeath)
+{
+    if (
+        !IsDefined(victim) ||
+        !IsPlayer(victim) ||
+        !victim IsFunModeSuperClassOwner()
+    )
+    {
+        return 1.0;
+    }
+
+    if (meansOfDeath == "MOD_MELEE")
+    {
+        return GetDvarFloat(
+            "fun_mode_super_class_melee_damage_multiplier"
+        );
+    }
+
+    if (meansOfDeath == "MOD_PROJECTILE")
+    {
+        return GetDvarFloat(
+            "fun_mode_super_class_direct_projectile_damage_multiplier"
+        );
+    }
+
+    return 1.0;
 }
 
 /*
