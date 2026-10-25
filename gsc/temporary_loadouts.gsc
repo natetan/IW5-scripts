@@ -137,7 +137,7 @@ WatchTemporaryLoadoutSpawns()
 
         preset = self.pers["fun_mode_temporary_loadout_preset"];
 
-        loadout = ApplyTemporaryLoadoutPreset(loadout, preset);
+        loadout = self ApplyTemporaryLoadoutPreset(loadout, preset);
 
         if (!IsDefined(loadout))
         {
@@ -245,11 +245,7 @@ ApplyTemporaryLoadoutPreset(loadout, preset)
             "none",
             "specialty_null"
         );
-        loadout = SetTemporarySecondary(
-            loadout,
-            "iw5_44magnum",
-            "tactical"
-        );
+        loadout = self SetRandomKnifeRunnerSecondary(loadout);
         loadout["loadoutPerk1"] = "specialty_longersprint";
         loadout["loadoutPerk2"] = "specialty_quickdraw";
         loadout["loadoutPerk3"] = "specialty_quieter";
@@ -260,6 +256,58 @@ ApplyTemporaryLoadoutPreset(loadout, preset)
     }
 
     return undefined;
+}
+
+SetRandomKnifeRunnerSecondary(loadout)
+{
+    if (!IsDefined(self.pers["fun_mode_last_knife_secondary_choice"]))
+    {
+        choice = RandomInt(7);
+    }
+    else
+    {
+        // Pick from the six entries other than the previous spawn's result.
+        choice = RandomInt(6);
+
+        if (choice >= self.pers["fun_mode_last_knife_secondary_choice"])
+        {
+            choice++;
+        }
+    }
+
+    self.pers["fun_mode_last_knife_secondary_choice"] = choice;
+
+    if (choice == 0)
+    {
+        return SetTemporarySecondary(loadout, "iw5_usp45", "tactical");
+    }
+
+    if (choice == 1)
+    {
+        return SetTemporarySecondary(loadout, "iw5_p99", "tactical");
+    }
+
+    if (choice == 2)
+    {
+        return SetTemporarySecondary(loadout, "iw5_mp412", "tactical");
+    }
+
+    if (choice == 3)
+    {
+        return SetTemporarySecondary(loadout, "iw5_44magnum", "tactical");
+    }
+
+    if (choice == 4)
+    {
+        return SetTemporarySecondary(loadout, "iw5_fnfiveseven", "tactical");
+    }
+
+    if (choice == 5)
+    {
+        return SetTemporarySecondary(loadout, "iw5_deserteagle", "tactical");
+    }
+
+    return SetTemporarySecondary(loadout, "iw5_usp45", "akimbo");
 }
 
 SetTemporaryPrimary(loadout, weapon, attachment, proficiency)

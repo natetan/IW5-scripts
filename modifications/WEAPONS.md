@@ -152,7 +152,7 @@ Knife, Tactical Insertion, and Juiced so it qualifies for Knife Runner.
 | `!gunner` | ACR 6.8 with Impact and Red Dot Sight | MP412 with Tactical Knife | Scavenger, Quickdraw, SitRep | Preserves equipment and streak configuration. |
 | `!smg` | MP7 with Focus and Silencer | MP9 with Silencer | Extreme Conditioning, Quickdraw, SitRep | Preserves equipment and streak configuration. |
 | `!boom` | ACR 6.8 with Focus and M320 Grenade Launcher | Javelin | Sleight of Hand, Quickdraw, SitRep | Preserves equipment and streak configuration. |
-| `!knife` | MSR, used to select the sniper character model before Knife Runner removes it | .44 Magnum with Tactical Knife | Extreme Conditioning, Quickdraw, Dead Silence | Selects Throwing Knife, Tactical Insertion, and Juiced; Knife Runner then enforces its normal weapon and ammo restrictions. |
+| `!knife` | MSR, used to select the sniper character model before Knife Runner removes it | Randomized on every spawn between Tactical Knife variants of the USP .45, P99, MP412, .44 Magnum, Five Seven, and Desert Eagle, plus Akimbo USP .45s | Extreme Conditioning, Quickdraw, Dead Silence | Selects Throwing Knife, Tactical Insertion, and Juiced; Knife Runner then enforces its normal weapon and ammo restrictions. |
 
 The presets use the standard loadout pipeline, so compatible weapons receive
 the repository's automatic extended-mag attachment. Every preset primary uses
