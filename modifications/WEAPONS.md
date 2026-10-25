@@ -74,7 +74,7 @@ proficiencies.
 | SPAS-12 | **2×** unsilenced; **5×** silenced | Silencer combinations retain the stronger multiplier even with a second attachment. |
 | AA-12 | **2×** unsilenced; **3×** silenced | Each kill restores 25% of the equipped magazine, rounded to a whole round and capped at its clip size. |
 | Striker | Stock (1×) unsilenced; **3×** silenced | Only silenced variants receive a script multiplier. |
-| Model 1887 | **5×** | The weapon has no attachment variants; its base damage receives the multiplier. |
+| Model 1887 | **5×** | The weapon has no attachment variants; its base damage receives the multiplier. A confirmed kill by an authorized Fun Mode class creates a damage pulse against other players within **382 units** of the victim regardless of intervening cover, repeating the killing hit's final damage without recursively chaining additional pulses. Teammates are affected when the active recipe permits friendly fire. |
 
 ## Machine Pistols
 

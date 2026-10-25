@@ -92,6 +92,7 @@
     - Gives authorized Fun Mode super classes a line-of-sight melee cleave:
       one knife hit repeats its normal damage against other nearby players.
       Throwing Knife player hits create a larger pulse around the victim.
+      Confirmed Model 1887 kills create a wider damage pulse at the victim.
     - Disables MW3's post-spawn killstreak damage cap for more lethal,
       MW2-style player-controlled streaks.
     - Tunes automated Reaper missile damage so the autonomous aircraft remains
@@ -122,6 +123,9 @@ Main()
     SetDvarIfNotInitialized("fun_mode_super_class_throwing_knife_aoe_enable", 1);
     SetDvarIfNotInitialized("fun_mode_super_class_throwing_knife_aoe_radius", 382);
     SetDvarIfNotInitialized("fun_mode_super_class_throwing_knife_aoe_damage_multiplier", 1.0);
+    SetDvarIfNotInitialized("fun_mode_super_class_model_1887_kill_aoe_enable", 1);
+    SetDvarIfNotInitialized("fun_mode_super_class_model_1887_kill_aoe_radius", 382);
+    SetDvarIfNotInitialized("fun_mode_super_class_model_1887_kill_aoe_damage_multiplier", 1.0);
     SetDvarIfNotInitialized("fun_mode_survival_specialist_bonus", 1);
     SetDvarIfNotInitialized("fun_mode_team_switch_assist", 1);
     SetDvarIfNotInitialized("fun_mode_team_switch_fill", 18);
@@ -453,7 +457,8 @@ ModifyPlayerDamageForFunMode(
             weapon,
             "MOD_MELEE",
             GetDvarFloat("fun_mode_super_class_melee_cleave_radius"),
-            GetDvarFloat("fun_mode_super_class_melee_cleave_damage_multiplier")
+            GetDvarFloat("fun_mode_super_class_melee_cleave_damage_multiplier"),
+            true
         );
     }
 
@@ -475,11 +480,101 @@ ModifyPlayerDamageForFunMode(
             weapon,
             meansOfDeath,
             GetDvarFloat("fun_mode_super_class_throwing_knife_aoe_radius"),
-            GetDvarFloat("fun_mode_super_class_throwing_knife_aoe_damage_multiplier")
+            GetDvarFloat("fun_mode_super_class_throwing_knife_aoe_damage_multiplier"),
+            true
+        );
+    }
+
+    if (
+        ShouldTriggerFunModeModel1887KillAoe(
+            victim,
+            attacker,
+            damage,
+            weapon
+        )
+    )
+    {
+        model1887PulseOrigin = victim.origin + (0, 0, 40);
+
+        attacker thread ApplyFunModeModel1887KillAoeAfterDamage(
+            victim,
+            model1887PulseOrigin,
+            damage,
+            weapon,
+            meansOfDeath
         );
     }
 
     return damage;
+}
+
+ShouldTriggerFunModeModel1887KillAoe(
+    victim,
+    attacker,
+    damage,
+    weapon
+)
+{
+    return (
+        GetDvarInt("fun_mode_super_class_model_1887_kill_aoe_enable") &&
+        IsDefined(victim) &&
+        IsPlayer(victim) &&
+        IsAlive(victim) &&
+        IsDefined(attacker) &&
+        IsPlayer(attacker) &&
+        attacker != victim &&
+        attacker IsFunModeSuperClassOwner() &&
+        IsDefined(weapon) &&
+        IsSubStr(weapon, "iw5_1887_mp") &&
+        damage > 0 &&
+        damage >= victim.health &&
+        (
+            !level.teamBased ||
+            victim.team != attacker.team ||
+            level.friendlyFire != 0
+        ) &&
+        (
+            !IsDefined(attacker.fun_mode_player_aoe_damage_active) ||
+            !attacker.fun_mode_player_aoe_damage_active
+        )
+    );
+}
+
+ApplyFunModeModel1887KillAoeAfterDamage(
+    originalVictim,
+    pulseOrigin,
+    damage,
+    weapon,
+    meansOfDeath
+)
+{
+    self endon("disconnect");
+    level endon("game_ended");
+
+    // Let IW5 finish resolving the predicted lethal hit, including Last Stand
+    // and other systems that can prevent an otherwise lethal damage callback.
+    wait 0.05;
+
+    if (
+        !IsDefined(originalVictim) ||
+        !IsPlayer(originalVictim) ||
+        IsAlive(originalVictim)
+    )
+    {
+        return;
+    }
+
+    self thread ApplyFunModePlayerAoeDamage(
+        originalVictim,
+        pulseOrigin,
+        pulseOrigin,
+        damage,
+        weapon,
+        meansOfDeath,
+        GetDvarFloat("fun_mode_super_class_model_1887_kill_aoe_radius"),
+        GetDvarFloat("fun_mode_super_class_model_1887_kill_aoe_damage_multiplier"),
+        false
+    );
 }
 
 ShouldTriggerFunModeMeleeCleave(victim, attacker, meansOfDeath)
@@ -543,7 +638,8 @@ ApplyFunModePlayerAoeDamage(
     weapon,
     meansOfDeath,
     radius,
-    damageMultiplier
+    damageMultiplier,
+    requireLineOfSight
 )
 {
     self endon("disconnect");
@@ -588,11 +684,14 @@ ApplyFunModePlayerAoeDamage(
             continue;
         }
 
-        targetPoint = candidate.origin + (0, 0, 40);
-
-        if (!BulletTracePassed(traceOrigin, targetPoint, false, candidate))
+        if (requireLineOfSight)
         {
-            continue;
+            targetPoint = candidate.origin + (0, 0, 40);
+
+            if (!BulletTracePassed(traceOrigin, targetPoint, false, candidate))
+            {
+                continue;
+            }
         }
 
         targets[targets.size] = candidate;
