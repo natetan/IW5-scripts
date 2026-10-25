@@ -19,6 +19,7 @@
       needs replenishing, including two-item tactical and tube capacities.
 	- Re-arms the C4 offhand weapon before a Scavenger refill so newly thrown
 	  charges enter IW5's normal ownership, damage, and detonator tracking.
+    - Restores one Throwing Knife after a Throwing Knife kill for every player.
     - Guards Recon Drone range checks against maps with missing or malformed
       remote-UAV height metadata, preventing a per-frame runtime-error loop.
     - Guards destructible map objects against missing sound aliases so a
@@ -142,6 +143,7 @@ Main()
     SetDvarIfNotInitialized("fun_mode_pistol_kill_refill_enable", 1);
     SetDvarIfNotInitialized("fun_mode_javelin_kill_refill_enable", 1);
     SetDvarIfNotInitialized("fun_mode_noobtube_kill_refill_enable", 1);
+    SetDvarIfNotInitialized("fun_mode_throwing_knife_kill_refill_enable", 1);
     SetDvarIfNotInitialized("fun_mode_specialist_mag_refill_enable", 1);
     SetDvarIfNotInitialized("fun_mode_specialist_mag_refill_percent", 0.25);
     SetDvarIfNotInitialized("fun_mode_specialist_multishot_enable", 1);
@@ -962,6 +964,14 @@ WatchKillAmmoRefills()
         weapon = self.fun_mode_last_damage_weapon;
 
         if (
+            GetDvarInt("fun_mode_throwing_knife_kill_refill_enable") &&
+            IsSubStr(weapon, "throwingknife_mp")
+        )
+        {
+            self RefillThrowingKnifeAfterKill();
+        }
+
+        if (
             GetDvarInt("fun_mode_javelin_kill_refill_enable") &&
             weapon == "javelin_mp"
         )
@@ -992,6 +1002,28 @@ WatchKillAmmoRefills()
         {
             self RefillWeaponClipByPercent(weapon, refillPercent);
         }
+    }
+}
+
+RefillThrowingKnifeAfterKill()
+{
+    offhands = self GetWeaponsListOffhands();
+
+    foreach (offhand in offhands)
+    {
+        if (offhand != "throwingknife_mp")
+        {
+            continue;
+        }
+
+        currentAmmo = self GetWeaponAmmoClip(offhand);
+
+        if (currentAmmo < 1)
+        {
+            self SetWeaponAmmoClip(offhand, 1);
+        }
+
+        return;
     }
 }
 
