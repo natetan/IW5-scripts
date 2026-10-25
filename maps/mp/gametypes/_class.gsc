@@ -10,9 +10,10 @@
 	- Ordinary secondary weapons, including primaries carried through Overkill,
 	  automatically receive Extended Mags as a bonus second attachment when the
 	  weapon and selected attachment support it.
-	- Human players' primary weapons also receive Extended Mags when supported
-	  and the loadout contains no more than one explicit attachment. Bot primary
-	  loadouts and explicit two-attachment setups remain unchanged.
+	- Human players' non-LMG primary weapons receive Extended Mags when supported
+	  and the loadout contains no more than one explicit attachment. LMGs receive
+	  Thermal instead, unless Red Dot or Holographic is explicitly selected.
+	  Bot primary loadouts and explicit two-attachment setups remain unchanged.
 */
 
 #include common_scripts\utility;
@@ -935,7 +936,7 @@ giveLoadout( team, class, allowCopycat, setPrimarySpawnWeapon )
 			loadoutSecondaryAttachment2 = "none";
 	}
 
-	loadoutPrimaryAttachment2 = self addExtendedMagsToHumanPrimary( loadoutPrimary, loadoutPrimaryAttachment, loadoutPrimaryAttachment2 );
+	loadoutPrimaryAttachment2 = self addAutomaticAttachmentToHumanPrimary( loadoutPrimary, loadoutPrimaryAttachment, loadoutPrimaryAttachment2 );
 	loadoutSecondaryAttachment2 = addExtendedMagsToSecondary( loadoutSecondary, loadoutSecondaryAttachment, loadoutSecondaryAttachment2, loadoutPerk2 );
 
 	self.loadoutPrimary = loadoutPrimary;
@@ -1584,7 +1585,7 @@ addExtendedMagsToSecondary( weaponName, attachment1, attachment2, perk2 )
 	return "xmags";
 }
 
-addExtendedMagsToHumanPrimary( weaponName, attachment1, attachment2 )
+addAutomaticAttachmentToHumanPrimary( weaponName, attachment1, attachment2 )
 {
 	if (
 		isDefined( self.pers["isBot"] ) && self.pers["isBot"] ||
@@ -1592,8 +1593,33 @@ addExtendedMagsToHumanPrimary( weaponName, attachment1, attachment2 )
 	)
 		return attachment2;
 
-	// Preserve an explicit two-attachment setup and avoid adding xmags twice.
-	if ( weaponName == "none" || attachment2 != "none" || attachment1 == "xmags" )
+	// Explicit two-attachment setups always remain authoritative.
+	if ( weaponName == "none" || attachment2 != "none" )
+		return attachment2;
+
+	if ( isLightMachineGunBaseName( weaponName ) )
+	{
+		// An explicitly selected Red Dot or Holographic optic wins over Thermal.
+		if (
+			attachment1 == "reflex" ||
+			attachment1 == "reflexlmg" ||
+			attachment1 == "eotech" ||
+			attachment1 == "eotechlmg" ||
+			attachment1 == "thermal"
+		)
+			return attachment2;
+
+		if ( !weaponSupportsAttachment( weaponName, "thermal" ) )
+			return attachment2;
+
+		if ( !attachmentsAreCompatible( attachment1, "thermal" ) )
+			return attachment2;
+
+		return "thermal";
+	}
+
+	// Non-LMG primaries retain the existing Extended Mags behavior.
+	if ( attachment1 == "xmags" )
 		return attachment2;
 
 	if ( !weaponSupportsAttachment( weaponName, "xmags" ) )
@@ -1603,6 +1629,17 @@ addExtendedMagsToHumanPrimary( weaponName, attachment1, attachment2 )
 		return attachment2;
 
 	return "xmags";
+}
+
+isLightMachineGunBaseName( weaponName )
+{
+	return (
+		weaponName == "iw5_sa80" ||
+		weaponName == "iw5_mg36" ||
+		weaponName == "iw5_pecheneg" ||
+		weaponName == "iw5_mk46" ||
+		weaponName == "iw5_m60"
+	);
 }
 
 buildWeaponName( baseName, attachment1, attachment2, camo, reticle )

@@ -130,6 +130,7 @@ here.
 
 | System | Eligible weapons | Behavior |
 |---|---|---|
+| Automatic primary attachment | Human primary weapons | Non-LMG primaries automatically receive Extended Mags as a compatible second attachment. LMGs receive Thermal instead and never receive automatic Extended Mags. An explicitly selected Red Dot or Holographic sight suppresses automatic Thermal; explicit two-attachment setups are preserved. Every automatic attachment is checked against the weapon's supported attachments and the selected attachment's compatibility. Bot primaries are unchanged. |
 | Shotgun proficiencies | Human loadouts containing any shotgun | Grants both Range and Damage, including when the shotgun is an Overkill secondary. |
 | Extended Scavenger | Configured secondary weapons, equipment, launchers, and underbarrel tubes | Expands stock Scavenger resupply behavior. The repository's normal and hardcore configurations enable every supported category. |
 | Drawn-handgun mobility | USP .45, P99, MP412, .44 Magnum, Five Seven, and Desert Eagle | While a standard handgun is drawn, removes the slowest carried primary weapon's mobility penalty and targets the normal **100%** weapon-mobility tier. Walking and sprinting both benefit; Lightweight, Juiced, Extreme Conditioning, and kill momentum still compose normally. Juggernauts are excluded. |
@@ -154,9 +155,9 @@ Knife, Tactical Insertion, and Juiced so it qualifies for Knife Runner.
 | `!boom` | ACR 6.8 with Focus and M320 Grenade Launcher | Javelin | Sleight of Hand, Quickdraw, SitRep | Preserves equipment and streak configuration. |
 | `!knife` | MSR, used to select the sniper character model before Knife Runner removes it | Randomized on every spawn between Tactical Knife variants of the USP .45, P99, MP412, .44 Magnum, Five Seven, and Desert Eagle, plus Akimbo USP .45s | Extreme Conditioning, Quickdraw, Dead Silence | Selects Throwing Knife, Tactical Insertion, and Juiced; Knife Runner then enforces its normal weapon and ammo restrictions. |
 
-The presets use the standard loadout pipeline, so compatible weapons receive
-the repository's automatic extended-mag attachment. Every preset primary uses
-Gold camo; secondaries retain no camo. After the swap, the stock killstreak
+The presets use the standard loadout pipeline, so their primaries receive the
+repository's applicable automatic attachment. Every preset primary uses Gold
+camo; secondaries retain no camo. After the swap, the stock killstreak
 reconciler restores activation weapons, action slots, queued extra rewards,
 selection state, and HUD data without re-awarding or consuming a reward. The
 presets do not rewrite saved custom classes and reset with the match.
