@@ -36,14 +36,15 @@ GUIDs to this repository.
 | `!help <command>` | 0 | Displays the command's usage and required permission level. |
 | `!permission` | 0 | Displays the issuing player's current command permission. Alias: `!perm`. |
 | `!random` | 3 | Immediately loads a random map from the complete configured mapvote pool while retaining the current Domination, Drop Zone, or Kill Confirmed recipe. Alias: `!randommap`. The current map is excluded when alternatives exist. Unsafe Drop Zone combinations use the same fallback rules as normal map voting. |
-| `!killmode <chain\|aoe\|off>` | 3 | Sets the issuing player's firearm kill effect for the current map. `chain` spreads final killing-shot damage to the nearest unvisited eligible player; `aoe` repeats it against every eligible player in range; `off` restores normal firearm kills. |
+| `!killmode <chain\|aoe\|off>` | 3 | Sets the issuing player's non-killstreak weapon kill effect for the current map. `chain` spreads final killing-hit damage to the nearest unvisited eligible player; `aoe` repeats it against every eligible player in range; `off` restores normal weapon kills. |
 
 ## Kill Modes
 
 `!killmode` affects only the issuing player and resets to `off` when the next
-map loads. It applies to normal primary and secondary weapons whose kills use
-IW5 rifle- or pistol-bullet damage. Melee, Throwing Knives, launchers,
-equipment, and killstreak weapons are excluded.
+map loads. It applies to primary and secondary weapons, their attachment
+modes, launchers, and carried equipment. Killstreak weapons are excluded.
+Melee and Throwing Knives retain their existing dedicated Fun Mode behavior
+instead of using the selected generic kill mode.
 
 Both modes use a **382-unit** range, ignore intervening cover, and preserve the
 killing weapon's attribution, killfeed icon, normal scoring, friendly-fire
@@ -136,7 +137,7 @@ case-insensitive, but they cannot contain spaces.
 | `fun_mode_chat_permission_1_guids` | Empty | Comma-delimited level 1 allowlist. |
 | `fun_mode_chat_permission_2_guids` | Empty | Comma-delimited level 2 allowlist. |
 | `fun_mode_chat_permission_3_guids` | Empty | Comma-delimited level 3 allowlist. |
-| `fun_mode_kill_mode_radius` | `382` | Range used by both firearm kill modes. |
+| `fun_mode_kill_mode_radius` | `382` | Range used by both non-killstreak weapon kill modes. |
 | `fun_mode_kill_mode_chain_delay` | `0.15` | Seconds between chained kills. Values below `0.05` are clamped. |
 | `fun_mode_kill_mode_chain_max_hops` | `17` | Maximum secondary kills attempted by one chain. |
 

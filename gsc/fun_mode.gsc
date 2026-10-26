@@ -92,8 +92,9 @@
     - Gives authorized Fun Mode super classes a line-of-sight melee cleave:
       one knife hit repeats its normal damage against other nearby players.
       Throwing Knife player hits create a larger pulse around the victim.
-    - Supports permissioned per-player firearm kill modes: a simultaneous
-      damage pulse or a nearest-target sequential chain.
+    - Supports permissioned per-player non-killstreak weapon kill modes: a
+      simultaneous damage pulse or a nearest-target sequential chain. Melee
+      and Throwing Knife behavior retain their dedicated Fun Mode paths.
     - Disables MW3's post-spawn killstreak damage cap for more lethal,
       MW2-style player-controlled streaks.
     - Tunes automated Reaper missile damage so the autonomous aircraft remains
@@ -555,11 +556,11 @@ ShouldTriggerFunModeKillMode(
             attacker.fun_mode_kill_mode != "chain"
         ) ||
         !IsDefined(weapon) ||
-        !IsSubStr(weapon, "iw5_") ||
-        (
-            meansOfDeath != "MOD_PISTOL_BULLET" &&
-            meansOfDeath != "MOD_RIFLE_BULLET"
-        ) ||
+        weapon == "none" ||
+        !IsDefined(meansOfDeath) ||
+        meansOfDeath == "MOD_MELEE" ||
+        IsSubStr(weapon, "throwingknife_mp") ||
+        maps\mp\_utility::IsKillstreakWeapon(weapon) ||
         damage <= 0 ||
         damage < victim.health ||
         (
