@@ -30,8 +30,8 @@
       explosive damage instead of the stock 45 percent.
     - Multiplies Javelin damage by ten against players while preserving its
       stock blast radius and earlier damage modifiers. Also doubles damage
-      from bolt-action sniper rifles, the Barrett, the AS50, the CM901, and
-      the Desert Eagle, and triples MP412 damage.
+      from bolt-action sniper rifles, the Barrett, the AS50, the CM901, the
+      Desert Eagle, and the .44 Magnum, and triples MP412 damage.
     - Restores half of the equipped magazine after an MP412 or Desert Eagle
       kill, rounding odd capacities up and respecting the normal clip cap.
     - Reloads one Javelin missile after a Javelin kill, including delayed kills
@@ -152,6 +152,7 @@ Main()
     SetDvarIfNotInitialized("fun_mode_bolt_sniper_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_heavy_sniper_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_mp412_damage_multiplier", 3.0);
+    SetDvarIfNotInitialized("fun_mode_44magnum_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_cm901_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_desert_eagle_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_pistol_kill_refill_enable", 1);
@@ -1209,6 +1210,14 @@ GetFunModeWeaponDamageMultiplier(weapon, meansOfDeath)
     )
     {
         return GetDvarFloat("fun_mode_mp412_damage_multiplier");
+    }
+
+    if (
+        isBulletDamage &&
+        IsSubStr(weapon, "iw5_44magnum_mp")
+    )
+    {
+        return GetDvarFloat("fun_mode_44magnum_damage_multiplier");
     }
 
     if (
