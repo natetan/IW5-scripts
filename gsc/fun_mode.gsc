@@ -27,7 +27,9 @@
     - Restores stock missile-attractor defaults when helicopter initialization
       leaves them undefined, preventing Osprey creation runtime errors.
     - Globally strengthens Blast Shield so its users take 25 percent of normal
-      explosive damage instead of the stock 45 percent.
+      explosive damage instead of the stock 45 percent. It also acts like
+      MW2 Danger Close, multiplying the user's outgoing non-killstreak
+      explosive damage by 1.5.
     - Multiplies Javelin damage by ten against players while preserving its
       stock blast radius and earlier damage modifiers. Also doubles damage
       from bolt-action sniper rifles, the Barrett, the AS50, the CM901, the
@@ -132,6 +134,7 @@ Main()
     SetDvarIfNotInitialized("fun_mode_team_switch_assist", 1);
     SetDvarIfNotInitialized("fun_mode_team_switch_fill", 18);
     SetDvarIfNotInitialized("fun_mode_blast_shield_damage", 0.25);
+    SetDvarIfNotInitialized("fun_mode_blast_shield_explosive_damage_multiplier", 1.5);
     SetDvarIfNotInitialized("fun_mode_javelin_damage_multiplier", 10.0);
     SetDvarIfNotInitialized("fun_mode_noobtube_damage_multiplier", 3.0);
     SetDvarIfNotInitialized("fun_mode_reaper_damage_multiplier", 1.5);
@@ -433,6 +436,23 @@ ModifyPlayerDamageForFunMode(
     if (weaponDamageMultiplier != 1.0)
     {
         damage = Int(damage * weaponDamageMultiplier);
+    }
+
+    dangerCloseDamageMultiplier = 1.0;
+
+    if (!isKillModeDamage)
+    {
+        dangerCloseDamageMultiplier = GetBlastShieldDangerCloseDamageMultiplier(
+            victim,
+            attacker,
+            weapon,
+            meansOfDeath
+        );
+    }
+
+    if (dangerCloseDamageMultiplier != 1.0)
+    {
+        damage = Int(damage * dangerCloseDamageMultiplier);
     }
 
     multishotDamageMultiplier = 1.0;
@@ -1073,6 +1093,43 @@ RestoreMatchStartExplosiveDamage(damage, meansOfDeath)
     }
 
     return Int(damage / level.armorVestMod);
+}
+
+/*
+    Blast Shield doubles as an unrestricted Danger Close-style offensive
+    perk. Apply it only to damage attributed to another player, and use IW5's
+    native explosive and killstreak classifiers so launchers, underbarrel
+    grenades, thrown explosives, C4, and Claymores qualify while streak damage
+    does not. Kill-mode callbacks already carry final damage and must not be
+    multiplied a second time.
+*/
+GetBlastShieldDangerCloseDamageMultiplier(
+    victim,
+    attacker,
+    weapon,
+    meansOfDeath
+)
+{
+    if (
+        !IsDefined(victim) ||
+        !IsPlayer(victim) ||
+        !IsDefined(attacker) ||
+        !IsPlayer(attacker) ||
+        attacker == victim ||
+        !IsDefined(weapon) ||
+        weapon == "none" ||
+        !IsDefined(meansOfDeath) ||
+        !IsExplosiveDamageMod(meansOfDeath) ||
+        maps\mp\_utility::IsKillstreakWeapon(weapon) ||
+        !attacker maps\mp\_utility::_HasPerk("_specialty_blastshield")
+    )
+    {
+        return 1.0;
+    }
+
+    return GetDvarFloat(
+        "fun_mode_blast_shield_explosive_damage_multiplier"
+    );
 }
 
 /*

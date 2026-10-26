@@ -130,6 +130,7 @@ here.
 
 | System | Eligible weapons | Behavior |
 |---|---|---|
+| Blast Shield Danger Close | Non-killstreak explosive weapons and equipment | A player carrying Blast Shield deals **1.50×** outgoing explosive damage with launchers, attachment modes, grenades, C4, Claymores, and other explosive equipment. It excludes killstreak weapons and self-damage and composes multiplicatively with weapon-specific damage rules. |
 | Automatic primary attachment | Human primary weapons | Non-LMG primaries automatically receive Extended Mags as a compatible second attachment. LMGs receive Thermal instead and never receive automatic Extended Mags. An explicitly selected Red Dot or Holographic sight suppresses automatic Thermal; explicit two-attachment setups are preserved. Every automatic attachment is checked against the weapon's supported attachments and the selected attachment's compatibility. Bot primaries are unchanged. |
 | Shotgun proficiencies | Human loadouts containing any shotgun | Grants both Range and Damage, including when the shotgun is an Overkill secondary. |
 | Extended Scavenger | Configured secondary weapons, equipment, launchers, and underbarrel tubes | Expands stock Scavenger resupply behavior. The repository's normal and hardcore configurations enable every supported category. |

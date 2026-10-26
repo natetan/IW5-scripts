@@ -28,7 +28,7 @@ cap. Primary-weapon ammunition still follows the normal MW3 Scavenger path.
 | Perk | Modification | Notes |
 |---|---|---|
 | Quickdraw | **Knife Runner component** | Retains its stock behavior. It must be originally selected alongside the other Knife Runner requirements; receiving Quickdraw later cannot activate the build. |
-| Blast Shield | **Takes 25% of normal explosive damage** | Replaces IW5's stock `0.45` damage scalar with `0.25`, increasing explosive resistance while the perk is active. |
+| Blast Shield | **Takes 25% explosive damage; deals 1.50× non-killstreak explosive damage** | Replaces IW5's stock `0.45` incoming-damage scalar with `0.25`. Its Danger Close-style outgoing multiplier applies globally to launchers, underbarrel grenade launchers, grenades, C4, Claymores, and other explosive equipment while excluding killstreak weapons and self-damage. Existing weapon-specific multipliers compose multiplicatively. Configure the offensive scalar with `fun_mode_blast_shield_explosive_damage_multiplier`. |
 | Hardline | Stock | No direct changes. Its normal one-point Specialist cost reduction is respected by the custom Specialist checks. |
 | Assassin | **Partially countered by custom intelligence streaks** | The actual Advanced UAV reveals Assassin users globally as ordinary red dots while preserving protection from directional arrows. Recon Pulse can apply the real Recon Drone tag to Assassin users within its radius. Ordinary and naturally stacked UAVs remain stock. |
 | Overkill | **Shotgun proficiency interaction** | If either equipped weapon is a shotgun, the human player's loadout receives both Range and Damage proficiencies. This includes an Overkill secondary shotgun. |
