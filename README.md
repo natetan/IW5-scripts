@@ -88,7 +88,8 @@ See [modifications/KILLSTREAKS.md](./modifications/KILLSTREAKS.md) for Assault,
 Support, and MOAB changes ordered by their stock kill or point requirements.
 
 See [COMMANDS.md](./COMMANDS.md) for chat-command permissions, usage, aliases,
-and the complete list of killstreak names accepted by `!give`.
+kill-mode testing, and the complete list of killstreak names accepted by
+`!give`.
 
 ### 🛠️ In-Match Class Editing
 

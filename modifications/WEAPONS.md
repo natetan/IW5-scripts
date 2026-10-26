@@ -74,7 +74,7 @@ proficiencies.
 | SPAS-12 | **2×** unsilenced; **5×** silenced | Silencer combinations retain the stronger multiplier even with a second attachment. |
 | AA-12 | **2×** unsilenced; **3×** silenced | Each kill restores 25% of the equipped magazine, rounded to a whole round and capped at its clip size. |
 | Striker | Stock (1×) unsilenced; **3×** silenced | Only silenced variants receive a script multiplier. |
-| Model 1887 | **5×** | The weapon has no attachment variants; its base damage receives the multiplier. A confirmed kill by an authorized Fun Mode class creates a damage pulse against other players within **382 units** of the victim regardless of intervening cover, repeating the killing hit's final damage without recursively chaining additional pulses. Teammates are affected when the active recipe permits friendly fire. |
+| Model 1887 | **5×** | The weapon has no attachment variants; its base damage receives the multiplier. |
 
 ## Machine Pistols
 
@@ -91,10 +91,10 @@ proficiencies.
 |---|---:|---|
 | USP .45 | Stock (1×) | None. |
 | P99 | Stock (1×) | None. |
-| MP412 | **3×** | Each kill restores 50% of the equipped magazine; odd capacities round up. A confirmed kill by an authorized Fun Mode class creates a cover-ignoring damage pulse against other players within **382 units** of the victim, repeating the killing hit's final damage without recursively chaining. Teammates are affected when the active recipe permits friendly fire. |
-| .44 Magnum | **2×** | A confirmed kill by an authorized Fun Mode class creates a cover-ignoring damage pulse against other players within **382 units** of the victim, repeating the killing hit's final damage without recursively chaining. Teammates are affected when the active recipe permits friendly fire. |
+| MP412 | **3×** | Each kill restores 50% of the equipped magazine; odd capacities round up. |
+| .44 Magnum | **2×** | None. |
 | Five Seven | Stock (1×) | Recon Juggernaut uses the Tactical Knife variant. |
-| Desert Eagle | **2×** | Each kill restores 50% of the equipped magazine; odd capacities round up. A confirmed kill by an authorized Fun Mode class creates a cover-ignoring damage pulse against other players within **382 units** of the victim, repeating the killing hit's final damage without recursively chaining. Teammates are affected when the active recipe permits friendly fire. |
+| Desert Eagle | **2×** | Each kill restores 50% of the equipped magazine; odd capacities round up. |
 
 The MP412 and Desert Eagle refill uses the equipped weapon's actual clip size,
 so Akimbo and extended-mag variants scale automatically. If another refill

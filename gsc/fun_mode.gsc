@@ -92,8 +92,8 @@
     - Gives authorized Fun Mode super classes a line-of-sight melee cleave:
       one knife hit repeats its normal damage against other nearby players.
       Throwing Knife player hits create a larger pulse around the victim.
-      Confirmed Model 1887, Desert Eagle, MP412, and .44 Magnum kills create
-      wider damage pulses at the victim.
+    - Supports permissioned per-player firearm kill modes: a simultaneous
+      damage pulse or a nearest-target sequential chain.
     - Disables MW3's post-spawn killstreak damage cap for more lethal,
       MW2-style player-controlled streaks.
     - Tunes automated Reaper missile damage so the autonomous aircraft remains
@@ -124,18 +124,9 @@ Main()
     SetDvarIfNotInitialized("fun_mode_super_class_throwing_knife_aoe_enable", 1);
     SetDvarIfNotInitialized("fun_mode_super_class_throwing_knife_aoe_radius", 382);
     SetDvarIfNotInitialized("fun_mode_super_class_throwing_knife_aoe_damage_multiplier", 1.0);
-    SetDvarIfNotInitialized("fun_mode_super_class_model_1887_kill_aoe_enable", 1);
-    SetDvarIfNotInitialized("fun_mode_super_class_model_1887_kill_aoe_radius", 382);
-    SetDvarIfNotInitialized("fun_mode_super_class_model_1887_kill_aoe_damage_multiplier", 1.0);
-    SetDvarIfNotInitialized("fun_mode_super_class_deagle_kill_aoe_enable", 1);
-    SetDvarIfNotInitialized("fun_mode_super_class_deagle_kill_aoe_radius", 382);
-    SetDvarIfNotInitialized("fun_mode_super_class_deagle_kill_aoe_damage_multiplier", 1.0);
-    SetDvarIfNotInitialized("fun_mode_super_class_mp412_kill_aoe_enable", 1);
-    SetDvarIfNotInitialized("fun_mode_super_class_mp412_kill_aoe_radius", 382);
-    SetDvarIfNotInitialized("fun_mode_super_class_mp412_kill_aoe_damage_multiplier", 1.0);
-    SetDvarIfNotInitialized("fun_mode_super_class_44magnum_kill_aoe_enable", 1);
-    SetDvarIfNotInitialized("fun_mode_super_class_44magnum_kill_aoe_radius", 382);
-    SetDvarIfNotInitialized("fun_mode_super_class_44magnum_kill_aoe_damage_multiplier", 1.0);
+    SetDvarIfNotInitialized("fun_mode_kill_mode_radius", 382);
+    SetDvarIfNotInitialized("fun_mode_kill_mode_chain_delay", 0.15);
+    SetDvarIfNotInitialized("fun_mode_kill_mode_chain_max_hops", 17);
     SetDvarIfNotInitialized("fun_mode_survival_specialist_bonus", 1);
     SetDvarIfNotInitialized("fun_mode_team_switch_assist", 1);
     SetDvarIfNotInitialized("fun_mode_team_switch_fill", 18);
@@ -416,23 +407,43 @@ ModifyPlayerDamageForFunMode(
         return 0;
     }
 
+    // Chain hops begin with the initiating shot's final damage. Skip Fun
+    // Mode's offensive multipliers so that already-final value is not scaled
+    // again, while the native callback and target defenses remain active.
+    isKillModeDamage = (
+        IsDefined(attacker) &&
+        IsPlayer(attacker) &&
+        IsDefined(attacker.fun_mode_kill_mode_damage_active) &&
+        attacker.fun_mode_kill_mode_damage_active
+    );
+
     damage = RestoreMatchStartExplosiveDamage(damage, meansOfDeath);
 
-    weaponDamageMultiplier = GetFunModeWeaponDamageMultiplier(
-        weapon,
-        meansOfDeath
-    );
+    weaponDamageMultiplier = 1.0;
+
+    if (!isKillModeDamage)
+    {
+        weaponDamageMultiplier = GetFunModeWeaponDamageMultiplier(
+            weapon,
+            meansOfDeath
+        );
+    }
 
     if (weaponDamageMultiplier != 1.0)
     {
         damage = Int(damage * weaponDamageMultiplier);
     }
 
-    multishotDamageMultiplier = GetSpecialistMultishotDamageMultiplier(
-        attacker,
-        weapon,
-        meansOfDeath
-    );
+    multishotDamageMultiplier = 1.0;
+
+    if (!isKillModeDamage)
+    {
+        multishotDamageMultiplier = GetSpecialistMultishotDamageMultiplier(
+            attacker,
+            weapon,
+            meansOfDeath
+        );
+    }
 
     if (multishotDamageMultiplier != 1.0)
     {
@@ -469,7 +480,8 @@ ModifyPlayerDamageForFunMode(
             "MOD_MELEE",
             GetDvarFloat("fun_mode_super_class_melee_cleave_radius"),
             GetDvarFloat("fun_mode_super_class_melee_cleave_damage_multiplier"),
-            true
+            true,
+            false
         );
     }
 
@@ -492,128 +504,147 @@ ModifyPlayerDamageForFunMode(
             meansOfDeath,
             GetDvarFloat("fun_mode_super_class_throwing_knife_aoe_radius"),
             GetDvarFloat("fun_mode_super_class_throwing_knife_aoe_damage_multiplier"),
-            true
+            true,
+            false
         );
     }
 
     if (
-        ShouldTriggerFunModeModel1887KillAoe(
+        ShouldTriggerFunModeKillMode(
             victim,
             attacker,
             damage,
-            weapon
+            weapon,
+            meansOfDeath
         )
     )
     {
-        model1887PulseOrigin = victim.origin + (0, 0, 40);
+        killModeOrigin = victim.origin + (0, 0, 40);
 
-        attacker thread ApplyFunModeModel1887KillAoeAfterDamage(
+        attacker thread ApplyFunModeKillModeAfterDamage(
             victim,
-            model1887PulseOrigin,
+            killModeOrigin,
             damage,
             weapon,
-            meansOfDeath
-        );
-    }
-
-    if (
-        ShouldTriggerFunModeDeagleKillAoe(
-            victim,
-            attacker,
-            damage,
-            weapon
-        )
-    )
-    {
-        deaglePulseOrigin = victim.origin + (0, 0, 40);
-
-        attacker thread ApplyFunModeDeagleKillAoeAfterDamage(
-            victim,
-            deaglePulseOrigin,
-            damage,
-            weapon,
-            meansOfDeath
-        );
-    }
-
-    if (
-        ShouldTriggerFunModeMp412KillAoe(
-            victim,
-            attacker,
-            damage,
-            weapon
-        )
-    )
-    {
-        mp412PulseOrigin = victim.origin + (0, 0, 40);
-
-        attacker thread ApplyFunModeMp412KillAoeAfterDamage(
-            victim,
-            mp412PulseOrigin,
-            damage,
-            weapon,
-            meansOfDeath
-        );
-    }
-
-    if (
-        ShouldTriggerFunMode44MagnumKillAoe(
-            victim,
-            attacker,
-            damage,
-            weapon
-        )
-    )
-    {
-        magnumPulseOrigin = victim.origin + (0, 0, 40);
-
-        attacker thread ApplyFunMode44MagnumKillAoeAfterDamage(
-            victim,
-            magnumPulseOrigin,
-            damage,
-            weapon,
-            meansOfDeath
+            meansOfDeath,
+            attacker.fun_mode_kill_mode
         );
     }
 
     return damage;
 }
 
-ShouldTriggerFunModeModel1887KillAoe(
+ShouldTriggerFunModeKillMode(
     victim,
     attacker,
     damage,
-    weapon
+    weapon,
+    meansOfDeath
 )
 {
-    return (
-        GetDvarInt("fun_mode_super_class_model_1887_kill_aoe_enable") &&
-        IsDefined(victim) &&
-        IsPlayer(victim) &&
-        IsAlive(victim) &&
-        IsDefined(attacker) &&
-        IsPlayer(attacker) &&
-        attacker != victim &&
-        attacker IsFunModeSuperClassOwner() &&
-        IsDefined(weapon) &&
-        IsSubStr(weapon, "iw5_1887_mp") &&
-        damage > 0 &&
-        damage >= victim.health &&
+    if (
+        !IsDefined(victim) ||
+        !IsPlayer(victim) ||
+        !IsAlive(victim) ||
+        !IsDefined(attacker) ||
+        !IsPlayer(attacker) ||
+        attacker == victim ||
+        !IsDefined(attacker.fun_mode_kill_mode) ||
         (
-            !level.teamBased ||
-            victim.team != attacker.team ||
-            level.friendlyFire != 0
-        ) &&
+            attacker.fun_mode_kill_mode != "aoe" &&
+            attacker.fun_mode_kill_mode != "chain"
+        ) ||
+        !IsDefined(weapon) ||
+        !IsSubStr(weapon, "iw5_") ||
         (
-            !IsDefined(attacker.fun_mode_player_aoe_damage_active) ||
-            !attacker.fun_mode_player_aoe_damage_active
+            meansOfDeath != "MOD_PISTOL_BULLET" &&
+            meansOfDeath != "MOD_RIFLE_BULLET"
+        ) ||
+        damage <= 0 ||
+        damage < victim.health ||
+        (
+            IsDefined(attacker.fun_mode_player_aoe_damage_active) &&
+            attacker.fun_mode_player_aoe_damage_active
         )
-    );
+    )
+    {
+        return false;
+    }
+
+    if (!IsDefined(level.teamBased) || !level.teamBased)
+    {
+        return true;
+    }
+
+    if (
+        !IsDefined(victim.team) ||
+        !IsDefined(attacker.team) ||
+        !IsDefined(level.friendlyFire)
+    )
+    {
+        return false;
+    }
+
+    return victim.team != attacker.team || level.friendlyFire != 0;
 }
 
-ApplyFunModeModel1887KillAoeAfterDamage(
+ApplyFunModeKillModeAfterDamage(
     originalVictim,
-    pulseOrigin,
+    effectOrigin,
+    damage,
+    weapon,
+    meansOfDeath,
+    killMode
+)
+{
+    self endon("disconnect");
+    level endon("game_ended");
+
+    wait 0.05;
+
+    if (
+        !IsDefined(originalVictim) ||
+        !IsPlayer(originalVictim) ||
+        IsAlive(originalVictim) ||
+        !IsDefined(killMode)
+    )
+    {
+        return;
+    }
+
+    if (killMode == "aoe")
+    {
+        self thread ApplyFunModePlayerAoeDamage(
+            originalVictim,
+            effectOrigin,
+            effectOrigin,
+            damage,
+            weapon,
+            meansOfDeath,
+            GetDvarFloat("fun_mode_kill_mode_radius"),
+            1.0,
+            false,
+            true
+        );
+
+        return;
+    }
+
+    if (killMode == "chain")
+    {
+        self thread ApplyFunModeKillModeChain(
+            originalVictim,
+            effectOrigin,
+            damage,
+            weapon,
+            meansOfDeath
+        );
+    }
+}
+
+ApplyFunModeKillModeChain(
+    originalVictim,
+    chainOrigin,
     damage,
     weapon,
     meansOfDeath
@@ -622,236 +653,186 @@ ApplyFunModeModel1887KillAoeAfterDamage(
     self endon("disconnect");
     level endon("game_ended");
 
-    // Let IW5 finish resolving the predicted lethal hit, including Last Stand
-    // and other systems that can prevent an otherwise lethal damage callback.
-    wait 0.05;
-
     if (
         !IsDefined(originalVictim) ||
         !IsPlayer(originalVictim) ||
-        IsAlive(originalVictim)
+        damage <= 0 ||
+        !IsDefined(weapon) ||
+        weapon == "none" ||
+        !IsDefined(meansOfDeath) ||
+        !IsDefined(level.callbackPlayerDamage)
     )
     {
         return;
     }
 
-    self thread ApplyFunModePlayerAoeDamage(
-        originalVictim,
-        pulseOrigin,
-        pulseOrigin,
-        damage,
-        weapon,
-        meansOfDeath,
-        GetDvarFloat("fun_mode_super_class_model_1887_kill_aoe_radius"),
-        GetDvarFloat("fun_mode_super_class_model_1887_kill_aoe_damage_multiplier"),
-        false
-    );
-}
+    radius = GetDvarFloat("fun_mode_kill_mode_radius");
+    hopDelay = GetDvarFloat("fun_mode_kill_mode_chain_delay");
+    maxHops = GetDvarInt("fun_mode_kill_mode_chain_max_hops");
 
-ShouldTriggerFunModeDeagleKillAoe(
-    victim,
-    attacker,
-    damage,
-    weapon
-)
-{
-    return (
-        GetDvarInt("fun_mode_super_class_deagle_kill_aoe_enable") &&
-        IsDefined(victim) &&
-        IsPlayer(victim) &&
-        IsAlive(victim) &&
-        IsDefined(attacker) &&
-        IsPlayer(attacker) &&
-        attacker != victim &&
-        attacker IsFunModeSuperClassOwner() &&
-        IsDefined(weapon) &&
-        IsSubStr(weapon, "iw5_deserteagle_mp") &&
-        damage > 0 &&
-        damage >= victim.health &&
-        (
-            !level.teamBased ||
-            victim.team != attacker.team ||
-            level.friendlyFire != 0
-        ) &&
-        (
-            !IsDefined(attacker.fun_mode_player_aoe_damage_active) ||
-            !attacker.fun_mode_player_aoe_damage_active
+    if (radius <= 0 || maxHops <= 0)
+    {
+        return;
+    }
+
+    if (hopDelay < 0.05)
+    {
+        hopDelay = 0.05;
+    }
+
+    visitedPlayers = [];
+    visitedPlayers[visitedPlayers.size] = originalVictim;
+    currentOrigin = chainOrigin;
+    hopCount = 0;
+
+    while (hopCount < maxHops)
+    {
+        nextTarget = FindNearestFunModeKillModeTarget(
+            currentOrigin,
+            radius,
+            visitedPlayers
+        );
+
+        if (!IsDefined(nextTarget))
+        {
+            break;
+        }
+
+        visitedPlayers[visitedPlayers.size] = nextTarget;
+        nextOrigin = nextTarget.origin + (0, 0, 40);
+        delayBeforeDamage = hopDelay;
+
+        if (hopCount > 0)
+        {
+            delayBeforeDamage = hopDelay - 0.05;
+        }
+
+        if (delayBeforeDamage > 0)
+        {
+            wait delayBeforeDamage;
+        }
+
+        if (
+            !IsDefined(nextTarget) ||
+            !IsPlayer(nextTarget) ||
+            !IsAlive(nextTarget)
         )
-    );
-}
+        {
+            break;
+        }
 
-ApplyFunModeDeagleKillAoeAfterDamage(
-    originalVictim,
-    pulseOrigin,
-    damage,
-    weapon,
-    meansOfDeath
-)
-{
-    self endon("disconnect");
-    level endon("game_ended");
+        delta = nextOrigin - currentOrigin;
 
-    // Confirm the original victim actually died before releasing the pulse.
-    wait 0.05;
+        if (DistanceSquared(nextOrigin, currentOrigin) > 0)
+        {
+            direction = VectorNormalize(delta);
+        }
+        else
+        {
+            direction = (0, 0, 1);
+        }
 
-    if (
-        !IsDefined(originalVictim) ||
-        !IsPlayer(originalVictim) ||
-        IsAlive(originalVictim)
-    )
-    {
-        return;
-    }
+        self.fun_mode_player_aoe_damage_active = true;
+        self.fun_mode_kill_mode_damage_active = true;
 
-    self thread ApplyFunModePlayerAoeDamage(
-        originalVictim,
-        pulseOrigin,
-        pulseOrigin,
-        damage,
-        weapon,
-        meansOfDeath,
-        GetDvarFloat("fun_mode_super_class_deagle_kill_aoe_radius"),
-        GetDvarFloat("fun_mode_super_class_deagle_kill_aoe_damage_multiplier"),
-        false
-    );
-}
+        nextTarget [[level.callbackPlayerDamage]](
+            self,
+            self,
+            damage,
+            0,
+            meansOfDeath,
+            weapon,
+            nextOrigin,
+            direction,
+            "none",
+            0
+        );
 
-ShouldTriggerFunModeMp412KillAoe(
-    victim,
-    attacker,
-    damage,
-    weapon
-)
-{
-    return (
-        GetDvarInt("fun_mode_super_class_mp412_kill_aoe_enable") &&
-        IsDefined(victim) &&
-        IsPlayer(victim) &&
-        IsAlive(victim) &&
-        IsDefined(attacker) &&
-        IsPlayer(attacker) &&
-        attacker != victim &&
-        attacker IsFunModeSuperClassOwner() &&
-        IsDefined(weapon) &&
-        IsSubStr(weapon, "iw5_mp412_mp") &&
-        damage > 0 &&
-        damage >= victim.health &&
-        (
-            !level.teamBased ||
-            victim.team != attacker.team ||
-            level.friendlyFire != 0
-        ) &&
-        (
-            !IsDefined(attacker.fun_mode_player_aoe_damage_active) ||
-            !attacker.fun_mode_player_aoe_damage_active
+        self.fun_mode_kill_mode_damage_active = false;
+        self.fun_mode_player_aoe_damage_active = false;
+        hopCount++;
+
+        wait 0.05;
+
+        if (
+            !IsDefined(nextTarget) ||
+            !IsPlayer(nextTarget) ||
+            IsAlive(nextTarget)
         )
-    );
-}
+        {
+            break;
+        }
 
-ApplyFunModeMp412KillAoeAfterDamage(
-    originalVictim,
-    pulseOrigin,
-    damage,
-    weapon,
-    meansOfDeath
-)
-{
-    self endon("disconnect");
-    level endon("game_ended");
-
-    // Confirm the original victim actually died before releasing the pulse.
-    wait 0.05;
-
-    if (
-        !IsDefined(originalVictim) ||
-        !IsPlayer(originalVictim) ||
-        IsAlive(originalVictim)
-    )
-    {
-        return;
+        currentOrigin = nextOrigin;
     }
 
-    self thread ApplyFunModePlayerAoeDamage(
-        originalVictim,
-        pulseOrigin,
-        pulseOrigin,
-        damage,
-        weapon,
-        meansOfDeath,
-        GetDvarFloat("fun_mode_super_class_mp412_kill_aoe_radius"),
-        GetDvarFloat("fun_mode_super_class_mp412_kill_aoe_damage_multiplier"),
-        false
-    );
+    self.fun_mode_kill_mode_damage_active = false;
+    self.fun_mode_player_aoe_damage_active = false;
 }
 
-ShouldTriggerFunMode44MagnumKillAoe(
-    victim,
-    attacker,
-    damage,
-    weapon
-)
+FindNearestFunModeKillModeTarget(origin, radius, visitedPlayers)
 {
-    return (
-        GetDvarInt("fun_mode_super_class_44magnum_kill_aoe_enable") &&
-        IsDefined(victim) &&
-        IsPlayer(victim) &&
-        IsAlive(victim) &&
-        IsDefined(attacker) &&
-        IsPlayer(attacker) &&
-        attacker != victim &&
-        attacker IsFunModeSuperClassOwner() &&
-        IsDefined(weapon) &&
-        IsSubStr(weapon, "iw5_44magnum_mp") &&
-        damage > 0 &&
-        damage >= victim.health &&
-        (
-            !level.teamBased ||
-            victim.team != attacker.team ||
-            level.friendlyFire != 0
-        ) &&
-        (
-            !IsDefined(attacker.fun_mode_player_aoe_damage_active) ||
-            !attacker.fun_mode_player_aoe_damage_active
+    nearestTarget = undefined;
+    nearestDistanceSquared = radius * radius;
+
+    foreach (candidate in level.players)
+    {
+        if (
+            !IsDefined(candidate) ||
+            !IsPlayer(candidate) ||
+            !IsAlive(candidate) ||
+            candidate == self ||
+            IsPlayerInFunModeKillModeChain(candidate, visitedPlayers)
         )
-    );
-}
+        {
+            continue;
+        }
 
-ApplyFunMode44MagnumKillAoeAfterDamage(
-    originalVictim,
-    pulseOrigin,
-    damage,
-    weapon,
-    meansOfDeath
-)
-{
-    self endon("disconnect");
-    level endon("game_ended");
+        if (IsDefined(level.teamBased) && level.teamBased)
+        {
+            if (!IsDefined(candidate.team) || !IsDefined(self.team))
+            {
+                continue;
+            }
 
-    // Confirm the original victim actually died before releasing the pulse.
-    wait 0.05;
+            if (
+                candidate.team == self.team &&
+                (
+                    !IsDefined(level.friendlyFire) ||
+                    level.friendlyFire == 0
+                )
+            )
+            {
+                continue;
+            }
+        }
 
-    if (
-        !IsDefined(originalVictim) ||
-        !IsPlayer(originalVictim) ||
-        IsAlive(originalVictim)
-    )
-    {
-        return;
+        candidateDistanceSquared = DistanceSquared(origin, candidate.origin);
+
+        if (candidateDistanceSquared > nearestDistanceSquared)
+        {
+            continue;
+        }
+
+        nearestTarget = candidate;
+        nearestDistanceSquared = candidateDistanceSquared;
     }
 
-    self thread ApplyFunModePlayerAoeDamage(
-        originalVictim,
-        pulseOrigin,
-        pulseOrigin,
-        damage,
-        weapon,
-        meansOfDeath,
-        GetDvarFloat("fun_mode_super_class_44magnum_kill_aoe_radius"),
-        GetDvarFloat("fun_mode_super_class_44magnum_kill_aoe_damage_multiplier"),
-        false
-    );
+    return nearestTarget;
 }
 
+IsPlayerInFunModeKillModeChain(candidate, visitedPlayers)
+{
+    foreach (visitedPlayer in visitedPlayers)
+    {
+        if (IsDefined(visitedPlayer) && visitedPlayer == candidate)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
 ShouldTriggerFunModeMeleeCleave(victim, attacker, meansOfDeath)
 {
     return (
@@ -914,7 +895,8 @@ ApplyFunModePlayerAoeDamage(
     meansOfDeath,
     radius,
     damageMultiplier,
-    requireLineOfSight
+    requireLineOfSight,
+    preserveFinalDamage
 )
 {
     self endon("disconnect");
@@ -988,6 +970,11 @@ ApplyFunModePlayerAoeDamage(
 
     self.fun_mode_player_aoe_damage_active = true;
 
+    if (preserveFinalDamage)
+    {
+        self.fun_mode_kill_mode_damage_active = true;
+    }
+
     foreach (target in targets)
     {
         if (!IsDefined(target) || !IsPlayer(target) || !IsAlive(target))
@@ -1011,6 +998,7 @@ ApplyFunModePlayerAoeDamage(
         );
     }
 
+    self.fun_mode_kill_mode_damage_active = false;
     self.fun_mode_player_aoe_damage_active = false;
 }
 

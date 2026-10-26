@@ -63,6 +63,12 @@ main()
         ::randomMapAdminChatCommand,
         "!random"
     );
+    registerAdminChatCommand(
+        "killmode",
+        3,
+        ::killModeAdminChatCommand,
+        "!killmode <chain|aoe|off>"
+    );
 
     level.funModeChatAliases["commands"] = "commands";
     level.funModeChatAliases["cmds"] = "commands";
@@ -74,6 +80,7 @@ main()
     level.funModeChatAliases["giveks"] = "give";
     level.funModeChatAliases["random"] = "random";
     level.funModeChatAliases["randommap"] = "random";
+    level.funModeChatAliases["killmode"] = "killmode";
 
     level thread watchAdminChatCommands();
 }
@@ -199,6 +206,34 @@ showAdminChatPermission( args )
 {
     permission = self getAdminChatPermission();
     self tell( "^3Chat permission level:^7 " + permission );
+}
+
+killModeAdminChatCommand( args )
+{
+    if ( !args.size )
+    {
+        self tell( "^3Usage:^7 !killmode <chain|aoe|off>" );
+        return;
+    }
+
+    mode = tolower( args[0] );
+
+    if ( mode != "chain" && mode != "aoe" && mode != "off" )
+    {
+        self tell( "^1Unknown kill mode:^7 " + args[0] );
+        self tell( "^3Usage:^7 !killmode <chain|aoe|off>" );
+        return;
+    }
+
+    self.fun_mode_kill_mode = mode;
+
+    if ( mode == "off" )
+    {
+        self tell( "^2Kill mode disabled.^7" );
+        return;
+    }
+
+    self tell( "^2Kill mode enabled:^7 " + mode );
 }
 
 giveKillstreakAdminChatCommand( args )
