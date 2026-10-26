@@ -91,7 +91,7 @@ proficiencies.
 |---|---:|---|
 | USP .45 | Stock (1×) | None. |
 | P99 | Stock (1×) | None. |
-| MP412 | **3×** | Each kill restores 50% of the equipped magazine; odd capacities round up. |
+| MP412 | **3×** | Each kill restores 50% of the equipped magazine; odd capacities round up. A confirmed kill by an authorized Fun Mode class creates a cover-ignoring damage pulse against other players within **382 units** of the victim, repeating the killing hit's final damage without recursively chaining. Teammates are affected when the active recipe permits friendly fire. |
 | .44 Magnum | Stock (1×) | None. |
 | Five Seven | Stock (1×) | Recon Juggernaut uses the Tactical Knife variant. |
 | Desert Eagle | **2×** | Each kill restores 50% of the equipped magazine; odd capacities round up. A confirmed kill by an authorized Fun Mode class creates a cover-ignoring damage pulse against other players within **382 units** of the victim, repeating the killing hit's final damage without recursively chaining. Teammates are affected when the active recipe permits friendly fire. |
