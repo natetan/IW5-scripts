@@ -92,8 +92,8 @@
     - Gives authorized Fun Mode super classes a line-of-sight melee cleave:
       one knife hit repeats its normal damage against other nearby players.
       Throwing Knife player hits create a larger pulse around the victim.
-      Confirmed Model 1887, Desert Eagle, and MP412 kills create wider damage
-      pulses at the victim.
+      Confirmed Model 1887, Desert Eagle, MP412, and .44 Magnum kills create
+      wider damage pulses at the victim.
     - Disables MW3's post-spawn killstreak damage cap for more lethal,
       MW2-style player-controlled streaks.
     - Tunes automated Reaper missile damage so the autonomous aircraft remains
@@ -133,6 +133,9 @@ Main()
     SetDvarIfNotInitialized("fun_mode_super_class_mp412_kill_aoe_enable", 1);
     SetDvarIfNotInitialized("fun_mode_super_class_mp412_kill_aoe_radius", 382);
     SetDvarIfNotInitialized("fun_mode_super_class_mp412_kill_aoe_damage_multiplier", 1.0);
+    SetDvarIfNotInitialized("fun_mode_super_class_44magnum_kill_aoe_enable", 1);
+    SetDvarIfNotInitialized("fun_mode_super_class_44magnum_kill_aoe_radius", 382);
+    SetDvarIfNotInitialized("fun_mode_super_class_44magnum_kill_aoe_damage_multiplier", 1.0);
     SetDvarIfNotInitialized("fun_mode_survival_specialist_bonus", 1);
     SetDvarIfNotInitialized("fun_mode_team_switch_assist", 1);
     SetDvarIfNotInitialized("fun_mode_team_switch_fill", 18);
@@ -552,6 +555,26 @@ ModifyPlayerDamageForFunMode(
         );
     }
 
+    if (
+        ShouldTriggerFunMode44MagnumKillAoe(
+            victim,
+            attacker,
+            damage,
+            weapon
+        )
+    )
+    {
+        magnumPulseOrigin = victim.origin + (0, 0, 40);
+
+        attacker thread ApplyFunMode44MagnumKillAoeAfterDamage(
+            victim,
+            magnumPulseOrigin,
+            damage,
+            weapon,
+            meansOfDeath
+        );
+    }
+
     return damage;
 }
 
@@ -756,6 +779,74 @@ ApplyFunModeMp412KillAoeAfterDamage(
         meansOfDeath,
         GetDvarFloat("fun_mode_super_class_mp412_kill_aoe_radius"),
         GetDvarFloat("fun_mode_super_class_mp412_kill_aoe_damage_multiplier"),
+        false
+    );
+}
+
+ShouldTriggerFunMode44MagnumKillAoe(
+    victim,
+    attacker,
+    damage,
+    weapon
+)
+{
+    return (
+        GetDvarInt("fun_mode_super_class_44magnum_kill_aoe_enable") &&
+        IsDefined(victim) &&
+        IsPlayer(victim) &&
+        IsAlive(victim) &&
+        IsDefined(attacker) &&
+        IsPlayer(attacker) &&
+        attacker != victim &&
+        attacker IsFunModeSuperClassOwner() &&
+        IsDefined(weapon) &&
+        IsSubStr(weapon, "iw5_44magnum_mp") &&
+        damage > 0 &&
+        damage >= victim.health &&
+        (
+            !level.teamBased ||
+            victim.team != attacker.team ||
+            level.friendlyFire != 0
+        ) &&
+        (
+            !IsDefined(attacker.fun_mode_player_aoe_damage_active) ||
+            !attacker.fun_mode_player_aoe_damage_active
+        )
+    );
+}
+
+ApplyFunMode44MagnumKillAoeAfterDamage(
+    originalVictim,
+    pulseOrigin,
+    damage,
+    weapon,
+    meansOfDeath
+)
+{
+    self endon("disconnect");
+    level endon("game_ended");
+
+    // Confirm the original victim actually died before releasing the pulse.
+    wait 0.05;
+
+    if (
+        !IsDefined(originalVictim) ||
+        !IsPlayer(originalVictim) ||
+        IsAlive(originalVictim)
+    )
+    {
+        return;
+    }
+
+    self thread ApplyFunModePlayerAoeDamage(
+        originalVictim,
+        pulseOrigin,
+        pulseOrigin,
+        damage,
+        weapon,
+        meansOfDeath,
+        GetDvarFloat("fun_mode_super_class_44magnum_kill_aoe_radius"),
+        GetDvarFloat("fun_mode_super_class_44magnum_kill_aoe_damage_multiplier"),
         false
     );
 }
