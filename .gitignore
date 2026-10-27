@@ -1,5 +1,6 @@
 bots.txt
 bot_name_history.txt
+manual_bot_names.txt
 
 # Raw IW5 map entity dumps copied from Plutonium storage.
 *.d3dbsp.ents

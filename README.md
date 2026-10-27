@@ -97,12 +97,13 @@ kill-mode testing, and the complete list of killstreak names accepted by
 
 This is especially useful while prestiging for fun: attachments and camos can be selected without waiting for their normal progression unlocks, while weapon levels can still be earned naturally.
 
-### 🏷️ Bot Name Generator
-PowerShell script that automatically:
+### 🏷️ Bot Name Management
+PowerShell scripts that can:
 
-- Generates realistic bot names
-- Creates a local `bots.txt`
-- Updates `z_svr_bots.iwd`
+- Generate realistic bot names
+- Install a manually maintained text-file list
+- Create a local generated `bots.txt`
+- Update and verify `z_svr_bots.iwd`
 
 See [BOTNAMES.md](./BOTNAMES.md) for details.
 
@@ -127,6 +128,7 @@ See [BOTNAMES.md](./BOTNAMES.md) for details.
 ├── iw5_targets.ps1              Shared client/server target configuration
 ├── install_bot_scripts.ps1
 ├── install_game_scripts.ps1
+├── set_iw5_bot_names.ps1        Custom bot-name list installer
 └── README.md
 ```
 ## Installation

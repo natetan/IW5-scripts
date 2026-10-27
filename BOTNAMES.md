@@ -1,8 +1,10 @@
-# Random Bot Name Generator
+# Bot Name Management
 
-This project uses a PowerShell script to generate random bot names for Bot Warfare in IW5 (MW3 Plutonium).
+This project provides PowerShell scripts for generating random bot names or
+installing a manually maintained name list for Bot Warfare in IW5 (MW3
+Plutonium).
 
-## How to Use
+## Generate Random Names
 
 1. Run:
 
@@ -67,6 +69,39 @@ Each generated lobby contains:
 
 The competitive aliases appear first and the remaining styles are shuffled.
 Every launch generates a fresh set of 17 unique names.
+
+---
+
+## Install a Custom List
+
+Create or edit a text file with one bot name per line, then pass its filename
+to the custom-list installer:
+
+```powershell
+.\set_iw5_bot_names.ps1 ".\my_bot_names.txt" -ClientOnly
+```
+
+The filename is positional, so `-Path` is optional. As with the generator,
+omit `-ClientOnly` to update both the local client and the default dedicated
+server, or use `-ServerOnly` and optionally `-ServerRoot`:
+
+```powershell
+.\set_iw5_bot_names.ps1 ".\my_bot_names.txt"
+.\set_iw5_bot_names.ps1 ".\my_bot_names.txt" -ServerOnly -ServerRoot "D:\servers\IW5"
+```
+
+The installer:
+
+- ignores blank lines and surrounding whitespace;
+- requires unique ASCII names between 3 and 16 characters;
+- accepts any non-empty number of names;
+- replaces only the root `bots.txt` in each selected archive;
+- verifies that the installed archive contents exactly match the supplied
+  list; and
+- does not alter `bot_name_history.txt` or the source list.
+
+Running `generate_iw5_bot_names.ps1` later intentionally replaces the custom
+list with a newly generated lobby.
 
 ---
 
