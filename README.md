@@ -107,6 +107,49 @@ PowerShell scripts that can:
 
 See [BOTNAMES.md](./BOTNAMES.md) for details.
 
+#### Bot Commands Quick Reference
+
+Run these commands from the repository root. Close Plutonium and WinRAR first
+because each command updates `z_svr_bots.iwd`.
+
+Install Bot Warfare script and waypoint changes locally:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File ".\install_bot_scripts.ps1" -ClientOnly
+```
+
+Generate and install a fresh random name list locally:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File ".\generate_iw5_bot_names.ps1" -ClientOnly
+```
+
+Install the manually edited `manual_bot_names.txt` locally:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File ".\set_iw5_bot_names.ps1" ".\manual_bot_names.txt" -ClientOnly
+```
+
+On the VM, run the same commands from `C:\src\IW5-scripts` without
+`-ClientOnly` so both `C:\gameserver\IW5` and the VM user's Plutonium storage
+remain synchronized:
+
+```powershell
+cd C:\src\IW5-scripts
+powershell.exe -ExecutionPolicy Bypass -File ".\install_bot_scripts.ps1"
+powershell.exe -ExecutionPolicy Bypass -File ".\set_iw5_bot_names.ps1" ".\manual_bot_names.txt"
+```
+
+Use the generator instead of the final command when a new random list is
+wanted:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File ".\generate_iw5_bot_names.ps1"
+```
+
+Restart Plutonium or load a new map after changing Bot Warfare scripts,
+waypoints, or names.
+
 ## Repository Structure
 
 ```text
@@ -128,6 +171,7 @@ See [BOTNAMES.md](./BOTNAMES.md) for details.
 ├── iw5_targets.ps1              Shared client/server target configuration
 ├── install_bot_scripts.ps1
 ├── install_game_scripts.ps1
+├── manual_bot_names.txt         Machine-local manual name list (Git-ignored)
 ├── set_iw5_bot_names.ps1        Custom bot-name list installer
 └── README.md
 ```

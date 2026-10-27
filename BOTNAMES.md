@@ -74,11 +74,11 @@ Every launch generates a fresh set of 17 unique names.
 
 ## Install a Custom List
 
-Create or edit a text file with one bot name per line, then pass its filename
-to the custom-list installer:
+Edit `manual_bot_names.txt` in the repository root with one bot name per line,
+then pass it to the custom-list installer:
 
 ```powershell
-.\set_iw5_bot_names.ps1 ".\my_bot_names.txt" -ClientOnly
+powershell.exe -ExecutionPolicy Bypass -File ".\set_iw5_bot_names.ps1" ".\manual_bot_names.txt" -ClientOnly
 ```
 
 The filename is positional, so `-Path` is optional. As with the generator,
@@ -86,9 +86,12 @@ omit `-ClientOnly` to update both the local client and the default dedicated
 server, or use `-ServerOnly` and optionally `-ServerRoot`:
 
 ```powershell
-.\set_iw5_bot_names.ps1 ".\my_bot_names.txt"
-.\set_iw5_bot_names.ps1 ".\my_bot_names.txt" -ServerOnly -ServerRoot "D:\servers\IW5"
+powershell.exe -ExecutionPolicy Bypass -File ".\set_iw5_bot_names.ps1" ".\manual_bot_names.txt"
+powershell.exe -ExecutionPolicy Bypass -File ".\set_iw5_bot_names.ps1" ".\manual_bot_names.txt" -ServerOnly -ServerRoot "D:\servers\IW5"
 ```
+
+`manual_bot_names.txt` is Git-ignored so it can be edited freely without
+appearing in commits.
 
 The installer:
 
