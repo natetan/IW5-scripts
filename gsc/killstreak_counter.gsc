@@ -139,7 +139,8 @@ TrackKillstreakCounter()
             lastHealth = health;
         }
 
-        healthBand = getHealthCounterBand(health);
+        baseHealth = self getHealthCounterBaseHealth();
+        healthBand = getHealthCounterBand(health, baseHealth);
 
         if (
             isdefined(healthCounter) &&
@@ -166,14 +167,49 @@ TrackKillstreakCounter()
     }
 }
 
-getHealthCounterBand(health)
+getHealthCounterBaseHealth()
 {
-    if (health >= 75)
+    if (
+        isdefined(self.fun_mode_quick_fix_base_health) &&
+        self.fun_mode_quick_fix_base_health > 0
+    )
+    {
+        return self.fun_mode_quick_fix_base_health;
+    }
+
+    if (
+        isdefined(self.previousmaxhealth) &&
+        self.previousmaxhealth > 0 &&
+        isdefined(self.haslightarmor) &&
+        self.haslightarmor
+    )
+    {
+        return self.previousmaxhealth;
+    }
+
+    if (isdefined(self.maxHealth) && self.maxHealth > 0)
+    {
+        return self.maxHealth;
+    }
+
+    return 100;
+}
+
+getHealthCounterBand(health, baseHealth)
+{
+    if (!isdefined(baseHealth) || baseHealth <= 0)
+    {
+        baseHealth = 100;
+    }
+
+    healthPercent = (health * 100.0) / baseHealth;
+
+    if (healthPercent >= 75)
     {
         return "green";
     }
 
-    if (health >= 41)
+    if (healthPercent > 40)
     {
         return "yellow";
     }
