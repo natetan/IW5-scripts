@@ -70,7 +70,10 @@ Most perk changes and Specialist behavior are defined in
 [`gsc/fun_mode.gsc`](../gsc/fun_mode.gsc). Expanded Scavenger behavior is
 defined in [`gsc/scavenger.gsc`](../gsc/scavenger.gsc), while Specialist
 magazine restoration is defined in
-[`gsc/kill_ammo_refills.gsc`](../gsc/kill_ammo_refills.gsc). Assassin
+[`gsc/kill_ammo_refills.gsc`](../gsc/kill_ammo_refills.gsc). Blast Shield
+damage rules, Specialist multishot, and super-class damage resistance live in
+[`gsc/combat_damage_modifiers.gsc`](../gsc/combat_damage_modifiers.gsc).
+Assassin
 interactions with the actual Advanced UAV and Recon Pulse are defined in
 [`gsc/advanced_uav_tuning.gsc`](../gsc/advanced_uav_tuning.gsc) and
 [`gsc/recon_drone_pulse.gsc`](../gsc/recon_drone_pulse.gsc). Active Scavenger

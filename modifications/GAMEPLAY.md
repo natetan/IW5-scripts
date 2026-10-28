@@ -49,7 +49,9 @@ destructible sound protection in
 [`gsc/destructible_sound_fix.gsc`](../gsc/destructible_sound_fix.gsc).
 Permissioned AoE, chain, and splash behavior lives in
 [`gsc/kill_modes.gsc`](../gsc/kill_modes.gsc), while the coordinator retains
-the authoritative damage-pipeline ordering.
+the authoritative damage-pipeline ordering. Cross-cutting incoming and
+outgoing damage rules live in
+[`gsc/combat_damage_modifiers.gsc`](../gsc/combat_damage_modifiers.gsc).
 Other gametype and engine stability hooks include explosive spawn protection in
 [`gsc/spawn_protection_tuning.gsc`](../gsc/spawn_protection_tuning.gsc) and the
 testing-only death loop in

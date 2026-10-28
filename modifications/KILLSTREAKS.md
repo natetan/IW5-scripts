@@ -88,6 +88,8 @@ Most optional changes have a matching `fun_mode_*` enable dvar. Exact tuning
 and implementation details live in the named scripts under [`gsc/`](../gsc/),
 with the Reaper missile's shared damage multiplier in
 [`gsc/weapon_damage_multipliers.gsc`](../gsc/weapon_damage_multipliers.gsc)
-and other shared damage and compatibility behavior in
+and player-controlled streak spawn-damage handling in
+[`gsc/combat_damage_modifiers.gsc`](../gsc/combat_damage_modifiers.gsc).
+Other shared compatibility behavior remains coordinated by
 [`gsc/fun_mode.gsc`](../gsc/fun_mode.gsc). Update this document whenever a
 killstreak's behavior or default value changes.

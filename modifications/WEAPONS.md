@@ -169,6 +169,8 @@ Weapon-specific script damage multipliers are defined in
 Proficiency and movement rules remain in [`gsc/fun_mode.gsc`](../gsc/fun_mode.gsc).
 Kill-triggered ammunition restoration is defined in
 [`gsc/kill_ammo_refills.gsc`](../gsc/kill_ammo_refills.gsc).
+Blast Shield's outgoing Danger Close-style multiplier is defined in
+[`gsc/combat_damage_modifiers.gsc`](../gsc/combat_damage_modifiers.gsc).
 Expanded Scavenger classification and refill behavior are defined in
 [`gsc/scavenger.gsc`](../gsc/scavenger.gsc). Temporary presets are defined in
 [`gsc/temporary_loadouts.gsc`](../gsc/temporary_loadouts.gsc). When behavior
