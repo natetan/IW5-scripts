@@ -165,6 +165,8 @@ presets do not rewrite saved custom classes and reset with the match.
 ## Source of Truth
 
 Most weapon-specific damage, refill, proficiency, and movement rules are
-defined in [`gsc/fun_mode.gsc`](../gsc/fun_mode.gsc). Temporary presets are defined in
+defined in [`gsc/fun_mode.gsc`](../gsc/fun_mode.gsc). Expanded Scavenger
+classification and refill behavior are defined in
+[`gsc/scavenger.gsc`](../gsc/scavenger.gsc). Temporary presets are defined in
 [`gsc/temporary_loadouts.gsc`](../gsc/temporary_loadouts.gsc). When behavior
 changes, update this document in the same commit.
