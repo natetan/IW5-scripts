@@ -27,7 +27,7 @@ Quick Fix and kill momentum are independent of the selected class, perk
 package, and strike package. Their values are controlled by the corresponding
 `fun_mode_quick_fix_*` and `fun_mode_kill_momentum_*` dvars. Quick Fix is
 implemented in [`gsc/quick_fix.gsc`](../gsc/quick_fix.gsc), while kill momentum
-remains in [`gsc/fun_mode.gsc`](../gsc/fun_mode.gsc).
+is implemented in [`gsc/player_movement.gsc`](../gsc/player_movement.gsc).
 
 ## Stability and Compatibility Fixes
 
@@ -54,6 +54,10 @@ outgoing damage rules live in
 [`gsc/combat_damage_modifiers.gsc`](../gsc/combat_damage_modifiers.gsc).
 Fun Mode super-class eligibility and full Specialist grants live in
 [`gsc/specialist_system.gsc`](../gsc/specialist_system.gsc).
+Loadout processing, weapon mobility, sprint composition, and kill momentum
+live in [`gsc/player_movement.gsc`](../gsc/player_movement.gsc). Knife Runner
+qualification, restrictions, immunity, and HUD feedback live in
+[`gsc/knife_runner.gsc`](../gsc/knife_runner.gsc).
 Other gametype and engine stability hooks include explosive spawn protection in
 [`gsc/spawn_protection_tuning.gsc`](../gsc/spawn_protection_tuning.gsc) and the
 testing-only death loop in

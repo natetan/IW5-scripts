@@ -139,8 +139,8 @@ WatchSurvivalFunModeSpawns()
         }
 
         self GiveFullSpecialistBonus();
-        self scripts\fun_mode::RestoreJuicedMovementAfterSpecialist();
-        self scripts\fun_mode::ApplyActiveKillMomentumSpeed();
+        self scripts\player_movement::RestoreJuicedMovementAfterSpecialist();
+        self scripts\player_movement::ApplyActiveKillMomentumSpeed();
         self thread RestoreFunModeBlindEyeAfterSpawnProtection();
     }
 }

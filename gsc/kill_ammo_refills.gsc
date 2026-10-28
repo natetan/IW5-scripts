@@ -113,7 +113,7 @@ GetKillRefillPercent(weapon)
     if (
         IsDefined(self.fun_mode_knife_runner_loadout) &&
         self.fun_mode_knife_runner_loadout &&
-        scripts\fun_mode::IsKnifeRunnerWeapon(weapon)
+        scripts\knife_runner::IsKnifeRunnerWeapon(weapon)
     )
     {
         return refillPercent;

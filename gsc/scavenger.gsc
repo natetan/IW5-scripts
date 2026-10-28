@@ -436,7 +436,7 @@ HandleScavengerBagPickupCustom(scrPlayer)
 
     foreach (weapon in weapons)
     {
-        if (knifeRunner && IsKnifeRunnerSidearm(weapon))
+        if (knifeRunner && scripts\knife_runner::IsKnifeRunnerWeapon(weapon))
         {
             continue;
         }
@@ -631,24 +631,6 @@ IsNoobTube(weapon)
 {
     // Public classifier used by damage and kill-refill systems.
     return IsScavengerNoobTube(weapon);
-}
-
-IsKnifeRunnerSidearm(weapon)
-{
-    if (!IsDefined(weapon) || weapon == "none")
-    {
-        return false;
-    }
-
-    if (IsSubStr(weapon, "iw5_") && IsSubStr(weapon, "_tactical"))
-    {
-        return true;
-    }
-
-    return (
-        IsSubStr(weapon, "iw5_usp45_mp") &&
-        IsSubStr(weapon, "_akimbo")
-    );
 }
 
 SetDvarIfNotInitialized(dvarName, value)
