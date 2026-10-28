@@ -67,7 +67,7 @@ main()
         "killmode",
         3,
         ::killModeAdminChatCommand,
-        "!killmode <chain|aoe|off>"
+        "!killmode <chain|aoe|splash|off>"
     );
 
     level.funModeChatAliases["commands"] = "commands";
@@ -212,16 +212,21 @@ killModeAdminChatCommand( args )
 {
     if ( !args.size )
     {
-        self tell( "^3Usage:^7 !killmode <chain|aoe|off>" );
+        self tell( "^3Usage:^7 !killmode <chain|aoe|splash|off>" );
         return;
     }
 
     mode = tolower( args[0] );
 
-    if ( mode != "chain" && mode != "aoe" && mode != "off" )
+    if (
+        mode != "chain" &&
+        mode != "aoe" &&
+        mode != "splash" &&
+        mode != "off"
+    )
     {
         self tell( "^1Unknown kill mode:^7 " + args[0] );
-        self tell( "^3Usage:^7 !killmode <chain|aoe|off>" );
+        self tell( "^3Usage:^7 !killmode <chain|aoe|splash|off>" );
         return;
     }
 

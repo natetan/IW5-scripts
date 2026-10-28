@@ -91,10 +91,10 @@
       class or GUID restriction.
     - Gives authorized Fun Mode super classes 50 percent resistance to melee
       damage and direct projectile impacts. Rocket splash remains unchanged.
-    - Supports permissioned per-player non-killstreak weapon kill modes: a
-      simultaneous damage pulse or a nearest-target sequential chain. Melee
-      and Throwing Knife kills use the same selected kill mode as other
-      non-killstreak weapons.
+    - Supports permissioned per-player non-killstreak weapon modes: a lethal
+      simultaneous pulse, a nearest-target sequential kill chain, or an
+      on-hit splash pool divided among nearby secondary targets. Melee and
+      Throwing Knives use the same selected mode as other eligible weapons.
     - Disables MW3's post-spawn killstreak damage cap for more lethal,
       MW2-style player-controlled streaks.
     - Tunes automated Reaper missile damage so the autonomous aircraft remains
@@ -120,6 +120,7 @@ Main()
     SetDvarIfNotInitialized("fun_mode_super_class_melee_damage_multiplier", 0.50);
     SetDvarIfNotInitialized("fun_mode_super_class_direct_projectile_damage_multiplier", 0.50);
     SetDvarIfNotInitialized("fun_mode_kill_mode_radius", 382);
+    SetDvarIfNotInitialized("fun_mode_kill_mode_splash_fraction", 0.50);
     SetDvarIfNotInitialized("fun_mode_kill_mode_chain_delay", 0.15);
     SetDvarIfNotInitialized("fun_mode_kill_mode_chain_max_hops", 17);
     SetDvarIfNotInitialized("fun_mode_survival_specialist_bonus", 1);
@@ -483,14 +484,27 @@ ModifyPlayerDamageForFunMode(
     {
         killModeOrigin = victim.origin + (0, 0, 40);
 
-        attacker thread ApplyFunModeKillModeAfterDamage(
-            victim,
-            killModeOrigin,
-            damage,
-            weapon,
-            meansOfDeath,
-            attacker.fun_mode_kill_mode
-        );
+        if (attacker.fun_mode_kill_mode == "splash")
+        {
+            attacker thread ApplyFunModeKillModeSplash(
+                victim,
+                killModeOrigin,
+                damage,
+                weapon,
+                meansOfDeath
+            );
+        }
+        else
+        {
+            attacker thread ApplyFunModeKillModeAfterDamage(
+                victim,
+                killModeOrigin,
+                damage,
+                weapon,
+                meansOfDeath,
+                attacker.fun_mode_kill_mode
+            );
+        }
     }
 
     return damage;
@@ -514,14 +528,18 @@ ShouldTriggerFunModeKillMode(
         !IsDefined(attacker.fun_mode_kill_mode) ||
         (
             attacker.fun_mode_kill_mode != "aoe" &&
-            attacker.fun_mode_kill_mode != "chain"
+            attacker.fun_mode_kill_mode != "chain" &&
+            attacker.fun_mode_kill_mode != "splash"
         ) ||
         !IsDefined(weapon) ||
         weapon == "none" ||
         !IsDefined(meansOfDeath) ||
         maps\mp\_utility::IsKillstreakWeapon(weapon) ||
         damage <= 0 ||
-        damage < victim.health ||
+        (
+            attacker.fun_mode_kill_mode != "splash" &&
+            damage < victim.health
+        ) ||
         (
             IsDefined(attacker.fun_mode_player_aoe_damage_active) &&
             attacker.fun_mode_player_aoe_damage_active
@@ -546,6 +564,152 @@ ShouldTriggerFunModeKillMode(
     }
 
     return victim.team != attacker.team || level.friendlyFire != 0;
+}
+
+ApplyFunModeKillModeSplash(
+    originalVictim,
+    effectOrigin,
+    damage,
+    weapon,
+    meansOfDeath
+)
+{
+    self endon("disconnect");
+    level endon("game_ended");
+
+    if (
+        !IsDefined(originalVictim) ||
+        !IsPlayer(originalVictim) ||
+        !IsDefined(effectOrigin) ||
+        damage <= 0 ||
+        !IsDefined(weapon) ||
+        weapon == "none" ||
+        !IsDefined(meansOfDeath) ||
+        !IsDefined(level.callbackPlayerDamage)
+    )
+    {
+        return;
+    }
+
+    radius = GetDvarFloat("fun_mode_kill_mode_radius");
+    splashFraction = GetDvarFloat("fun_mode_kill_mode_splash_fraction");
+
+    if (radius <= 0 || splashFraction <= 0)
+    {
+        return;
+    }
+
+    targets = [];
+
+    foreach (candidate in level.players)
+    {
+        if (
+            !IsDefined(candidate) ||
+            !IsPlayer(candidate) ||
+            !IsAlive(candidate) ||
+            candidate == self ||
+            candidate == originalVictim ||
+            DistanceSquared(effectOrigin, candidate.origin) > radius * radius
+        )
+        {
+            continue;
+        }
+
+        if (IsDefined(level.teamBased) && level.teamBased)
+        {
+            if (!IsDefined(candidate.team) || !IsDefined(self.team))
+            {
+                continue;
+            }
+
+            if (
+                candidate.team == self.team &&
+                (
+                    !IsDefined(level.friendlyFire) ||
+                    level.friendlyFire == 0
+                )
+            )
+            {
+                continue;
+            }
+        }
+
+        targets[targets.size] = candidate;
+    }
+
+    if (!targets.size)
+    {
+        return;
+    }
+
+    splashPool = Int(damage * splashFraction);
+
+    if (splashPool <= 0)
+    {
+        return;
+    }
+
+    damagePerTarget = Int(splashPool / targets.size);
+    remainder = splashPool - damagePerTarget * targets.size;
+
+    // Let the original hit finish before routing attributed secondary damage.
+    wait 0.05;
+
+    if (!IsDefined(self) || !IsPlayer(self))
+    {
+        return;
+    }
+
+    self.fun_mode_player_aoe_damage_active = true;
+    self.fun_mode_kill_mode_damage_active = true;
+
+    for (index = 0; index < targets.size; index++)
+    {
+        target = targets[index];
+        targetDamage = damagePerTarget;
+
+        if (index < remainder)
+        {
+            targetDamage++;
+        }
+
+        if (
+            targetDamage <= 0 ||
+            !IsDefined(target) ||
+            !IsPlayer(target) ||
+            !IsAlive(target)
+        )
+        {
+            continue;
+        }
+
+        delta = target.origin - effectOrigin;
+
+        if (DistanceSquared(target.origin, effectOrigin) > 0)
+        {
+            direction = VectorNormalize(delta);
+        }
+        else
+        {
+            direction = (0, 0, 1);
+        }
+
+        target [[level.callbackPlayerDamage]](
+            self,
+            self,
+            targetDamage,
+            0,
+            meansOfDeath,
+            weapon,
+            target.origin,
+            direction,
+            "none",
+            0
+        );
+    }
+
+    self.fun_mode_kill_mode_damage_active = false;
+    self.fun_mode_player_aoe_damage_active = false;
 }
 
 ApplyFunModeKillModeAfterDamage(
