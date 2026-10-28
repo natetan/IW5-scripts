@@ -45,7 +45,7 @@ GetIncomingMultiplier(victim, meansOfDeath)
     if (
         !IsDefined(victim) ||
         !IsPlayer(victim) ||
-        !victim scripts\fun_mode::IsFunModeSuperClassOwner()
+        !victim scripts\specialist_system::IsFunModeSuperClassOwner()
     )
     {
         return 1.0;
@@ -163,7 +163,7 @@ GetMultishotMultiplier(attacker, weapon, meansOfDeath)
             meansOfDeath != "MOD_PISTOL_BULLET" &&
             meansOfDeath != "MOD_RIFLE_BULLET"
         ) ||
-        !attacker scripts\fun_mode::HasEarnedFullSpecialistBonus()
+        !attacker scripts\specialist_system::HasEarnedFullSpecialistBonus()
     )
     {
         return 1.0;

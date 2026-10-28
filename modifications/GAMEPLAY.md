@@ -52,6 +52,8 @@ Permissioned AoE, chain, and splash behavior lives in
 the authoritative damage-pipeline ordering. Cross-cutting incoming and
 outgoing damage rules live in
 [`gsc/combat_damage_modifiers.gsc`](../gsc/combat_damage_modifiers.gsc).
+Fun Mode super-class eligibility and full Specialist grants live in
+[`gsc/specialist_system.gsc`](../gsc/specialist_system.gsc).
 Other gametype and engine stability hooks include explosive spawn protection in
 [`gsc/spawn_protection_tuning.gsc`](../gsc/spawn_protection_tuning.gsc) and the
 testing-only death loop in

@@ -66,7 +66,10 @@ behaves after it is granted or genuinely earned.
 
 ## Source of Truth
 
-Most perk changes and Specialist behavior are defined in
+Specialist eligibility, full-perk grants, Survival reapplication, and
+post-Specialist rewards are defined in
+[`gsc/specialist_system.gsc`](../gsc/specialist_system.gsc). Movement
+composition and loadout-driven perk application remain in
 [`gsc/fun_mode.gsc`](../gsc/fun_mode.gsc). Expanded Scavenger behavior is
 defined in [`gsc/scavenger.gsc`](../gsc/scavenger.gsc), while Specialist
 magazine restoration is defined in

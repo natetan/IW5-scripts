@@ -134,7 +134,7 @@ GetKillRefillPercent(weapon)
         ) ||
         (
             GetDvarInt("fun_mode_specialist_mag_refill_enable") &&
-            self scripts\fun_mode::HasEarnedFullSpecialistBonus()
+            self scripts\specialist_system::HasEarnedFullSpecialistBonus()
         )
     );
 
