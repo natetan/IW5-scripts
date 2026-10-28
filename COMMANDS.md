@@ -42,9 +42,9 @@ GUIDs to this repository.
 
 `!killmode` affects only the issuing player and resets to `off` when the next
 map loads. It applies to primary and secondary weapons, their attachment
-modes, launchers, and carried equipment. Killstreak weapons are excluded.
-Melee and Throwing Knives retain their existing dedicated Fun Mode behavior
-instead of using the selected generic kill mode.
+modes, launchers, carried equipment, melee, and Throwing Knives. Killstreak
+weapons are excluded. Knife and Throwing Knife kills have no inherent area
+effect while the mode is `off`.
 
 Both modes use a **382-unit** range, ignore intervening cover, and preserve the
 killing weapon's attribution, killfeed icon, normal scoring, friendly-fire

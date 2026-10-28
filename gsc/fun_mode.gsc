@@ -91,12 +91,10 @@
       class or GUID restriction.
     - Gives authorized Fun Mode super classes 50 percent resistance to melee
       damage and direct projectile impacts. Rocket splash remains unchanged.
-    - Gives authorized Fun Mode super classes a line-of-sight melee cleave:
-      one knife hit repeats its normal damage against other nearby players.
-      Throwing Knife player hits create a larger pulse around the victim.
     - Supports permissioned per-player non-killstreak weapon kill modes: a
       simultaneous damage pulse or a nearest-target sequential chain. Melee
-      and Throwing Knife behavior retain their dedicated Fun Mode paths.
+      and Throwing Knife kills use the same selected kill mode as other
+      non-killstreak weapons.
     - Disables MW3's post-spawn killstreak damage cap for more lethal,
       MW2-style player-controlled streaks.
     - Tunes automated Reaper missile damage so the autonomous aircraft remains
@@ -121,12 +119,6 @@ Main()
     SetDvarIfNotInitialized("fun_mode_super_class_guids", "");
     SetDvarIfNotInitialized("fun_mode_super_class_melee_damage_multiplier", 0.50);
     SetDvarIfNotInitialized("fun_mode_super_class_direct_projectile_damage_multiplier", 0.50);
-    SetDvarIfNotInitialized("fun_mode_super_class_melee_cleave_enable", 1);
-    SetDvarIfNotInitialized("fun_mode_super_class_melee_cleave_radius", 192);
-    SetDvarIfNotInitialized("fun_mode_super_class_melee_cleave_damage_multiplier", 1.0);
-    SetDvarIfNotInitialized("fun_mode_super_class_throwing_knife_aoe_enable", 1);
-    SetDvarIfNotInitialized("fun_mode_super_class_throwing_knife_aoe_radius", 382);
-    SetDvarIfNotInitialized("fun_mode_super_class_throwing_knife_aoe_damage_multiplier", 1.0);
     SetDvarIfNotInitialized("fun_mode_kill_mode_radius", 382);
     SetDvarIfNotInitialized("fun_mode_kill_mode_chain_delay", 0.15);
     SetDvarIfNotInitialized("fun_mode_kill_mode_chain_max_hops", 17);
@@ -374,8 +366,6 @@ ModifyPlayerDamageForFunMode(
     hitLocation
 )
 {
-    baseDamage = damage;
-
     if (
         IsDefined(attacker) &&
         IsPlayer(attacker) &&
@@ -482,55 +472,6 @@ ModifyPlayerDamageForFunMode(
     }
 
     if (
-        ShouldTriggerFunModeMeleeCleave(
-            victim,
-            attacker,
-            meansOfDeath
-        )
-    )
-    {
-        meleeCenter = attacker.origin;
-        meleeTraceOrigin = attacker GetEye();
-
-        attacker thread ApplyFunModePlayerAoeDamage(
-            victim,
-            meleeCenter,
-            meleeTraceOrigin,
-            baseDamage,
-            weapon,
-            "MOD_MELEE",
-            GetDvarFloat("fun_mode_super_class_melee_cleave_radius"),
-            GetDvarFloat("fun_mode_super_class_melee_cleave_damage_multiplier"),
-            true,
-            false
-        );
-    }
-
-    if (
-        ShouldTriggerFunModeThrowingKnifeAoe(
-            victim,
-            attacker,
-            weapon
-        )
-    )
-    {
-        throwingKnifeCenter = victim.origin + (0, 0, 40);
-
-        attacker thread ApplyFunModePlayerAoeDamage(
-            victim,
-            throwingKnifeCenter,
-            throwingKnifeCenter,
-            baseDamage,
-            weapon,
-            meansOfDeath,
-            GetDvarFloat("fun_mode_super_class_throwing_knife_aoe_radius"),
-            GetDvarFloat("fun_mode_super_class_throwing_knife_aoe_damage_multiplier"),
-            true,
-            false
-        );
-    }
-
-    if (
         ShouldTriggerFunModeKillMode(
             victim,
             attacker,
@@ -578,8 +519,6 @@ ShouldTriggerFunModeKillMode(
         !IsDefined(weapon) ||
         weapon == "none" ||
         !IsDefined(meansOfDeath) ||
-        meansOfDeath == "MOD_MELEE" ||
-        IsSubStr(weapon, "throwingknife_mp") ||
         maps\mp\_utility::IsKillstreakWeapon(weapon) ||
         damage <= 0 ||
         damage < victim.health ||
@@ -854,53 +793,6 @@ IsPlayerInFunModeKillModeChain(candidate, visitedPlayers)
 
     return false;
 }
-ShouldTriggerFunModeMeleeCleave(victim, attacker, meansOfDeath)
-{
-    return (
-        GetDvarInt("fun_mode_super_class_melee_cleave_enable") &&
-        meansOfDeath == "MOD_MELEE" &&
-        IsDefined(victim) &&
-        IsPlayer(victim) &&
-        IsDefined(attacker) &&
-        IsPlayer(attacker) &&
-        attacker != victim &&
-        attacker IsFunModeSuperClassOwner() &&
-        (
-            !level.teamBased ||
-            victim.team != attacker.team ||
-            level.friendlyFire != 0
-        ) &&
-        (
-            !IsDefined(attacker.fun_mode_player_aoe_damage_active) ||
-            !attacker.fun_mode_player_aoe_damage_active
-        )
-    );
-}
-
-ShouldTriggerFunModeThrowingKnifeAoe(victim, attacker, weapon)
-{
-    return (
-        GetDvarInt("fun_mode_super_class_throwing_knife_aoe_enable") &&
-        IsDefined(weapon) &&
-        IsSubStr(weapon, "throwingknife_mp") &&
-        IsDefined(victim) &&
-        IsPlayer(victim) &&
-        IsDefined(attacker) &&
-        IsPlayer(attacker) &&
-        attacker != victim &&
-        attacker IsFunModeSuperClassOwner() &&
-        (
-            !level.teamBased ||
-            victim.team != attacker.team ||
-            level.friendlyFire != 0
-        ) &&
-        (
-            !IsDefined(attacker.fun_mode_player_aoe_damage_active) ||
-            !attacker.fun_mode_player_aoe_damage_active
-        )
-    );
-}
-
 /*
     Reusable player-centered area-damage path for Fun Mode attacks. Every
     secondary hit re-enters IW5's active damage callback, preserving Bot
