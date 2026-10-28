@@ -47,6 +47,9 @@ range protection in
 [`gsc/remote_uav_tracking_fix.gsc`](../gsc/remote_uav_tracking_fix.gsc), and
 destructible sound protection in
 [`gsc/destructible_sound_fix.gsc`](../gsc/destructible_sound_fix.gsc).
+Permissioned AoE, chain, and splash behavior lives in
+[`gsc/kill_modes.gsc`](../gsc/kill_modes.gsc), while the coordinator retains
+the authoritative damage-pipeline ordering.
 Other gametype and engine stability hooks include explosive spawn protection in
 [`gsc/spawn_protection_tuning.gsc`](../gsc/spawn_protection_tuning.gsc) and the
 testing-only death loop in
