@@ -3,9 +3,10 @@
 /*
     Configurable Kill Modes - IW5 / Plutonium
 
-    Implements permissioned AoE, nearest-target chain, and on-hit splash
-    effects while routing synthetic damage through IW5's native player-damage
-    callback for attribution, scoring, friendly fire, and target defenses.
+    Implements permissioned AoE, nearest-target chain, wide-radius virus
+    chain, and on-hit splash effects while routing synthetic damage through
+    IW5's native player-damage callback for attribution, scoring, friendly
+    fire, and target defenses.
 */
 
 main()
@@ -16,6 +17,7 @@ main()
 Configure()
 {
     SetDvarIfNotInitialized("fun_mode_kill_mode_radius", 382);
+    SetDvarIfNotInitialized("fun_mode_kill_mode_virus_radius", 1000);
     SetDvarIfNotInitialized("fun_mode_kill_mode_splash_fraction", 0.50);
     SetDvarIfNotInitialized("fun_mode_kill_mode_chain_delay", 0.15);
     SetDvarIfNotInitialized("fun_mode_kill_mode_chain_max_hops", 17);
@@ -40,6 +42,7 @@ ShouldTrigger(
         (
             attacker.fun_mode_kill_mode != "aoe" &&
             attacker.fun_mode_kill_mode != "chain" &&
+            attacker.fun_mode_kill_mode != "virus" &&
             attacker.fun_mode_kill_mode != "splash"
         ) ||
         !IsDefined(weapon) ||
@@ -265,14 +268,25 @@ ApplyAfterDamage(
         return;
     }
 
-    if (killMode == "chain")
+    if (killMode == "chain" || killMode == "virus")
     {
+        chainRadius = GetDvarFloat("fun_mode_kill_mode_radius");
+        lethalHops = false;
+
+        if (killMode == "virus")
+        {
+            chainRadius = GetDvarFloat("fun_mode_kill_mode_virus_radius");
+            lethalHops = true;
+        }
+
         self thread ApplyFunModeKillModeChain(
             originalVictim,
             effectOrigin,
             damage,
             weapon,
-            meansOfDeath
+            meansOfDeath,
+            chainRadius,
+            lethalHops
         );
     }
 }
@@ -282,7 +296,9 @@ ApplyFunModeKillModeChain(
     chainOrigin,
     damage,
     weapon,
-    meansOfDeath
+    meansOfDeath,
+    radius,
+    lethalHops
 )
 {
     self endon("disconnect");
@@ -301,7 +317,6 @@ ApplyFunModeKillModeChain(
         return;
     }
 
-    radius = GetDvarFloat("fun_mode_kill_mode_radius");
     hopDelay = GetDvarFloat("fun_mode_kill_mode_chain_delay");
     maxHops = GetDvarInt("fun_mode_kill_mode_chain_max_hops");
 
@@ -370,16 +385,29 @@ ApplyFunModeKillModeChain(
         self.fun_mode_player_aoe_damage_active = true;
         self.fun_mode_kill_mode_damage_active = true;
 
+        hopDamage = damage;
+        hopHitLocation = "none";
+
+        if (lethalHops)
+        {
+            // Virus is a map-testing mode: once a valid target is selected,
+            // use an overwhelming attributed headshot instead of copying the
+            // initiating weapon's final damage. Stock IW5 headshots bypass
+            // Final Stand for weapon types that can otherwise trigger it.
+            hopDamage = nextTarget.health + 100000;
+            hopHitLocation = "head";
+        }
+
         nextTarget [[level.callbackPlayerDamage]](
             self,
             self,
-            damage,
+            hopDamage,
             0,
             meansOfDeath,
             weapon,
             nextOrigin,
             direction,
-            "none",
+            hopHitLocation,
             0
         );
 

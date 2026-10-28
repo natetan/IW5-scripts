@@ -214,9 +214,9 @@ ModifyPlayerDamageForFunMode(
         return 0;
     }
 
-    // Chain hops begin with the initiating shot's final damage. Skip Fun
-    // Mode's offensive multipliers so that already-final value is not scaled
-    // again, while the native callback and target defenses remain active.
+    // Synthetic kill-mode hops provide their final damage directly. Skip Fun
+    // Mode's offensive multipliers so chain damage is not scaled twice and
+    // virus lethality is not weapon-dependent; native target defenses remain.
     isKillModeDamage = (
         IsDefined(attacker) &&
         IsPlayer(attacker) &&

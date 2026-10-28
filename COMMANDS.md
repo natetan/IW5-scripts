@@ -36,7 +36,7 @@ GUIDs to this repository.
 | `!help <command>` | 0 | Displays the command's usage and required permission level. |
 | `!permission` | 0 | Displays the issuing player's current command permission. Alias: `!perm`. |
 | `!random` | 3 | Immediately loads a random map from the complete configured mapvote pool while retaining the current Domination, Drop Zone, or Kill Confirmed recipe. Alias: `!randommap`. The current map is excluded when alternatives exist. Unsafe Drop Zone combinations use the same fallback rules as normal map voting. |
-| `!killmode <chain\|aoe\|splash\|off>` | 3 | Sets the issuing player's non-killstreak weapon effect for the current map. `chain` spreads final killing-hit damage to the nearest unvisited eligible player; `aoe` repeats it against every eligible player in range; `splash` divides half of every hit's final damage among nearby eligible players; `off` restores normal weapon behavior. |
+| `!killmode <chain\|virus\|aoe\|splash\|off>` | 3 | Sets the issuing player's non-killstreak weapon effect for the current map. `chain` spreads final killing-hit damage to the nearest unvisited eligible player; `virus` lethally headshots targets within 1,000 units instead of copying the original damage; `aoe` repeats final damage against every eligible player in range; `splash` divides half of every hit's final damage among nearby eligible players; `off` restores normal weapon behavior. |
 
 ## Kill Modes
 
@@ -46,8 +46,12 @@ modes, launchers, carried equipment, melee, and Throwing Knives. Killstreak
 weapons are excluded. Knife and Throwing Knife kills have no inherent area
 effect while the mode is `off`.
 
-All three modes use a **382-unit** range, ignore intervening cover, and
-preserve the weapon's attribution, killfeed icon, normal scoring,
+The `chain`, `aoe`, and `splash` modes use a **382-unit** range. The sandbox
+`virus` mode uses a **1,000-unit** hop radius and lethally damages each selected
+target with headshot attribution instead of repeating the initiating weapon's
+damage. For weapon types that can normally trigger it, the headshot bypasses
+Final Stand through IW5's stock death logic. All modes ignore intervening
+cover and preserve the weapon's attribution, killfeed icon, normal scoring,
 friendly-fire rules, and target defenses. Synthetic damage cannot recursively
 start another effect.
 
@@ -57,6 +61,10 @@ start another effect.
   seconds**, repeats the original final damage, and continues from each
   confirmed death. It stops when a target survives, no target remains in
   range, or it reaches **17 secondary hops**.
+- `!killmode virus` follows the same nearest-target selection, delay, and hop
+  limit, but each hop is a lethal headshot and searches within **1,000 units**
+  for broad map testing. It does not inherit the initiating weapon's damage
+  value.
 - `!killmode splash` leaves the directly hit target's damage unchanged and
   divides a secondary pool equal to **50%** of that final hit damage among all
   other eligible players in range. Integer remainders are distributed one
@@ -141,7 +149,8 @@ case-insensitive, but they cannot contain spaces.
 | `fun_mode_chat_permission_1_guids` | Empty | Comma-delimited level 1 allowlist. |
 | `fun_mode_chat_permission_2_guids` | Empty | Comma-delimited level 2 allowlist. |
 | `fun_mode_chat_permission_3_guids` | Empty | Comma-delimited level 3 allowlist. |
-| `fun_mode_kill_mode_radius` | `382` | Range used by all three non-killstreak weapon modes. |
+| `fun_mode_kill_mode_radius` | `382` | Range used by `chain`, `aoe`, and `splash` modes. |
+| `fun_mode_kill_mode_virus_radius` | `1000` | Per-hop search radius used only by `virus` mode. |
 | `fun_mode_kill_mode_splash_fraction` | `0.50` | Fraction of each direct hit's final damage divided among eligible secondary targets in `splash` mode. |
 | `fun_mode_kill_mode_chain_delay` | `0.15` | Seconds between chained kills. Values below `0.05` are clamped. |
 | `fun_mode_kill_mode_chain_max_hops` | `17` | Maximum secondary kills attempted by one chain. |
