@@ -141,15 +141,8 @@ Main()
     SetDvarIfNotInitialized("fun_mode_44magnum_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_cm901_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_desert_eagle_damage_multiplier", 2.0);
-    SetDvarIfNotInitialized("fun_mode_pistol_kill_refill_enable", 1);
-    SetDvarIfNotInitialized("fun_mode_javelin_kill_refill_enable", 1);
-    SetDvarIfNotInitialized("fun_mode_noobtube_kill_refill_enable", 1);
-    SetDvarIfNotInitialized("fun_mode_throwing_knife_kill_refill_enable", 1);
-    SetDvarIfNotInitialized("fun_mode_specialist_mag_refill_enable", 1);
-    SetDvarIfNotInitialized("fun_mode_specialist_mag_refill_percent", 0.25);
     SetDvarIfNotInitialized("fun_mode_specialist_multishot_enable", 1);
     SetDvarIfNotInitialized("fun_mode_specialist_multishot_chance", 0.20);
-    SetDvarIfNotInitialized("fun_mode_aa12_kill_refill_enable", 1);
     SetDvarIfNotInitialized("fun_mode_kill_momentum_enable", 1);
     SetDvarIfNotInitialized("fun_mode_kill_momentum_duration", 1.50);
     SetDvarIfNotInitialized("fun_mode_kill_momentum_start", 1.20);
@@ -180,6 +173,7 @@ Main()
     scripts\remote_uav_tracking_fix::Configure();
     scripts\destructible_sound_fix::Configure();
     scripts\scavenger::Configure();
+    scripts\kill_ammo_refills::Configure();
 
     /*
         _escortairdrop::createAirship passes these values directly to
@@ -1287,7 +1281,7 @@ OnPlayerConnect()
         player thread WatchKillMomentumSpawns();
         player thread WatchExtremeConditioningSprintSpawns();
         player thread WatchWeaponMobilitySpawns();
-        player thread WatchKillAmmoRefills();
+        player scripts\kill_ammo_refills::OnPlayerConnected();
         player thread WatchKnifeRunnerKills();
 
         if (player IsBotPlayer())
@@ -1302,190 +1296,6 @@ OnPlayerConnect()
         player scripts\team_switch_assist::OnPlayerConnected();
         player thread WatchPostSpecialistRewards();
         player thread WatchPostSpecialistSpawns();
-    }
-}
-
-WatchKillAmmoRefills()
-{
-    self endon("disconnect");
-
-    for (;;)
-    {
-        self waittill("killed_enemy");
-
-        if (!IsAlive(self) || !IsDefined(self.fun_mode_last_damage_weapon))
-        {
-            continue;
-        }
-
-        weapon = self.fun_mode_last_damage_weapon;
-
-        if (
-            GetDvarInt("fun_mode_throwing_knife_kill_refill_enable") &&
-            IsSubStr(weapon, "throwingknife_mp")
-        )
-        {
-            self RefillThrowingKnifeAfterKill();
-        }
-
-        if (
-            GetDvarInt("fun_mode_javelin_kill_refill_enable") &&
-            weapon == "javelin_mp"
-        )
-        {
-            self RefillWeaponClipByRounds(weapon, 1);
-        }
-
-        if (
-            GetDvarInt("fun_mode_noobtube_kill_refill_enable") &&
-            scripts\scavenger::IsNoobTube(weapon)
-        )
-        {
-            // Underbarrel launchers consume their loaded clip directly. The
-            // reserve-stock path used by Scavenger does not immediately make
-            // another shot available, while the Specialist magazine-refill
-            // path proves that restoring the tube clip does.
-            self RefillWeaponClipByRounds(weapon, 1);
-        }
-
-        if (!IsSubStr(weapon, "iw5_"))
-        {
-            continue;
-        }
-
-        refillPercent = self GetKillRefillPercent(weapon);
-
-        if (refillPercent > 0.0)
-        {
-            self RefillWeaponClipByPercent(weapon, refillPercent);
-        }
-    }
-}
-
-RefillThrowingKnifeAfterKill()
-{
-    offhands = self GetWeaponsListOffhands();
-
-    foreach (offhand in offhands)
-    {
-        if (offhand != "throwingknife_mp")
-        {
-            continue;
-        }
-
-        currentAmmo = self GetWeaponAmmoClip(offhand);
-
-        if (currentAmmo < 1)
-        {
-            self SetWeaponAmmoClip(offhand, 1);
-        }
-
-        return;
-    }
-}
-
-GetKillRefillPercent(weapon)
-{
-    refillPercent = 0.0;
-
-    if (
-        IsDefined(self.fun_mode_knife_runner_loadout) &&
-        self.fun_mode_knife_runner_loadout &&
-        IsKnifeRunnerWeapon(weapon)
-    )
-    {
-        return refillPercent;
-    }
-
-    if (
-        GetDvarInt("fun_mode_pistol_kill_refill_enable") &&
-        IsHighPoweredPistol(weapon)
-    )
-    {
-        refillPercent = 0.50;
-    }
-
-    standardRefillApplies = (
-        (
-            GetDvarInt("fun_mode_aa12_kill_refill_enable") &&
-            IsSubStr(weapon, "iw5_aa12_mp")
-        ) ||
-        (
-            GetDvarInt("fun_mode_specialist_mag_refill_enable") &&
-            self HasEarnedFullSpecialistBonus()
-        )
-    );
-
-    if (standardRefillApplies)
-    {
-        standardRefillPercent = GetDvarFloat(
-            "fun_mode_specialist_mag_refill_percent"
-        );
-
-        if (standardRefillPercent > refillPercent)
-        {
-            refillPercent = standardRefillPercent;
-        }
-    }
-
-    return refillPercent;
-}
-
-IsHighPoweredPistol(weapon)
-{
-    return (
-        IsDefined(weapon) &&
-        (
-            IsSubStr(weapon, "iw5_mp412_mp") ||
-            IsSubStr(weapon, "iw5_deserteagle_mp")
-        )
-    );
-}
-
-RefillWeaponClipByPercent(weapon, refillPercent)
-{
-    clipSize = WeaponClipSize(weapon);
-
-    if (clipSize <= 0 || refillPercent <= 0)
-    {
-        return;
-    }
-
-    refillAmount = Int((clipSize * refillPercent) + 0.5);
-
-    if (refillAmount < 1)
-    {
-        refillAmount = 1;
-    }
-
-    self RefillWeaponClipByRounds(weapon, refillAmount);
-}
-
-RefillWeaponClipByRounds(weapon, refillAmount)
-{
-    if (refillAmount <= 0)
-    {
-        return;
-    }
-
-    clipSize = WeaponClipSize(weapon);
-
-    if (clipSize <= 0)
-    {
-        return;
-    }
-
-    clipAmmo = self GetWeaponAmmoClip(weapon);
-    newClipAmmo = clipAmmo + refillAmount;
-
-    if (newClipAmmo > clipSize)
-    {
-        newClipAmmo = clipSize;
-    }
-
-    if (newClipAmmo > clipAmmo)
-    {
-        self SetWeaponAmmoClip(weapon, newClipAmmo);
     }
 }
 
