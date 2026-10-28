@@ -124,8 +124,6 @@ Main()
     SetDvarIfNotInitialized("fun_mode_kill_mode_chain_delay", 0.15);
     SetDvarIfNotInitialized("fun_mode_kill_mode_chain_max_hops", 17);
     SetDvarIfNotInitialized("fun_mode_survival_specialist_bonus", 1);
-    SetDvarIfNotInitialized("fun_mode_team_switch_assist", 1);
-    SetDvarIfNotInitialized("fun_mode_team_switch_fill", 18);
     SetDvarIfNotInitialized("fun_mode_blast_shield_damage", 0.25);
     SetDvarIfNotInitialized("fun_mode_blast_shield_explosive_damage_multiplier", 1.5);
     SetDvarIfNotInitialized("fun_mode_javelin_damage_multiplier", 10.0);
@@ -152,10 +150,6 @@ Main()
     SetDvarIfNotInitialized("fun_mode_specialist_multishot_enable", 1);
     SetDvarIfNotInitialized("fun_mode_specialist_multishot_chance", 0.20);
     SetDvarIfNotInitialized("fun_mode_aa12_kill_refill_enable", 1);
-    SetDvarIfNotInitialized("fun_mode_quick_fix_enable", 1);
-    SetDvarIfNotInitialized("fun_mode_quick_fix_heal_percent", 0.25);
-    SetDvarIfNotInitialized("fun_mode_quick_fix_overheal_percent", 0.10);
-    SetDvarIfNotInitialized("fun_mode_quick_fix_max_percent", 2.00);
     SetDvarIfNotInitialized("fun_mode_kill_momentum_enable", 1);
     SetDvarIfNotInitialized("fun_mode_kill_momentum_duration", 1.50);
     SetDvarIfNotInitialized("fun_mode_kill_momentum_start", 1.20);
@@ -179,6 +173,12 @@ Main()
     SetDvarIfNotInitialized("fun_mode_post_specialist_kills", 3);
     SetDvarIfNotInitialized("fun_mode_post_specialist_uav_duration", 5);
     SetDvarIfNotInitialized("fun_mode_post_specialist_random_streak_enable", 1);
+
+    // Keep startup deterministic: feature modules register hooks and dvars here.
+    scripts\quick_fix::Configure();
+    scripts\team_switch_assist::Configure();
+    scripts\remote_uav_tracking_fix::Configure();
+    scripts\destructible_sound_fix::Configure();
 
     /*
         _escortairdrop::createAirship passes these values directly to
@@ -219,109 +219,6 @@ Main()
         ::HandleScavengerBagPickupCustom
     );
 
-	ReplaceFunc(
-		maps\mp\killstreaks\_remoteuav::remoteuav_in_range,
-		::RemoteUavInRangeGuarded
-	);
-
-    ReplaceFunc(
-        common_scripts\_destructible::play_sound,
-        ::DestructiblePlaySoundGuarded
-    );
-}
-
-/*
-    Some map destructible definitions reference an undefined, empty, or
-    unavailable sound alias. The stock helper passes it directly to
-    PlaySound(), which raises a runtime error. Preserve its positioned sound
-    entity and cleanup behavior, but ignore aliases the current map did not
-    load.
-*/
-DestructiblePlaySoundGuarded(soundAlias, tagName)
-{
-    if (
-        !IsDefined(soundAlias) ||
-        soundAlias == "" ||
-        !SoundExists(soundAlias)
-    )
-    {
-        return;
-    }
-
-    if (IsDefined(tagName))
-    {
-        soundOrigin = Spawn("script_origin", self GetTagOrigin(tagName));
-        soundOrigin Hide();
-        soundOrigin LinkTo(
-            self,
-            tagName,
-            (0.0, 0.0, 0.0),
-            (0.0, 0.0, 0.0)
-        );
-    }
-    else
-    {
-        soundOrigin = Spawn("script_origin", (0.0, 0.0, 0.0));
-        soundOrigin Hide();
-        soundOrigin.origin = self.origin;
-        soundOrigin.angles = self.angles;
-        soundOrigin LinkTo(self);
-    }
-
-    soundOrigin PlaySound(soundAlias);
-    wait 5.0;
-
-    if (IsDefined(soundOrigin))
-    {
-        soundOrigin Delete();
-    }
-}
-
-/*
-	Preserve IW5's stock Recon Drone range behavior while tolerating maps that
-	do not provide a usable remote_uav_range or airstrikeheight value.
-*/
-RemoteUavInRangeGuarded()
-{
-	inHeliProximity = (
-		IsDefined(self.inheliproximity) &&
-		self.inheliproximity
-	);
-
-	if (IsDefined(self.rangetrigger))
-	{
-		if (!self IsTouching(self.rangetrigger) && !inHeliProximity)
-		{
-			return 1;
-		}
-
-		return 0;
-	}
-
-	maxDistance = 12800;
-
-	if (IsDefined(self.maxdistance))
-	{
-		maxDistance = self.maxdistance;
-	}
-
-	withinHeight = true;
-
-	if (IsDefined(self.maxheight))
-	{
-		withinHeight = self.origin[2] < self.maxheight;
-	}
-
-	if (
-		Distance2D(self.origin, level.mapcenter) < maxDistance &&
-		withinHeight &&
-		!inHeliProximity
-	)
-	{
-		return 1;
-	}
-
-	return 0;
 }
 
 Init()
@@ -1408,8 +1305,7 @@ OnPlayerConnect()
     {
         level waittill("connected", player);
 
-        player thread WatchQuickFix();
-        player thread WatchQuickFixSpawns();
+        player scripts\quick_fix::OnPlayerConnected();
         player thread WatchKillMomentum();
         player thread WatchKillMomentumSpawns();
         player thread WatchExtremeConditioningSprintSpawns();
@@ -1426,7 +1322,7 @@ OnPlayerConnect()
         player thread WatchKnifeRunnerInvulnerabilityHudDeaths();
         player thread WatchSurvivalFunModeSpawns();
         player thread WatchScavengerPickupEligibility();
-        player thread WatchTeamSwitchMenu();
+        player scripts\team_switch_assist::OnPlayerConnected();
         player thread WatchPostSpecialistRewards();
         player thread WatchPostSpecialistSpawns();
     }
@@ -2034,309 +1930,6 @@ GrantRandomPostSpecialistKillstreak()
         self,
         0
     );
-}
-
-/*
-    Capture the game mode's real health setting on every spawn. Overhealth
-    temporarily raises maxHealth, so this stored value remains the authoritative
-    base until death resets the player.
-*/
-WatchQuickFixSpawns()
-{
-    self endon("disconnect");
-
-    for (;;)
-    {
-        self waittill("spawned_player");
-        wait 0.05;
-
-        self.fun_mode_quick_fix_base_health = self.maxHealth;
-        self.fun_mode_quick_fix_overhealth_ceiling = undefined;
-        self ClearQuickFixOverhealthOverlay();
-
-        self thread WatchQuickFixOverhealth();
-        self thread ClearQuickFixOverlayOnDeath();
-    }
-}
-
-ClearQuickFixOverlayOnDeath()
-{
-    self endon("disconnect");
-    self waittill("death");
-    self ClearQuickFixOverhealthOverlay();
-}
-
-ClearQuickFixOverhealthOverlay()
-{
-    if (IsDefined(self.fun_mode_quick_fix_overlay))
-    {
-        self.fun_mode_quick_fix_overlay Destroy();
-        self.fun_mode_quick_fix_overlay = undefined;
-    }
-}
-
-UpdateQuickFixOverhealthOverlay()
-{
-    if (self IsBotPlayer())
-    {
-        self ClearQuickFixOverhealthOverlay();
-        return;
-    }
-
-    if (
-        !IsDefined(self.fun_mode_quick_fix_base_health) ||
-        self.health <= self.fun_mode_quick_fix_base_health ||
-        (IsDefined(self.haslightarmor) && self.haslightarmor)
-    )
-    {
-        self ClearQuickFixOverhealthOverlay();
-        return;
-    }
-
-    if (!IsDefined(self.fun_mode_quick_fix_overlay))
-    {
-        self.fun_mode_quick_fix_overlay = NewClientHudElem(self);
-        self.fun_mode_quick_fix_overlay.x = 0;
-        self.fun_mode_quick_fix_overlay.y = 0;
-        self.fun_mode_quick_fix_overlay.alignX = "left";
-        self.fun_mode_quick_fix_overlay.alignY = "top";
-        self.fun_mode_quick_fix_overlay.horzAlign = "fullscreen";
-        self.fun_mode_quick_fix_overlay.vertAlign = "fullscreen";
-        self.fun_mode_quick_fix_overlay.sort = -10;
-        self.fun_mode_quick_fix_overlay.archived = 1;
-        self.fun_mode_quick_fix_overlay SetShader(
-            "combathigh_overlay",
-            640,
-            480
-        );
-    }
-
-    maximumHealth = Int(
-        self.fun_mode_quick_fix_base_health *
-        GetDvarFloat("fun_mode_quick_fix_max_percent")
-    );
-    maximumOverhealth = maximumHealth - self.fun_mode_quick_fix_base_health;
-
-    if (maximumOverhealth <= 0)
-    {
-        self ClearQuickFixOverhealthOverlay();
-        return;
-    }
-
-    overhealth = self.health - self.fun_mode_quick_fix_base_health;
-    overhealthFraction = overhealth / maximumOverhealth;
-
-    if (overhealthFraction > 1)
-    {
-        overhealthFraction = 1;
-    }
-
-    // Keep the first overhealth step visible, then reach stock intensity at cap.
-    self.fun_mode_quick_fix_overlay.alpha = 0.15 + (0.85 * overhealthFraction);
-}
-
-/*
-    Overhealth behaves like a consumable shield rather than ordinary maximum
-    health. Damage lowers its ceiling, preventing IW5's normal regeneration
-    from restoring health above the remaining overhealth amount.
-*/
-WatchQuickFixOverhealth()
-{
-    self endon("disconnect");
-    self endon("death");
-
-    previousHealth = self.health;
-
-    for (;;)
-    {
-        wait 0.05;
-
-        if (!IsDefined(self.fun_mode_quick_fix_overhealth_ceiling))
-        {
-            previousHealth = self.health;
-            continue;
-        }
-
-        baseHealth = self.fun_mode_quick_fix_base_health;
-
-        // Hand control back to IW5 if a real Ballistic Vest is collected.
-        if (IsDefined(self.haslightarmor) && self.haslightarmor)
-        {
-            self.previousmaxhealth = baseHealth;
-            self.fun_mode_quick_fix_overhealth_ceiling = undefined;
-            self ClearQuickFixOverhealthOverlay();
-            previousHealth = self.health;
-            continue;
-        }
-
-        if (self.health < previousHealth)
-        {
-            self.fun_mode_quick_fix_overhealth_ceiling = self.health;
-        }
-
-        if (self.fun_mode_quick_fix_overhealth_ceiling <= baseHealth)
-        {
-            self.maxHealth = baseHealth;
-            self.fun_mode_quick_fix_overhealth_ceiling = undefined;
-        }
-        else
-        {
-            self.maxHealth = self.fun_mode_quick_fix_overhealth_ceiling;
-
-            if (self.health > self.fun_mode_quick_fix_overhealth_ceiling)
-            {
-                self.health = self.fun_mode_quick_fix_overhealth_ceiling;
-            }
-        }
-
-        self UpdateQuickFixOverhealthOverlay();
-
-        previousHealth = self.health;
-    }
-}
-
-/*
-    Below base health, kills restore a large burst and carry any excess across
-    the base-health boundary. At or above base health, kills add smaller
-    overhealth steps. Ten full-health kills reach the default 200-percent cap.
-*/
-WatchQuickFix()
-{
-    self endon("disconnect");
-
-    for (;;)
-    {
-        self waittill("killed_enemy");
-
-        if (
-            !GetDvarInt("fun_mode_quick_fix_enable") ||
-            !IsAlive(self) ||
-            !IsDefined(self.fun_mode_quick_fix_base_health) ||
-            (IsDefined(self.haslightarmor) && self.haslightarmor)
-        )
-        {
-            continue;
-        }
-
-        baseHealth = self.fun_mode_quick_fix_base_health;
-        oldHealth = self.health;
-
-        if (oldHealth < baseHealth)
-        {
-            healthToRestore = Int(
-                baseHealth * GetDvarFloat("fun_mode_quick_fix_heal_percent")
-            );
-        }
-        else
-        {
-            healthToRestore = Int(
-                baseHealth * GetDvarFloat("fun_mode_quick_fix_overheal_percent")
-            );
-        }
-
-        if (healthToRestore < 1)
-        {
-            healthToRestore = 1;
-        }
-
-        maximumHealth = Int(
-            baseHealth * GetDvarFloat("fun_mode_quick_fix_max_percent")
-        );
-
-        restoredHealth = self.health + healthToRestore;
-
-        if (restoredHealth > maximumHealth)
-        {
-            restoredHealth = maximumHealth;
-        }
-
-        if (restoredHealth > baseHealth)
-        {
-            self.maxHealth = restoredHealth;
-            self.fun_mode_quick_fix_overhealth_ceiling = restoredHealth;
-        }
-
-        self.health = restoredHealth;
-        self UpdateQuickFixOverhealthOverlay();
-    }
-}
-
-/*
-    A full 9v9 lobby gives IW5 no free destination-team slot when a human
-    tries to switch. When the human opens the team menu, temporarily lower the
-    fill target and kick one bot from the opposite team. This creates the
-    destination slot. Restoring the fill target after the human switches makes
-    Bot Warfare add a replacement bot to the team the human left.
-*/
-WatchTeamSwitchMenu()
-{
-    self endon("disconnect");
-
-    for (;;)
-    {
-        self waittill("menuresponse", menu, response);
-
-        if (
-            !GetDvarInt("fun_mode_team_switch_assist") ||
-            response != "changeteam" ||
-            !IsDefined(self.pers["team"]) ||
-            (
-                IsDefined(level.fun_mode_team_switch_in_progress) &&
-                level.fun_mode_team_switch_in_progress
-            )
-        )
-        {
-            continue;
-        }
-
-        currentTeam = self.pers["team"];
-
-        if (currentTeam != "allies" && currentTeam != "axis")
-        {
-            continue;
-        }
-
-        destinationTeam = "axis";
-
-        if (currentTeam == "axis")
-        {
-            destinationTeam = "allies";
-        }
-
-        foreach (candidate in level.players)
-        {
-            if (
-                !candidate IsBotPlayer() ||
-                !IsDefined(candidate.pers["team"]) ||
-                candidate.pers["team"] != destinationTeam
-            )
-            {
-                continue;
-            }
-
-            fillTarget = GetDvarInt("fun_mode_team_switch_fill");
-            previousFillKick = GetDvarInt("bots_manage_fill_kick");
-
-            level.fun_mode_team_switch_in_progress = true;
-
-            // Prevent addBots_loop() from observing 18 clients against the
-            // temporary target of 17 and racing us by kicking a second bot.
-            SetDvar("bots_manage_fill_kick", 0);
-            SetDvar("bots_manage_fill", fillTarget - 1);
-            kick(candidate GetEntityNumber(), "EXE_PLAYERKICKED");
-
-            level thread RestoreBotFill(fillTarget, previousFillKick);
-            break;
-        }
-    }
-}
-
-RestoreBotFill(fillTarget, fillKickValue)
-{
-    wait 10;
-    SetDvar("bots_manage_fill", fillTarget);
-    SetDvar("bots_manage_fill_kick", fillKickValue);
-    level.fun_mode_team_switch_in_progress = false;
 }
 
 WatchPlayerLoadout()

@@ -25,8 +25,9 @@ operations are documented separately.
 
 Quick Fix and kill momentum are independent of the selected class, perk
 package, and strike package. Their values are controlled by the corresponding
-`fun_mode_quick_fix_*` and `fun_mode_kill_momentum_*` dvars initialized in
-[`gsc/fun_mode.gsc`](../gsc/fun_mode.gsc).
+`fun_mode_quick_fix_*` and `fun_mode_kill_momentum_*` dvars. Quick Fix is
+implemented in [`gsc/quick_fix.gsc`](../gsc/quick_fix.gsc), while kill momentum
+remains in [`gsc/fun_mode.gsc`](../gsc/fun_mode.gsc).
 
 ## Stability and Compatibility Fixes
 
@@ -37,10 +38,16 @@ package, and strike package. Their values are controlled by the corresponding
 
 ## Source of Truth
 
-Global combat and player systems are defined primarily in
-[`gsc/fun_mode.gsc`](../gsc/fun_mode.gsc). Gametype and engine stability hooks
-live in their named files under [`gsc/`](../gsc/), including explosive spawn
-protection in
+[`gsc/fun_mode.gsc`](../gsc/fun_mode.gsc) is the deterministic coordinator for
+global combat and player systems. Extracted features live in named files under
+[`gsc/`](../gsc/): Quick Fix in
+[`gsc/quick_fix.gsc`](../gsc/quick_fix.gsc), full-lobby team switching in
+[`gsc/team_switch_assist.gsc`](../gsc/team_switch_assist.gsc), Recon Drone
+range protection in
+[`gsc/remote_uav_tracking_fix.gsc`](../gsc/remote_uav_tracking_fix.gsc), and
+destructible sound protection in
+[`gsc/destructible_sound_fix.gsc`](../gsc/destructible_sound_fix.gsc).
+Other gametype and engine stability hooks include explosive spawn protection in
 [`gsc/spawn_protection_tuning.gsc`](../gsc/spawn_protection_tuning.gsc) and the
 testing-only death loop in
 [`gsc/death_loop_command.gsc`](../gsc/death_loop_command.gsc). Permissioned
