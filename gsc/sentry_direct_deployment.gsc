@@ -3,11 +3,13 @@
 
     Replaces the five-kill Sentry airdrop wrapper with the stock carried-Sentry
     placement flow. The placed turret retains its normal minigun, health,
-    lifetime, pickup, EMP, and destruction behavior, while occasionally firing
-    one grenade at the same target it is already tracking.
+    pickup, EMP, and destruction behavior, remains active until destroyed or
+    otherwise cleaned up by the match, and occasionally fires one grenade at
+    the same target it is already tracking.
 
     Tuning:
         fun_mode_direct_sentry_deployment_enable
+        fun_mode_sentry_persistent_lifetime_enable
         fun_mode_sentry_grenade_secondary_enable
         fun_mode_sentry_grenade_interval_seconds
         fun_mode_sentry_grenade_min_range
@@ -19,16 +21,23 @@
 main()
 {
     setdvarifuninitialized( "fun_mode_direct_sentry_deployment_enable", 1 );
+    setdvarifuninitialized( "fun_mode_sentry_persistent_lifetime_enable", 1 );
     setdvarifuninitialized( "fun_mode_sentry_grenade_secondary_enable", 1 );
     setdvarifuninitialized( "fun_mode_sentry_grenade_interval_seconds", 8 );
     setdvarifuninitialized( "fun_mode_sentry_grenade_min_range", 512 );
 
     directDeploymentEnabled =
         getdvarint( "fun_mode_direct_sentry_deployment_enable" );
+    persistentLifetimeEnabled =
+        getdvarint( "fun_mode_sentry_persistent_lifetime_enable" );
     grenadeSecondaryEnabled =
         getdvarint( "fun_mode_sentry_grenade_secondary_enable" );
 
-    if ( !directDeploymentEnabled && !grenadeSecondaryEnabled )
+    if (
+        !directDeploymentEnabled &&
+        !persistentLifetimeEnabled &&
+        !grenadeSecondaryEnabled
+    )
         return;
 
     if ( directDeploymentEnabled )
@@ -36,6 +45,14 @@ main()
         replacefunc(
             maps\mp\killstreaks\_airdrop::tryuseairdropsentryminigun,
             ::tryUseDirectSentry
+        );
+    }
+
+    if ( persistentLifetimeEnabled )
+    {
+        replacefunc(
+            maps\mp\killstreaks\_autosentry::sentry_timeout,
+            ::sentryTimeoutWithPersistentAssaultSentry
         );
     }
 
@@ -54,6 +71,45 @@ main()
             ::sentryBurstFireStartWithGrenades
         );
     }
+}
+
+sentryTimeoutWithPersistentAssaultSentry()
+{
+    self endon( "death" );
+    level endon( "game_ended" );
+
+    if (
+        self.sentrytype == "sentry_minigun" ||
+        self.sentrytype == "minigun_turret"
+    )
+    {
+        // Destruction, pickup, owner loss, team changes, and game-end cleanup
+        // still use their native notifications. Only the 90-second expiry is
+        // suppressed for the regular Assault Sentry.
+        for (;;)
+            wait 60;
+    }
+
+    timeout = level.sentrysettings[self.sentrytype].timeout;
+
+    while ( timeout )
+    {
+        wait 1;
+        maps\mp\gametypes\_hostmigration::waittillhostmigrationdone();
+
+        if ( !isdefined( self.carriedby ) )
+            timeout = max( 0, timeout - 1 );
+    }
+
+    if ( isdefined( self.owner ) )
+    {
+        if ( self.sentrytype == "sam_turret" )
+            self.owner thread maps\mp\_utility::leaderdialogonplayer( "sam_gone" );
+        else
+            self.owner thread maps\mp\_utility::leaderdialogonplayer( "sentry_gone" );
+    }
+
+    self notify( "death" );
 }
 
 tryUseDirectSentry( lifeId, awardId )
