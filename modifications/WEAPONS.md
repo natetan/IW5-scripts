@@ -164,9 +164,11 @@ presets do not rewrite saved custom classes and reset with the match.
 
 ## Source of Truth
 
-Most weapon-specific damage, proficiency, and movement rules are defined in
-[`gsc/fun_mode.gsc`](../gsc/fun_mode.gsc). Kill-triggered ammunition restoration
-is defined in [`gsc/kill_ammo_refills.gsc`](../gsc/kill_ammo_refills.gsc).
+Weapon-specific script damage multipliers are defined in
+[`gsc/weapon_damage_multipliers.gsc`](../gsc/weapon_damage_multipliers.gsc).
+Proficiency and movement rules remain in [`gsc/fun_mode.gsc`](../gsc/fun_mode.gsc).
+Kill-triggered ammunition restoration is defined in
+[`gsc/kill_ammo_refills.gsc`](../gsc/kill_ammo_refills.gsc).
 Expanded Scavenger classification and refill behavior are defined in
 [`gsc/scavenger.gsc`](../gsc/scavenger.gsc). Temporary presets are defined in
 [`gsc/temporary_loadouts.gsc`](../gsc/temporary_loadouts.gsc). When behavior

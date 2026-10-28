@@ -126,21 +126,6 @@ Main()
     SetDvarIfNotInitialized("fun_mode_survival_specialist_bonus", 1);
     SetDvarIfNotInitialized("fun_mode_blast_shield_damage", 0.25);
     SetDvarIfNotInitialized("fun_mode_blast_shield_explosive_damage_multiplier", 1.5);
-    SetDvarIfNotInitialized("fun_mode_javelin_damage_multiplier", 10.0);
-    SetDvarIfNotInitialized("fun_mode_noobtube_damage_multiplier", 3.0);
-    SetDvarIfNotInitialized("fun_mode_reaper_damage_multiplier", 1.5);
-    SetDvarIfNotInitialized("fun_mode_shotgun_damage_multiplier", 2.0);
-    SetDvarIfNotInitialized("fun_mode_1887_damage_multiplier", 5.0);
-    SetDvarIfNotInitialized("fun_mode_usas_damage_multiplier", 1.5);
-    SetDvarIfNotInitialized("fun_mode_silenced_shotgun_damage_multiplier", 5.0);
-    SetDvarIfNotInitialized("fun_mode_silenced_auto_shotgun_damage_multiplier", 3.0);
-    SetDvarIfNotInitialized("fun_mode_silenced_striker_damage_multiplier", 3.0);
-    SetDvarIfNotInitialized("fun_mode_bolt_sniper_damage_multiplier", 2.0);
-    SetDvarIfNotInitialized("fun_mode_heavy_sniper_damage_multiplier", 2.0);
-    SetDvarIfNotInitialized("fun_mode_mp412_damage_multiplier", 3.0);
-    SetDvarIfNotInitialized("fun_mode_44magnum_damage_multiplier", 2.0);
-    SetDvarIfNotInitialized("fun_mode_cm901_damage_multiplier", 2.0);
-    SetDvarIfNotInitialized("fun_mode_desert_eagle_damage_multiplier", 2.0);
     SetDvarIfNotInitialized("fun_mode_specialist_multishot_enable", 1);
     SetDvarIfNotInitialized("fun_mode_specialist_multishot_chance", 0.20);
     SetDvarIfNotInitialized("fun_mode_kill_momentum_enable", 1);
@@ -174,6 +159,7 @@ Main()
     scripts\destructible_sound_fix::Configure();
     scripts\scavenger::Configure();
     scripts\kill_ammo_refills::Configure();
+    scripts\weapon_damage_multipliers::Configure();
 
     /*
         _escortairdrop::createAirship passes these values directly to
@@ -286,7 +272,7 @@ ModifyPlayerDamageForFunMode(
 
     if (!isKillModeDamage)
     {
-        weaponDamageMultiplier = GetFunModeWeaponDamageMultiplier(
+        weaponDamageMultiplier = scripts\weapon_damage_multipliers::GetMultiplier(
             weapon,
             meansOfDeath
         );
@@ -1119,155 +1105,6 @@ GetSpecialistMultishotDamageMultiplier(attacker, weapon, meansOfDeath)
     }
 
     return 1.0;
-}
-
-/*
-    Central registry for Fun Mode's weapon-specific damage buffs. Return 1.0
-    for normal damage so new weapon rules can be added here without expanding
-    the player-damage callback itself.
-*/
-GetFunModeWeaponDamageMultiplier(weapon, meansOfDeath)
-{
-    if (!IsDefined(weapon))
-    {
-        return 1.0;
-    }
-
-    if (weapon == "javelin_mp")
-    {
-        return GetDvarFloat("fun_mode_javelin_damage_multiplier");
-    }
-
-    if (weapon == "remote_mortar_missile_mp")
-        return GetDvarFloat("fun_mode_reaper_damage_multiplier");
-
-    if (scripts\scavenger::IsNoobTube(weapon))
-    {
-        return GetDvarFloat("fun_mode_noobtube_damage_multiplier");
-    }
-
-    isBulletDamage = (
-        meansOfDeath == "MOD_PISTOL_BULLET" ||
-        meansOfDeath == "MOD_RIFLE_BULLET"
-    );
-
-    if (
-        isBulletDamage &&
-        (
-            IsSubStr(weapon, "iw5_cheytac_mp") ||
-            IsSubStr(weapon, "iw5_l96a1_mp") ||
-            IsSubStr(weapon, "iw5_msr_mp")
-        )
-    )
-    {
-        return GetDvarFloat("fun_mode_bolt_sniper_damage_multiplier");
-    }
-
-    if (
-        isBulletDamage &&
-        (
-            IsSubStr(weapon, "iw5_barrett_mp") ||
-            IsSubStr(weapon, "iw5_as50_mp")
-        )
-    )
-    {
-        return GetDvarFloat("fun_mode_heavy_sniper_damage_multiplier");
-    }
-
-    if (
-        isBulletDamage &&
-        IsSubStr(weapon, "iw5_mp412_mp")
-    )
-    {
-        return GetDvarFloat("fun_mode_mp412_damage_multiplier");
-    }
-
-    if (
-        isBulletDamage &&
-        IsSubStr(weapon, "iw5_44magnum_mp")
-    )
-    {
-        return GetDvarFloat("fun_mode_44magnum_damage_multiplier");
-    }
-
-    if (
-        isBulletDamage &&
-        IsSubStr(weapon, "iw5_cm901_mp")
-    )
-    {
-        return GetDvarFloat("fun_mode_cm901_damage_multiplier");
-    }
-
-    if (
-        isBulletDamage &&
-        IsSubStr(weapon, "iw5_deserteagle_mp")
-    )
-    {
-        return GetDvarFloat("fun_mode_desert_eagle_damage_multiplier");
-    }
-
-    if (
-        isBulletDamage &&
-        IsFunModeShotgun(weapon) &&
-        IsSubStr(weapon, "_silencer")
-    )
-    {
-        if (IsSubStr(weapon, "iw5_striker_mp"))
-        {
-            return GetDvarFloat("fun_mode_silenced_striker_damage_multiplier");
-        }
-
-        if (
-            IsSubStr(weapon, "iw5_aa12_mp") ||
-            IsSubStr(weapon, "iw5_usas12_mp")
-        )
-        {
-            return GetDvarFloat("fun_mode_silenced_auto_shotgun_damage_multiplier");
-        }
-
-        return GetDvarFloat("fun_mode_silenced_shotgun_damage_multiplier");
-    }
-
-    if (
-        isBulletDamage &&
-        IsSubStr(weapon, "iw5_1887_mp")
-    )
-    {
-        return GetDvarFloat("fun_mode_1887_damage_multiplier");
-    }
-
-    if (
-        isBulletDamage &&
-        IsSubStr(weapon, "iw5_usas12_mp")
-    )
-    {
-        return GetDvarFloat("fun_mode_usas_damage_multiplier");
-    }
-
-    if (
-        isBulletDamage &&
-        (
-            IsSubStr(weapon, "iw5_spas12_mp") ||
-            IsSubStr(weapon, "iw5_ksg_mp") ||
-            IsSubStr(weapon, "iw5_aa12_mp")
-        )
-    )
-    {
-        return GetDvarFloat("fun_mode_shotgun_damage_multiplier");
-    }
-
-    return 1.0;
-}
-
-IsFunModeShotgun(weapon)
-{
-    return (
-        IsSubStr(weapon, "iw5_spas12_mp") ||
-        IsSubStr(weapon, "iw5_aa12_mp") ||
-        IsSubStr(weapon, "iw5_striker_mp") ||
-        IsSubStr(weapon, "iw5_usas12_mp") ||
-        IsSubStr(weapon, "iw5_ksg_mp")
-    );
 }
 
 OnPlayerConnect()
