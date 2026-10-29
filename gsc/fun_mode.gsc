@@ -24,6 +24,8 @@
       remote-UAV height metadata, preventing a per-frame runtime-error loop.
     - Guards destructible map objects against missing sound aliases so a
       broken destruction sound cannot generate a script runtime error.
+    - Leaves malformed custom-map animated props static when their model has
+      no registered animation metadata, while preserving valid animations.
     - Restores stock missile-attractor defaults when helicopter initialization
       leaves them undefined, preventing Osprey creation runtime errors.
     - Globally strengthens Blast Shield so its users take 25 percent of normal
@@ -69,6 +71,8 @@
       Players who originally select Extreme Conditioning and authorized Fun
       Mode super classes also receive IW5's hidden Marathon perk, registered
       by the repository's perk-table overlay.
+    - Grants IW5's hidden Dolphin Dive perk to every human and bot after each
+      spawn, independent of class, perk package, and strike package.
     - Activates Knife Runner when a human loadout combines Extreme
       Conditioning, Quickdraw, Dead Silence, Throwing Knife, Tactical
       Insertion, Juiced, and either a Tactical Knife handgun or Akimbo USP
@@ -121,6 +125,7 @@ Main()
     scripts\team_switch_assist::Configure();
     scripts\remote_uav_tracking_fix::Configure();
     scripts\destructible_sound_fix::Configure();
+    scripts\animated_models_fix::Configure();
     scripts\scavenger::Configure();
     scripts\kill_ammo_refills::Configure();
     scripts\weapon_damage_multipliers::Configure();

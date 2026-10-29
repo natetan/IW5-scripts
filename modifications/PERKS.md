@@ -23,6 +23,12 @@ category, including standalone launchers. Flashbangs and concussion grenades
 retain a two-item cap; supported underbarrel tubes retain a two-round reserve
 cap. Primary-weapon ammunition still follows the normal MW3 Scavenger path.
 
+## Global Hidden Perks
+
+| Perk | Modification | Notes |
+|---|---|---|
+| Dolphin Dive (`specialty_jumpdive`) | **Granted to everyone** | Every human and bot receives IW5's hidden Dolphin Dive perk after each spawn, independent of class, selected perks, or strike package. The repository perk-table overlay registers the otherwise unavailable hidden perk before `SetPerk` grants it. Disable the experiment before map load with `fun_mode_dolphin_dive_enable 0`. |
+
 ## Tier Two
 
 | Perk | Modification | Notes |

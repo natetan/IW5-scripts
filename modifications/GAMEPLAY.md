@@ -35,6 +35,7 @@ is implemented in [`gsc/player_movement.gsc`](../gsc/player_movement.gsc).
 |---|---|
 | Drop Zone tracking guards | Prevents undefined team, HUD, or zone state during team changes from producing permanent runtime-error loops. |
 | Destructible sound guard | Prevents missing destruction sound aliases from producing script runtime errors. |
+| Animated-model metadata guard | Prevents malformed custom-map animated props—such as an unregistered model on Western Paradise—from producing a map-load runtime error. Valid animated props retain stock behavior; invalid props remain static. |
 
 ## Source of Truth
 
@@ -46,7 +47,9 @@ global combat and player systems. Extracted features live in named files under
 range protection in
 [`gsc/remote_uav_tracking_fix.gsc`](../gsc/remote_uav_tracking_fix.gsc), and
 destructible sound protection in
-[`gsc/destructible_sound_fix.gsc`](../gsc/destructible_sound_fix.gsc).
+[`gsc/destructible_sound_fix.gsc`](../gsc/destructible_sound_fix.gsc), and
+custom-map animated-model protection in
+[`gsc/animated_models_fix.gsc`](../gsc/animated_models_fix.gsc).
 Permissioned AoE, chain, virus, and splash behavior lives in
 [`gsc/kill_modes.gsc`](../gsc/kill_modes.gsc), while the coordinator retains
 the authoritative damage-pipeline ordering. Cross-cutting incoming and
