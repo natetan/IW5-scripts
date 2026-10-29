@@ -70,6 +70,7 @@ TrackKillstreakCounter()
 
     counter = undefined;
     healthCounter = undefined;
+    bloodshieldCounter = undefined;
 
     if (getdvarint("fun_mode_killstreak_counter_enable"))
     {
@@ -105,10 +106,29 @@ TrackKillstreakCounter()
         healthCounter.label = &"^2HEALTH: ^5";
         healthCounter.sort = 1;
         healthCounter.foreground = true;
+
+        // A dynamic value cannot be safely appended to another numeric HUD
+        // element. Keep Bloodshield on its own aligned row so digit-width and
+        // resolution changes cannot separate punctuation from the value.
+        bloodshieldCounter = self createFontString(
+            "Objective",
+            getdvarfloat("fun_mode_health_counter_scale")
+        );
+        bloodshieldCounter setPoint(
+            "BOTTOMRIGHT",
+            "BOTTOMRIGHT",
+            getdvarint("fun_mode_health_counter_x"),
+            getdvarint("fun_mode_health_counter_y") - 18
+        );
+        bloodshieldCounter.label = &"^1BLOODSHIELD: ^5";
+        bloodshieldCounter.sort = 1;
+        bloodshieldCounter.foreground = true;
+        bloodshieldCounter.alpha = 0;
     }
 
     lastValue = -1;
     lastHealth = -1;
+    lastBloodshield = -1;
     lastHealthBand = "";
 
     for (;;)
@@ -137,6 +157,26 @@ TrackKillstreakCounter()
         {
             healthCounter setValue(health);
             lastHealth = health;
+        }
+
+        bloodshield = self scripts\striker_modifications::GetDisplayedBloodthirsterShield();
+
+        if (
+            isdefined(bloodshieldCounter) &&
+            bloodshield != lastBloodshield
+        )
+        {
+            if (bloodshield > 0)
+            {
+                bloodshieldCounter setValue(bloodshield);
+                bloodshieldCounter.alpha = 1;
+            }
+            else
+            {
+                bloodshieldCounter.alpha = 0;
+            }
+
+            lastBloodshield = bloodshield;
         }
 
         baseHealth = self getHealthCounterBaseHealth();

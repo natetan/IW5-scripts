@@ -73,7 +73,7 @@ proficiencies.
 | KSG 12 | **2×** unsilenced; **5×** silenced | Silencer combinations retain the stronger multiplier even with a second attachment. |
 | SPAS-12 | **2×** unsilenced; **5×** silenced | Silencer combinations retain the stronger multiplier even with a second attachment. |
 | AA-12 | **2×** unsilenced; **3×** silenced | Each kill restores 25% of the equipped magazine, rounded to a whole round and capped at its clip size. |
-| Striker | Stock (1×) unsilenced; **3×** silenced | Only silenced variants receive a script multiplier. |
+| Striker | Stock (1×) unsilenced; **3×** silenced | Bloodthirster restores **50%** of final player damage. Healing first fills the player's current Quick Fix or Ballistic Vest health allowance; overflow becomes an independent consumable Bloodshield capped at an additional **150% of the mode's base health**, allowing 200 vested health plus 150 shield in a 100-HP mode. While Bloodshield is active, Striker bullet damage scales linearly with its remaining capacity, from no bonus near zero to **+50% damage** at maximum shield. Firing the final shell emits a **600-unit**, distance-only Pressure Release EMP pulse through walls against hostile equipment; it cannot damage players and currently has no cooldown. |
 | Model 1887 | **5×** | The weapon has no attachment variants; its base damage receives the multiplier. |
 
 ## Machine Pistols

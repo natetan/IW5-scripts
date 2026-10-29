@@ -52,6 +52,9 @@
       pellet.
     - Gives the AA-12 that same 25-percent magazine refill on every kill even
       without the full Specialist Bonus.
+    - Gives the Striker Bloodthirster lifesteal with a separate consumable
+      shield that layers above Quick Fix and Ballistic Vest health. Emptying
+      its magazine emits a player-safe EMP pulse against nearby equipment.
     - Doubles player damage from the SPAS-12, KSG 12, and AA-12, gives the
       USAS-12 a 1.5 multiplier, and gives the attachment-free Model 1887
       quintuple damage.
@@ -210,6 +213,13 @@ ModifyPlayerDamageForFunMode(
         );
     }
 
+    // Pressure Release uses EMP-grenade damage so native equipment handlers
+    // recognize it. It must never damage or EMP player health directly.
+    if (scripts\striker_modifications::ShouldSuppressPlayerDamage(attacker, weapon))
+    {
+        return 0;
+    }
+
     if (
         IsDefined(victim) &&
         IsPlayer(victim) &&
@@ -293,6 +303,16 @@ ModifyPlayerDamageForFunMode(
         damage = Int(damage * multishotDamageMultiplier);
     }
 
+    if (!isKillModeDamage)
+    {
+        damage = scripts\striker_modifications::ApplyBloodshieldDamageBonus(
+            attacker,
+            damage,
+            weapon,
+            meansOfDeath
+        );
+    }
+
     incomingDamageMultiplier = scripts\combat_damage_modifiers::GetIncomingMultiplier(
         victim,
         meansOfDeath
@@ -303,7 +323,21 @@ ModifyPlayerDamageForFunMode(
         damage = Int(damage * incomingDamageMultiplier);
     }
 
+    damage = scripts\striker_modifications::ProcessIncomingDamage(
+        victim,
+        damage
+    );
+
     damage = scripts\deaths_dance::PreventFatalDamage(victim, damage);
+
+    scripts\striker_modifications::ProcessOutgoingDamage(
+        victim,
+        attacker,
+        damage,
+        weapon,
+        meansOfDeath,
+        isKillModeDamage
+    );
 
     if (
         scripts\kill_modes::ShouldTrigger(
@@ -354,6 +388,7 @@ OnPlayerConnect()
         player scripts\kill_ammo_refills::OnPlayerConnected();
         player scripts\knife_runner::OnPlayerConnected();
         player scripts\deaths_dance::OnPlayerConnected();
+        player scripts\striker_modifications::OnPlayerConnected();
 
         if (player IsBotPlayer())
         {
