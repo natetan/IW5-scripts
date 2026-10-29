@@ -397,6 +397,9 @@ resolveTestingKillstreakName( requestedName )
             return "triple_uav";
         case "support_sentry":
             return "remote_mg_turret";
+        case "dance":
+        case "deaths_dance":
+            return "airdrop_juggernaut_recon";
         case "moab":
             return "nuke";
         default:

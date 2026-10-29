@@ -128,7 +128,7 @@ grants the Precision Airstrike slot that runs the Harrier replacement, while
 | Remote Sentry / Guardian Sentry | `support_sentry` | `remote_mg_turret` |
 | EMP | `emp` | `emp` |
 | Stealth Bomber | `stealth_airstrike` | `stealth_airstrike` |
-| Recon Juggernaut | `airdrop_juggernaut_recon` | `airdrop_juggernaut_recon` |
+| Recon Juggernaut / Death's Dance | `dance` or `deaths_dance` | `airdrop_juggernaut_recon` |
 | Escort Airdrop | `escort_airdrop` | `escort_airdrop` |
 
 ### Special reward

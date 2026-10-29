@@ -93,7 +93,7 @@ proficiencies.
 | P99 | Stock (1×) | None. |
 | MP412 | **3×** | Each kill restores 50% of the equipped magazine; odd capacities round up. |
 | .44 Magnum | **2×** | None. |
-| Five Seven | Stock (1×) | Recon Juggernaut uses the Tactical Knife variant. |
+| Five Seven | Stock (1×) | No additional modifications. |
 | Desert Eagle | **2×** | Each kill restores 50% of the equipped magazine; odd capacities round up. |
 
 The MP412 and Desert Eagle refill uses the equipped weapon's actual clip size,

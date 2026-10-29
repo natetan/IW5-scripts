@@ -23,6 +23,7 @@
         fun_mode_fast_ac130_activation_enable
         fun_mode_fast_pavelow_activation_enable
         fun_mode_fast_assault_juggernaut_swarm_activation_enable
+        fun_mode_fast_deaths_dance_activation_enable
 */
 
 #include maps\mp\killstreaks\_killstreaks;
@@ -43,6 +44,7 @@ main()
     setdvarifuninitialized( "fun_mode_fast_ac130_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_pavelow_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_assault_juggernaut_swarm_activation_enable", 1 );
+    setdvarifuninitialized( "fun_mode_fast_deaths_dance_activation_enable", 1 );
 
     level.fastUavActivation = getdvarint( "fun_mode_fast_uav_activation_enable" );
     level.fastSupportUavActivation = getdvarint( "fun_mode_fast_support_uav_activation_enable" );
@@ -58,6 +60,7 @@ main()
     level.fastAc130Activation = getdvarint( "fun_mode_fast_ac130_activation_enable" );
     level.fastPavelowActivation = getdvarint( "fun_mode_fast_pavelow_activation_enable" );
     level.fastAssaultJuggernautSwarmActivation = getdvarint( "fun_mode_fast_assault_juggernaut_swarm_activation_enable" );
+    level.fastDeathsDanceActivation = getdvarint( "fun_mode_fast_deaths_dance_activation_enable" );
 
     if ( !level.fastUavActivation &&
          !level.fastSupportUavActivation &&
@@ -72,7 +75,8 @@ main()
          !level.fastReaperActivation &&
          !level.fastAc130Activation &&
          !level.fastPavelowActivation &&
-         !level.fastAssaultJuggernautSwarmActivation )
+         !level.fastAssaultJuggernautSwarmActivation &&
+         !level.fastDeathsDanceActivation )
         return;
 
     replacefunc(
@@ -154,6 +158,17 @@ getFastKillstreakWeapon( streakName )
     )
     {
         return "airdrop_tank_marker_mp";
+    }
+
+    // Death's Dance replaces the Support Recon Juggernaut package and uses a
+    // marker not shared by another fast-activated Support reward.
+    if (
+        streakName == "airdrop_juggernaut_recon" &&
+        getdvarint( "fun_mode_deaths_dance_enable" ) &&
+        level.fastDeathsDanceActivation
+    )
+    {
+        return "airdrop_escort_marker_mp";
     }
 
     return tablelookup( "mp/killstreakTable.csv", 1, streakName, 12 );

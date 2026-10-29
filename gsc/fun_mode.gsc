@@ -101,6 +101,9 @@
       MW2-style player-controlled streaks.
     - Tunes automated Reaper missile damage so the autonomous aircraft remains
       worthy of the nine-kill slot.
+    - Replaces the Recon Juggernaut package with stackable Death's Dance
+      charges that prevent one fatal hit and reward a recovery kill with an
+      owner-safe explosion and full Ballistic Vest.
     - Assists team changes in full 9v9 bot lobbies by temporarily removing a
       destination-team bot, then restoring the configured fill target so Bot
       Warfare replaces it on the team the human left.
@@ -210,6 +213,16 @@ ModifyPlayerDamageForFunMode(
     if (
         IsDefined(victim) &&
         IsPlayer(victim) &&
+        IsDefined(victim.fun_mode_deaths_dance_explosion_active) &&
+        victim.fun_mode_deaths_dance_explosion_active
+    )
+    {
+        return 0;
+    }
+
+    if (
+        IsDefined(victim) &&
+        IsPlayer(victim) &&
         IsDefined(victim.fun_mode_knife_runner_invulnerable_until) &&
         victim.fun_mode_knife_runner_invulnerable_until > GetTime()
     )
@@ -290,6 +303,8 @@ ModifyPlayerDamageForFunMode(
         damage = Int(damage * incomingDamageMultiplier);
     }
 
+    damage = scripts\deaths_dance::PreventFatalDamage(victim, damage);
+
     if (
         scripts\kill_modes::ShouldTrigger(
             victim,
@@ -338,6 +353,7 @@ OnPlayerConnect()
         player scripts\player_movement::OnPlayerConnected();
         player scripts\kill_ammo_refills::OnPlayerConnected();
         player scripts\knife_runner::OnPlayerConnected();
+        player scripts\deaths_dance::OnPlayerConnected();
 
         if (player IsBotPlayer())
         {
