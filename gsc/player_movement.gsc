@@ -3,9 +3,8 @@
 /*
     Player Loadout and Movement - IW5 / Plutonium
 
-    Coordinates changed-kit behavior, global Dolphin Dive, Marathon and
-    shotgun proficiency grants, weapon mobility, sprint-only speed, Juiced
-    composition, and kill momentum.
+    Coordinates changed-kit behavior, Marathon and shotgun proficiency grants,
+    weapon mobility, sprint-only speed, Juiced composition, and kill momentum.
 */
 
 main()
@@ -28,7 +27,6 @@ Configure()
     SetDvarIfNotInitialized("fun_mode_extreme_conditioning_marathon_enable", 1);
     SetDvarIfNotInitialized("fun_mode_pistol_mobility_enable", 1);
     SetDvarIfNotInitialized("fun_mode_pistol_mobility_target", 1.0);
-    SetDvarIfNotInitialized("fun_mode_dolphin_dive_enable", 1);
 }
 
 OnPlayerConnected()
@@ -37,38 +35,6 @@ OnPlayerConnected()
     self thread WatchKillMomentumSpawns();
     self thread WatchExtremeConditioningSprintSpawns();
     self thread WatchWeaponMobilitySpawns();
-    self thread WatchDolphinDiveSpawns();
-}
-
-WatchDolphinDiveSpawns()
-{
-    self endon("disconnect");
-
-    for (;;)
-    {
-        self waittill("spawned_player");
-        self thread ApplyDolphinDiveAfterLoadout();
-    }
-}
-
-ApplyDolphinDiveAfterLoadout()
-{
-    self endon("disconnect");
-    self endon("death");
-    self endon("spawned_player");
-
-    // Let the stock or Bot Warfare loadout finish rebuilding perks first.
-    wait 0.25;
-
-    if (
-        GetDvarInt("fun_mode_dolphin_dive_enable") &&
-        IsAlive(self) &&
-        IsDefined(self.sessionState) &&
-        self.sessionState == "playing"
-    )
-    {
-        self SetPerk("specialty_jumpdive", true, false);
-    }
 }
 
 OnHumanPlayerConnected()

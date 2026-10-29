@@ -71,8 +71,6 @@
       Players who originally select Extreme Conditioning and authorized Fun
       Mode super classes also receive IW5's hidden Marathon perk, registered
       by the repository's perk-table overlay.
-    - Grants IW5's hidden Dolphin Dive perk to every human and bot after each
-      spawn, independent of class, perk package, and strike package.
     - Activates Knife Runner when a human loadout combines Extreme
       Conditioning, Quickdraw, Dead Silence, Throwing Knife, Tactical
       Insertion, Juiced, and either a Tactical Knife handgun or Akimbo USP
