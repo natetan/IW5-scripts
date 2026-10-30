@@ -79,13 +79,18 @@ start another effect.
 ## Give Killstreak
 
 ```text
-!give <killstreak> [player]
+!give <killstreak> [player] [quantity]
 ```
 
 `!give` requires level 3. It grants a validated IW5 killstreak through the
-target player's native extra-reward slot. The optional player defaults to the
+target player's native extra-reward queue. The optional player defaults to the
 issuer and may be `me`, an exact player name, or a unique beginning of a player
-name. Aliases for the command itself are `!giveks` and `!givekillstreak`.
+name. Quantity defaults to **1** and must be a positive whole number. For safety,
+each player may hold at most **10** queued extra rewards; a request that exceeds
+the remaining capacity is reduced to fit. When targeting yourself, quantity can
+be supplied directly as the second argument; both `!give sentry 3` and
+`!give sentry me 3` are valid. Aliases for the command itself are `!giveks` and
+`!givekillstreak`.
 
 Examples:
 
@@ -93,6 +98,8 @@ Examples:
 !give pred
 !give swarm me
 !give emp Aero
+!give sentry 3
+!give uav_s Aero 5
 ```
 
 The repository's killstreak replacements still apply. For example, `harrier`

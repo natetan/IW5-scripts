@@ -55,7 +55,7 @@ main()
         "give",
         3,
         ::giveKillstreakAdminChatCommand,
-        "!give <killstreak> [player]"
+        "!give <killstreak> [player] [quantity]"
     );
     registerAdminChatCommand(
         "random",
@@ -245,9 +245,9 @@ killModeAdminChatCommand( args )
 
 giveKillstreakAdminChatCommand( args )
 {
-    if ( !args.size )
+    if ( !args.size || args.size > 3 )
     {
-        self tell( "^3Usage:^7 !give <killstreak> [player]" );
+        self tell( "^3Usage:^7 !give <killstreak> [player] [quantity]" );
         return;
     }
 
@@ -263,9 +263,15 @@ giveKillstreakAdminChatCommand( args )
     }
 
     target = self;
+    quantityToken = undefined;
 
     if ( args.size > 1 )
-        target = self findAdminChatPlayer( args[1] );
+    {
+        if ( args.size == 2 && isAdminChatUnsignedInteger( args[1] ) )
+            quantityToken = args[1];
+        else
+            target = self findAdminChatPlayer( args[1] );
+    }
 
     if ( !isdefined( target ) )
     {
@@ -284,18 +290,133 @@ giveKillstreakAdminChatCommand( args )
         return;
     }
 
-    target thread maps\mp\killstreaks\_killstreaks::givekillstreak(
+    if ( args.size > 2 )
+        quantityToken = args[2];
+
+    requestedQuantity = 1;
+
+    if ( isdefined( quantityToken ) )
+    {
+        if ( !isPositiveAdminChatInteger( quantityToken ) )
+        {
+            self tell( "^1Quantity must be a positive whole number." );
+            return;
+        }
+
+        requestedQuantity = int( quantityToken );
+    }
+
+    queueLimit = 10;
+    queuedRewards = target countQueuedAdminChatKillstreaks();
+    availableCapacity = queueLimit - queuedRewards;
+
+    if ( availableCapacity <= 0 )
+    {
+        self tell( "^1That player's extra-reward queue is full (^7" + queueLimit + "^1)." );
+        return;
+    }
+
+    grantedQuantity = requestedQuantity;
+
+    if ( grantedQuantity > availableCapacity )
+        grantedQuantity = availableCapacity;
+
+    target thread grantAdminChatKillstreakQuantity(
         streakName,
-        0,
-        0,
-        target,
-        0
+        grantedQuantity
     );
 
     if ( target == self )
-        self tell( "^2Granted killstreak:^7 " + streakName );
+        self tell(
+            "^2Granted killstreak:^7 " + streakName +
+            " ^2x^7" + grantedQuantity
+        );
     else
-        self tell( "^2Granted " + streakName + " to:^7 " + target.name );
+        self tell(
+            "^2Granted " + streakName + " x^7" + grantedQuantity +
+            " ^2to:^7 " + target.name
+        );
+
+    if ( grantedQuantity < requestedQuantity )
+    {
+        self tell(
+            "^3Quantity reduced to fit the safe queue limit of ^7" +
+            queueLimit + "^3."
+        );
+    }
+}
+
+grantAdminChatKillstreakQuantity( streakName, quantity )
+{
+    self endon( "disconnect" );
+
+    for ( index = 0; index < quantity; index++ )
+    {
+        self maps\mp\killstreaks\_killstreaks::givekillstreak(
+            streakName,
+            0,
+            0,
+            self,
+            0
+        );
+
+        // Serialize setup callbacks and queue mutations instead of starting
+        // several givekillstreak threads in the same server frame.
+        wait 0.05;
+    }
+}
+
+countQueuedAdminChatKillstreaks()
+{
+    if (
+        !isdefined( self.pers ) ||
+        !isdefined( self.pers["killstreaks"] )
+    )
+    {
+        return 0;
+    }
+
+    queuedRewards = 0;
+
+    for ( index = 4; index < self.pers["killstreaks"].size; index++ )
+    {
+        if (
+            isdefined( self.pers["killstreaks"][index] ) &&
+            isdefined( self.pers["killstreaks"][index].streakname )
+        )
+        {
+            queuedRewards++;
+        }
+    }
+
+    return queuedRewards;
+}
+
+isPositiveAdminChatInteger( value )
+{
+    if ( !isAdminChatUnsignedInteger( value ) )
+        return false;
+
+    // Avoid converting an arbitrarily large chat token through int(). Values
+    // above the two-digit queue limit cannot be useful to this command.
+    if ( value.size > 2 )
+        return false;
+
+    return int( value ) > 0;
+}
+
+isAdminChatUnsignedInteger( value )
+{
+    if ( !isdefined( value ) || !value.size )
+        return false;
+
+    for ( index = 0; index < value.size; index++ )
+    {
+        if ( !issubstr( "0123456789", value[index] ) )
+            return false;
+    }
+
+    return true;
 }
 
 randomMapAdminChatCommand( args )

@@ -364,8 +364,10 @@ set fun_mode_chat_permission_3_guids "YOUR_GUID"
 Separate multiple GUIDs with commas and no spaces, and never commit the real
 values. `!commands` lists commands available to the current player,
 `!permission` displays their level, and the initial owner command is
-`!give <killstreak> [player]`. The target is optional and defaults to the
-command issuer; for example, `!give swarm` grants the Assault Juggernaut slot's
+`!give <killstreak> [player] [quantity]`. The target and quantity are optional;
+they default to the issuer and one reward. The extra-reward queue is capped at
+10 entries per player. For example, `!give sentry 3` grants three Assault
+Sentries, while `!give swarm` grants one Assault Juggernaut slot containing the
 Predator Swarm replacement. See [COMMANDS.md](./COMMANDS.md) for the complete
 command and killstreak-name reference.
 
