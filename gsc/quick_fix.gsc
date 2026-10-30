@@ -154,8 +154,15 @@ WatchQuickFixOverhealth()
         // Hand control back to IW5 if a real Ballistic Vest is collected.
         if (IsDefined(self.haslightarmor) && self.haslightarmor)
         {
-            self.previousmaxhealth = baseHealth;
-            self.fun_mode_quick_fix_overhealth_ceiling = undefined;
+            if (
+                !IsDefined(self.fun_mode_kill_mode) ||
+                self.fun_mode_kill_mode != "vamp"
+            )
+            {
+                self.previousmaxhealth = baseHealth;
+                self.fun_mode_quick_fix_overhealth_ceiling = undefined;
+            }
+
             self ClearQuickFixOverhealthOverlay();
             previousHealth = self.health;
             continue;

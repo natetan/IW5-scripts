@@ -120,6 +120,11 @@ giveScaledLightArmor()
     level endon( "end_game" );
 
     baseHealth = self getBallisticVestBaseHealth();
+    vampActive = (
+        isdefined( self.fun_mode_kill_mode ) &&
+        self.fun_mode_kill_mode == "vamp"
+    );
+    preservedVampHealth = self.health;
 
     if (
         isdefined( self.haslightarmor ) &&
@@ -141,6 +146,17 @@ giveScaledLightArmor()
     if ( armoredHealth < baseHealth )
         armoredHealth = baseHealth;
 
+    restoreHealth = baseHealth;
+
+    // Vamp health is intentionally uncapped. A vest may raise a low Vamp
+    // player to its normal armored minimum, but must never truncate a larger
+    // pool when granted or when its 50-damage armor state expires.
+    if ( vampActive && preservedVampHealth > armoredHealth )
+        armoredHealth = preservedVampHealth;
+
+    if ( vampActive && preservedVampHealth > restoreHealth )
+        restoreHealth = preservedVampHealth;
+
     self thread maps\mp\perks\_perkfunctions::removelightarmorondeath();
     self.haslightarmor = 1;
     self.combathighoverlay = newclienthudelem( self );
@@ -153,10 +169,14 @@ giveScaledLightArmor()
     self.combathighoverlay setshader( "combathigh_overlay", 640, 480 );
     self.combathighoverlay.sort = -10;
     self.combathighoverlay.archived = 1;
-    self.previousmaxhealth = baseHealth;
+    self.previousmaxhealth = restoreHealth;
     self.maxHealth = armoredHealth;
     self.health = armoredHealth;
-    self.fun_mode_quick_fix_overhealth_ceiling = undefined;
+
+    if ( vampActive )
+        self.fun_mode_quick_fix_overhealth_ceiling = armoredHealth;
+    else
+        self.fun_mode_quick_fix_overhealth_ceiling = undefined;
 
     // Preserve the stock vest's 50-damage armor-state duration while using
     // proportional health targets and restoration thresholds.
@@ -184,7 +204,7 @@ giveScaledLightArmor()
 
             if ( armorDamageRemaining <= 0 )
             {
-                self maps\mp\perks\_perkfunctions::removelightarmor( baseHealth );
+                self maps\mp\perks\_perkfunctions::removelightarmor( restoreHealth );
                 break;
             }
         }
