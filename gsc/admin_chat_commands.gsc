@@ -364,6 +364,11 @@ resolveTestingKillstreakName( requestedName )
 
     switch ( requestedName )
     {
+        case "care":
+        case "package":
+            return "airdrop_assault";
+        case "sentry":
+            return "airdrop_sentry_minigun";
         case "pred":
         case "predator":
             return "predator_missile";
@@ -388,19 +393,30 @@ resolveTestingKillstreakName( requestedName )
             return "airdrop_juggernaut";
         case "osprey":
             return "osprey_gunner";
+        case "uav_s":
+            return "uav_support";
         case "cuav":
             return "counter_uav";
         case "vest":
             return "deployable_vest";
+        case "sam":
+            return "sam_turret";
         case "recon":
             return "remote_uav";
+        case "trap":
+            return "airdrop_trap";
         case "auav":
             return "triple_uav";
+        case "sentry_s":
         case "support_sentry":
             return "remote_mg_turret";
+        case "stealth":
+            return "stealth_airstrike";
         case "dance":
         case "deaths_dance":
             return "airdrop_juggernaut_recon";
+        case "osprey_s":
+            return "escort_airdrop";
         case "moab":
             return "nuke";
         default:

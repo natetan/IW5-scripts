@@ -104,10 +104,10 @@ grants the Precision Airstrike slot that runs the Harrier replacement, while
 | Displayed reward | Preferred name or alias | Canonical name |
 |---|---|---|
 | UAV | `uav` | `uav` |
-| Care Package | `airdrop_assault` | `airdrop_assault` |
+| Care Package | `care` or `package` | `airdrop_assault` |
 | I.M.S. | `ims` | `ims` |
 | Predator Missile | `pred` or `predator` | `predator_missile` |
-| Sentry Gun | `airdrop_sentry_minigun` | `airdrop_sentry_minigun` |
+| Sentry Gun | `sentry` | `airdrop_sentry_minigun` |
 | Precision Airstrike / Harrier | `harrier` | `precision_airstrike` |
 | Attack Helicopter | `heli` | `helicopter` |
 | Strafe Run / AA Strike | `strafe` or `aa` | `littlebird_flock` |
@@ -123,18 +123,18 @@ grants the Precision Airstrike slot that runs the Harrier replacement, while
 
 | Displayed reward | Preferred name or alias | Canonical name |
 |---|---|---|
-| Support UAV | `uav_support` | `uav_support` |
+| Support UAV | `uav_s` | `uav_support` |
 | Counter-UAV | `cuav` | `counter_uav` |
 | Ballistic Vests / Team Armor Pulse | `vest` | `deployable_vest` |
-| SAM Turret | `sam_turret` | `sam_turret` |
+| SAM Turret | `sam` | `sam_turret` |
 | Recon Drone / Recon Pulse | `recon` | `remote_uav` |
-| Airdrop Trap | `airdrop_trap` | `airdrop_trap` |
+| Airdrop Trap | `trap` | `airdrop_trap` |
 | Advanced UAV | `auav` | `triple_uav` |
-| Remote Sentry / Guardian Sentry | `support_sentry` | `remote_mg_turret` |
+| Remote Sentry / Guardian Sentry | `sentry_s` | `remote_mg_turret` |
 | EMP | `emp` | `emp` |
-| Stealth Bomber | `stealth_airstrike` | `stealth_airstrike` |
+| Stealth Bomber | `stealth` | `stealth_airstrike` |
 | Recon Juggernaut / Death's Dance | `dance` or `deaths_dance` | `airdrop_juggernaut_recon` |
-| Escort Airdrop | `escort_airdrop` | `escort_airdrop` |
+| Escort Airdrop | `osprey_s` | `escort_airdrop` |
 
 ### Special reward
 
