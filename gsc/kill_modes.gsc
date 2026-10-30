@@ -3,10 +3,10 @@
 /*
     Configurable Kill Modes - IW5 / Plutonium
 
-    Implements permissioned AoE, nearest-target chain, wide-radius virus
-    chain, and on-hit splash effects while routing synthetic damage through
-    IW5's native player-damage callback for attribution, scoring, friendly
-    fire, and target defenses.
+    Implements permissioned AoE, nearest-target chain, wide-radius virus,
+    on-hit splash, and uncapped bullet lifesteal effects while routing
+    synthetic damage through IW5's native player-damage callback for
+    attribution, scoring, friendly fire, and target defenses.
 */
 
 main()
@@ -19,8 +19,98 @@ Configure()
     SetDvarIfNotInitialized("fun_mode_kill_mode_radius", 382);
     SetDvarIfNotInitialized("fun_mode_kill_mode_virus_radius", 1000);
     SetDvarIfNotInitialized("fun_mode_kill_mode_splash_fraction", 0.50);
+    SetDvarIfNotInitialized("fun_mode_kill_mode_vamp_fraction", 1.00);
     SetDvarIfNotInitialized("fun_mode_kill_mode_chain_delay", 0.15);
     SetDvarIfNotInitialized("fun_mode_kill_mode_chain_max_hops", 17);
+}
+
+ApplyVampLifesteal(
+    victim,
+    attacker,
+    damage,
+    weapon,
+    meansOfDeath,
+    isSyntheticKillModeDamage
+)
+{
+    if (
+        isSyntheticKillModeDamage ||
+        !IsDefined(victim) ||
+        !IsPlayer(victim) ||
+        !IsAlive(victim) ||
+        !IsDefined(attacker) ||
+        !IsPlayer(attacker) ||
+        !IsAlive(attacker) ||
+        attacker == victim ||
+        !IsDefined(attacker.fun_mode_kill_mode) ||
+        attacker.fun_mode_kill_mode != "vamp" ||
+        !IsDefined(weapon) ||
+        weapon == "none" ||
+        maps\mp\_utility::IsKillstreakWeapon(weapon) ||
+        (
+            meansOfDeath != "MOD_PISTOL_BULLET" &&
+            meansOfDeath != "MOD_RIFLE_BULLET"
+        ) ||
+        !IsDefined(damage) ||
+        damage <= 0
+    )
+    {
+        return;
+    }
+
+    // Do not let a testing mode farm health by deliberately shooting allies.
+    if (
+        IsDefined(level.teamBased) &&
+        level.teamBased &&
+        IsDefined(victim.team) &&
+        IsDefined(attacker.team) &&
+        victim.team == attacker.team
+    )
+    {
+        return;
+    }
+
+    lifestealFraction = GetDvarFloat("fun_mode_kill_mode_vamp_fraction");
+
+    if (lifestealFraction <= 0)
+    {
+        return;
+    }
+
+    // Credit only health the victim can actually lose, not overkill damage.
+    dealtDamage = damage;
+
+    if (dealtDamage > victim.health)
+    {
+        dealtDamage = victim.health;
+    }
+
+    healing = Int((dealtDamage * lifestealFraction) + 0.5);
+
+    if (healing < 1)
+    {
+        healing = 1;
+    }
+
+    attacker.health += healing;
+
+    // Raising maxHealth makes the added health real consumable overhealth.
+    // Vamp deliberately has no script-side ceiling and resets on respawn.
+    if (attacker.health > attacker.maxHealth)
+    {
+        attacker.maxHealth = attacker.health;
+    }
+
+    if (IsDefined(attacker.fun_mode_quick_fix_base_health))
+    {
+        attacker.fun_mode_quick_fix_overhealth_ceiling = attacker.health;
+        attacker UpdateQuickFixOverhealthOverlayForVamp();
+    }
+}
+
+UpdateQuickFixOverhealthOverlayForVamp()
+{
+    self scripts\quick_fix::UpdateQuickFixOverhealthOverlay();
 }
 
 ShouldTrigger(

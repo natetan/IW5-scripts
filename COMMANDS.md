@@ -36,7 +36,7 @@ GUIDs to this repository.
 | `!help <command>` | 0 | Displays the command's usage and required permission level. |
 | `!permission` | 0 | Displays the issuing player's current command permission. Alias: `!perm`. |
 | `!random` | 3 | Immediately loads a random map from the complete configured mapvote pool while retaining the current Domination, Drop Zone, or Kill Confirmed recipe. Alias: `!randommap`. The current map is excluded when alternatives exist. Unsafe Drop Zone combinations use the same fallback rules as normal map voting. |
-| `!killmode <chain\|virus\|aoe\|splash\|off>` | 3 | Sets the issuing player's non-killstreak weapon effect for the current map. `chain` spreads final killing-hit damage to the nearest unvisited eligible player; `virus` lethally headshots targets within 1,000 units instead of copying the original damage; `aoe` repeats final damage against every eligible player in range; `splash` divides half of every hit's final damage among nearby eligible players; `off` restores normal weapon behavior. |
+| `!killmode <chain\|virus\|aoe\|splash\|vamp\|off>` | 3 | Sets the issuing player's non-killstreak weapon effect for the current map. `chain` spreads final killing-hit damage to the nearest unvisited eligible player; `virus` lethally headshots targets within 1,000 units instead of copying the original damage; `aoe` repeats final damage against every eligible player in range; `splash` divides half of every hit's final damage among nearby eligible players; `vamp` converts hostile bullet damage into uncapped health; `off` restores normal weapon behavior. |
 
 ## Kill Modes
 
@@ -69,6 +69,11 @@ start another effect.
   divides a secondary pool equal to **50%** of that final hit damage among all
   other eligible players in range. Integer remainders are distributed one
   point at a time so the complete pool is preserved.
+- `!killmode vamp` restores health equal to **100%** of the actual damage dealt
+  by every non-killstreak bullet against a hostile player. Excess healing
+  raises maximum health with no script-side cap and is consumed normally by
+  incoming damage. Overkill damage, teammate damage, synthetic kill-mode
+  damage, explosives, melee, and Throwing Knives do not grant health.
 - `!killmode off` disables the effect immediately.
 
 ## Give Killstreak
@@ -152,6 +157,7 @@ case-insensitive, but they cannot contain spaces.
 | `fun_mode_kill_mode_radius` | `382` | Range used by `chain`, `aoe`, and `splash` modes. |
 | `fun_mode_kill_mode_virus_radius` | `1000` | Per-hop search radius used only by `virus` mode. |
 | `fun_mode_kill_mode_splash_fraction` | `0.50` | Fraction of each direct hit's final damage divided among eligible secondary targets in `splash` mode. |
+| `fun_mode_kill_mode_vamp_fraction` | `1.00` | Fraction of actual hostile bullet damage restored as uncapped health in `vamp` mode. |
 | `fun_mode_kill_mode_chain_delay` | `0.15` | Seconds between chained kills. Values below `0.05` are clamped. |
 | `fun_mode_kill_mode_chain_max_hops` | `17` | Maximum secondary kills attempted by one chain. |
 

@@ -97,9 +97,10 @@
     - Gives authorized Fun Mode super classes 50 percent resistance to melee
       damage and direct projectile impacts. Rocket splash remains unchanged.
     - Supports permissioned per-player non-killstreak weapon modes: a lethal
-      simultaneous pulse, a nearest-target sequential kill chain, or an
-      on-hit splash pool divided among nearby secondary targets. Melee and
-      Throwing Knives use the same selected mode as other eligible weapons.
+      simultaneous pulse, a nearest-target sequential kill chain, an on-hit
+      splash pool divided among nearby secondary targets, or uncapped
+      bullet-damage lifesteal. Melee and Throwing Knives use the same selected
+      area mode as other eligible weapons.
     - Disables MW3's post-spawn killstreak damage cap for more lethal,
       MW2-style player-controlled streaks.
     - Tunes automated Reaper missile damage so the autonomous aircraft remains
@@ -331,6 +332,15 @@ ModifyPlayerDamageForFunMode(
     damage = scripts\deaths_dance::PreventFatalDamage(victim, damage);
 
     scripts\striker_modifications::ProcessOutgoingDamage(
+        victim,
+        attacker,
+        damage,
+        weapon,
+        meansOfDeath,
+        isKillModeDamage
+    );
+
+    scripts\kill_modes::ApplyVampLifesteal(
         victim,
         attacker,
         damage,

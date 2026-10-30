@@ -203,6 +203,10 @@ WatchQuickFix()
             !GetDvarInt("fun_mode_quick_fix_enable") ||
             !IsAlive(self) ||
             !IsDefined(self.fun_mode_quick_fix_base_health) ||
+            (
+                IsDefined(self.fun_mode_kill_mode) &&
+                self.fun_mode_kill_mode == "vamp"
+            ) ||
             (IsDefined(self.haslightarmor) && self.haslightarmor)
         )
         {
