@@ -75,6 +75,12 @@ main()
         ::possessionAdminChatCommand,
         "!possess"
     );
+    registerAdminChatCommand(
+        "reflect",
+        3,
+        ::reflectAdminChatCommand,
+        "!reflect"
+    );
 
     level.funModeChatAliases["commands"] = "commands";
     level.funModeChatAliases["cmds"] = "commands";
@@ -88,6 +94,7 @@ main()
     level.funModeChatAliases["randommap"] = "random";
     level.funModeChatAliases["killmode"] = "killmode";
     level.funModeChatAliases["possess"] = "possess";
+    level.funModeChatAliases["reflect"] = "reflect";
 
     level thread watchAdminChatCommands();
 }
@@ -259,6 +266,17 @@ possessionAdminChatCommand( args )
     }
 
     self scripts\possession_mode::ToggleForPlayer();
+}
+
+reflectAdminChatCommand( args )
+{
+    if ( args.size )
+    {
+        self tell( "^3Usage:^7 !reflect" );
+        return;
+    }
+
+    self scripts\damage_reflection::ToggleForPlayer();
 }
 
 giveKillstreakAdminChatCommand( args )

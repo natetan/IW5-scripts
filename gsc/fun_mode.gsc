@@ -215,6 +215,19 @@ ModifyPlayerDamageForFunMode(
         );
     }
 
+    damage = scripts\damage_reflection::ProcessIncomingDamage(
+        victim,
+        attacker,
+        damage,
+        weapon,
+        meansOfDeath
+    );
+
+    if (damage <= 0)
+    {
+        return 0;
+    }
+
     // Pressure Release uses EMP-grenade damage so native equipment handlers
     // recognize it. It must never damage or EMP player health directly.
     if (scripts\striker_modifications::ShouldSuppressPlayerDamage(attacker, weapon))
