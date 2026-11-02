@@ -5,10 +5,12 @@
     testing. Authorized Fun Mode classes 13-15 receive the same behavior
     automatically through the repository's existing class/GUID policy.
 
-    The first reflection type is melee: the incoming knife hit is suppressed,
-    then a lethal attributed melee hit is routed back through IW5's native
-    damage callback so ordinary scoring, killfeed, streak, challenge, and
-    death handling remain active.
+    The initial reflection types are hostile melee and direct SMAW/RPG rocket
+    collisions. The incoming hit is suppressed, then a lethal attributed hit
+    of the same type is routed back through IW5's native damage callback so
+    ordinary scoring, killfeed, streak, challenge, and death handling remain
+    active. Only the directly struck player's paired splash callback is also
+    suppressed; ordinary splash against nearby players remains unchanged.
 */
 
 main()
@@ -27,7 +29,10 @@ ToggleForPlayer()
 
     if (self.fun_mode_reflect_enabled)
     {
-        self Tell("^2Reflection enabled.^7 Hostile knives reflect to their owner.");
+        self Tell(
+            "^2Reflection enabled.^7 Hostile knives and direct rockets " +
+            "reflect to their owner."
+        );
     }
     else
     {
@@ -48,6 +53,20 @@ ToggleForPlayer()
 ProcessIncomingDamage(victim, attacker, damage, weapon, meansOfDeath)
 {
     if (
+        ShouldSuppressReflectedRocketSplash(
+            victim,
+            attacker,
+            weapon,
+            meansOfDeath
+        )
+    )
+    {
+        return 0;
+    }
+
+    reflectionType = GetReflectionType(weapon, meansOfDeath);
+
+    if (
         !IsDefined(victim) ||
         !IsPlayer(victim) ||
         !IsAlive(victim) ||
@@ -57,8 +76,7 @@ ProcessIncomingDamage(victim, attacker, damage, weapon, meansOfDeath)
         attacker == victim ||
         !IsDefined(damage) ||
         damage <= 0 ||
-        !IsDefined(meansOfDeath) ||
-        meansOfDeath != "MOD_MELEE" ||
+        reflectionType == "" ||
         !victim HasDamageReflection() ||
         (
             IsDefined(attacker.fun_mode_reflection_active) &&
@@ -80,8 +98,73 @@ ProcessIncomingDamage(victim, attacker, damage, weapon, meansOfDeath)
         return damage;
     }
 
-    victim thread ReflectKnifeAfterDamage(attacker, weapon);
+    if (reflectionType == "rocket")
+    {
+        // IW5 follows the physical MOD_PROJECTILE collision with a separate
+        // splash callback. Suppress only that directly struck player's paired
+        // splash; unrelated players and ordinary nearby splash remain normal.
+        victim.fun_mode_reflected_rocket_attacker = attacker;
+        victim.fun_mode_reflected_rocket_splash_until = GetTime() + 150;
+    }
+
+    victim thread ReflectDamageAfterDamage(
+        attacker,
+        weapon,
+        meansOfDeath,
+        reflectionType
+    );
     return 0;
+}
+
+GetReflectionType(weapon, meansOfDeath)
+{
+    if (!IsDefined(meansOfDeath))
+    {
+        return "";
+    }
+
+    if (meansOfDeath == "MOD_MELEE")
+    {
+        return "melee";
+    }
+
+    if (
+        meansOfDeath == "MOD_PROJECTILE" &&
+        IsReflectableRocketWeapon(weapon)
+    )
+    {
+        return "rocket";
+    }
+
+    return "";
+}
+
+IsReflectableRocketWeapon(weapon)
+{
+    if (!IsDefined(weapon))
+    {
+        return false;
+    }
+
+    normalizedWeapon = ToLower(weapon);
+    return IsSubStr(normalizedWeapon, "smaw") || IsSubStr(normalizedWeapon, "rpg");
+}
+
+ShouldSuppressReflectedRocketSplash(victim, attacker, weapon, meansOfDeath)
+{
+    return (
+        IsDefined(victim) &&
+        IsPlayer(victim) &&
+        IsDefined(attacker) &&
+        IsDefined(weapon) &&
+        IsDefined(meansOfDeath) &&
+        meansOfDeath == "MOD_PROJECTILE_SPLASH" &&
+        IsDefined(victim.fun_mode_reflected_rocket_splash_until) &&
+        victim.fun_mode_reflected_rocket_splash_until >= GetTime() &&
+        IsDefined(victim.fun_mode_reflected_rocket_attacker) &&
+        victim.fun_mode_reflected_rocket_attacker == attacker &&
+        IsReflectableRocketWeapon(weapon)
+    );
 }
 
 HasDamageReflection()
@@ -95,7 +178,7 @@ HasDamageReflection()
     );
 }
 
-ReflectKnifeAfterDamage(target, fallbackWeapon)
+ReflectDamageAfterDamage(target, originalWeapon, originalMeansOfDeath, reflectionType)
 {
     self endon("disconnect");
     level endon("game_ended");
@@ -116,14 +199,25 @@ ReflectKnifeAfterDamage(target, fallbackWeapon)
         return;
     }
 
-    reflectedWeapon = self GetCurrentWeapon();
+    reflectedWeapon = originalWeapon;
+    reflectedMeansOfDeath = originalMeansOfDeath;
 
-    if (!IsDefined(reflectedWeapon) || reflectedWeapon == "none")
+    if (reflectionType == "melee")
     {
-        reflectedWeapon = fallbackWeapon;
+        reflectedWeapon = self GetCurrentWeapon();
+        reflectedMeansOfDeath = "MOD_MELEE";
+
+        if (!IsDefined(reflectedWeapon) || reflectedWeapon == "none")
+        {
+            reflectedWeapon = originalWeapon;
+        }
     }
 
-    if (!IsDefined(reflectedWeapon) || reflectedWeapon == "none")
+    if (
+        !IsDefined(reflectedWeapon) ||
+        reflectedWeapon == "none" ||
+        !IsDefined(reflectedMeansOfDeath)
+    )
     {
         return;
     }
@@ -146,7 +240,7 @@ ReflectKnifeAfterDamage(target, fallbackWeapon)
         self,
         target.health + 100000,
         0,
-        "MOD_MELEE",
+        reflectedMeansOfDeath,
         reflectedWeapon,
         target.origin,
         direction,

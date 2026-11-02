@@ -105,12 +105,12 @@ percentages.
 
 | Weapon | Player damage multiplier | Other modifications |
 |---|---:|---|
-| SMAW | Stock (1×) | None. |
+| SMAW | Stock (1×) | A hostile direct impact against a player with damage reflection is suppressed and lethally reflected to the shooter. The direct victim ignores that impact's paired splash callback; ordinary nearby splash is unchanged. |
 | Javelin | **10×** | A player kill restores one Javelin missile. |
 | Stinger | Stock (1×) | None. |
 | XM25 | Stock (1×) | None. |
 | M320 GL | Stock (1×) | None. This is the standalone secondary, not an underbarrel tube. |
-| RPG-7 | Stock (1×) | None. |
+| RPG-7 | Stock (1×) | A hostile direct impact against a player with damage reflection is suppressed and lethally reflected to the shooter. The direct victim ignores that impact's paired splash callback; ordinary nearby splash is unchanged. |
 | Underbarrel M320 / GP25 / grenade launcher | **3×** | A kill restores one loaded tube round. Supported alternate-mode variants inherit the rule. |
 
 ## Riot Shield
