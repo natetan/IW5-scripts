@@ -135,6 +135,7 @@ Main()
     scripts\kill_ammo_refills::Configure();
     scripts\weapon_damage_multipliers::Configure();
     scripts\kill_modes::Configure();
+    scripts\possession_mode::Configure();
     scripts\combat_damage_modifiers::Configure();
     scripts\specialist_system::Configure();
     scripts\knife_runner::Configure();
@@ -217,6 +218,15 @@ ModifyPlayerDamageForFunMode(
     // Pressure Release uses EMP-grenade damage so native equipment handlers
     // recognize it. It must never damage or EMP player health directly.
     if (scripts\striker_modifications::ShouldSuppressPlayerDamage(attacker, weapon))
+    {
+        return 0;
+    }
+
+    if (
+        IsDefined(victim) &&
+        IsPlayer(victim) &&
+        victim scripts\possession_mode::IsTransitionProtected()
+    )
     {
         return 0;
     }
@@ -349,6 +359,15 @@ ModifyPlayerDamageForFunMode(
         isKillModeDamage
     );
 
+    scripts\possession_mode::CaptureFatalHit(
+        victim,
+        attacker,
+        damage,
+        isKillModeDamage,
+        weapon,
+        meansOfDeath
+    );
+
     if (
         scripts\kill_modes::ShouldTrigger(
             victim,
@@ -410,6 +429,7 @@ OnPlayerConnect()
         player scripts\scavenger::OnPlayerConnected();
         player scripts\team_switch_assist::OnPlayerConnected();
         player scripts\specialist_system::OnHumanPlayerConnected();
+        player scripts\possession_mode::OnHumanPlayerConnected();
     }
 }
 

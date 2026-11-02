@@ -69,6 +69,12 @@ main()
         ::killModeAdminChatCommand,
         "!killmode <chain|virus|aoe|splash|vamp|off>"
     );
+    registerAdminChatCommand(
+        "possess",
+        3,
+        ::possessionAdminChatCommand,
+        "!possess"
+    );
 
     level.funModeChatAliases["commands"] = "commands";
     level.funModeChatAliases["cmds"] = "commands";
@@ -81,6 +87,7 @@ main()
     level.funModeChatAliases["random"] = "random";
     level.funModeChatAliases["randommap"] = "random";
     level.funModeChatAliases["killmode"] = "killmode";
+    level.funModeChatAliases["possess"] = "possess";
 
     level thread watchAdminChatCommands();
 }
@@ -241,6 +248,17 @@ killModeAdminChatCommand( args )
     }
 
     self tell( "^2Kill mode enabled:^7 " + mode );
+}
+
+possessionAdminChatCommand( args )
+{
+    if ( args.size )
+    {
+        self tell( "^3Usage:^7 !possess" );
+        return;
+    }
+
+    self scripts\possession_mode::ToggleForPlayer();
 }
 
 giveKillstreakAdminChatCommand( args )
