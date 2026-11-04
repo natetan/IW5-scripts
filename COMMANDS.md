@@ -64,9 +64,10 @@ start another effect.
   seconds**, repeats the original final damage, and continues from each
   confirmed death. It stops when a target survives, no target remains in
   range, or it reaches **17 secondary hops**.
-- `!killmode virus` follows the same nearest-target selection, delay, and hop
-  limit, but each hop is a lethal headshot and searches within **2,000 units**
-  for broad map testing. It does not inherit the initiating weapon's damage
+- `!killmode virus` follows the same nearest-target selection and delay, but
+  each hop is a lethal headshot and searches within **2,000 units** for broad
+  map testing. It has no hop cap and continues until no unvisited eligible
+  target remains in range. It does not inherit the initiating weapon's damage
   value.
 - `!killmode splash` leaves the directly hit target's damage unchanged and
   divides a secondary pool equal to **50%** of that final hit damage among all
@@ -169,7 +170,7 @@ case-insensitive, but they cannot contain spaces.
 | `fun_mode_kill_mode_splash_fraction` | `0.50` | Fraction of each direct hit's final damage divided among eligible secondary targets in `splash` mode. |
 | `fun_mode_kill_mode_vamp_fraction` | `1.00` | Fraction of actual hostile bullet damage restored as uncapped health in `vamp` mode. |
 | `fun_mode_kill_mode_chain_delay` | `0.15` | Seconds between chained kills. Values below `0.05` are clamped. |
-| `fun_mode_kill_mode_chain_max_hops` | `17` | Maximum secondary kills attempted by one chain. |
+| `fun_mode_kill_mode_chain_max_hops` | `17` | Maximum secondary kills attempted by `chain`; `virus` is uncapped. |
 
 Command registration, aliases, validation, and authorization are implemented
 in [`gsc/admin_chat_commands.gsc`](./gsc/admin_chat_commands.gsc).

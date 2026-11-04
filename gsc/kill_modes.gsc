@@ -410,7 +410,7 @@ ApplyFunModeKillModeChain(
     hopDelay = GetDvarFloat("fun_mode_kill_mode_chain_delay");
     maxHops = GetDvarInt("fun_mode_kill_mode_chain_max_hops");
 
-    if (radius <= 0 || maxHops <= 0)
+    if (radius <= 0 || (!lethalHops && maxHops <= 0))
     {
         return;
     }
@@ -425,7 +425,10 @@ ApplyFunModeKillModeChain(
     currentOrigin = chainOrigin;
     hopCount = 0;
 
-    while (hopCount < maxHops)
+    // Chain retains its configurable safety cap. Virus is a sandbox-clearing
+    // mode and already tracks visited players, so it can safely continue until
+    // no new eligible target remains within the per-hop radius.
+    while (lethalHops || hopCount < maxHops)
     {
         nextTarget = FindNearestFunModeKillModeTarget(
             currentOrigin,
