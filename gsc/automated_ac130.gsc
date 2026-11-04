@@ -7,7 +7,9 @@
 
     Weapon damage, streak duration, aircraft durability, and countermeasures
     remain stock. The existing ac130_reload_tuning.gsc values are used only as
-    pacing between the autonomous 105 mm, 40 mm, and 25 mm firing cycle.
+    pacing between the autonomous 105 mm, 40 mm, and 25 mm firing cycle. The
+    25 mm cannon prioritizes visible hostile aircraft before infantry; the
+    105 mm and 40 mm cannons remain player-only.
 
     Set fun_mode_automated_ac130_enable to 0 before loading a map to restore
     the stock player-controlled AC-130.
@@ -18,6 +20,7 @@
 main()
 {
     setdvarifuninitialized( "fun_mode_automated_ac130_enable", 1 );
+    setdvarifuninitialized( "fun_mode_automated_ac130_25mm_air_priority_enable", 1 );
 
     if ( !getdvarint( "fun_mode_automated_ac130_enable" ) )
         return;
@@ -223,7 +226,7 @@ runAutomatedAc130( owner, lifeId )
 
         for ( shot = 0; shot < 10; shot++ )
         {
-            target = getAutomatedAc130Target( owner );
+            target = getAutomatedAc13025mmTarget( owner );
 
             if ( !isdefined( target ) )
                 break;
@@ -276,7 +279,6 @@ fireAutomatedAc130Round( owner, target, weapon, lifeId )
     if (
         !isdefined( owner ) ||
         !isdefined( target ) ||
-        !isalive( target ) ||
         !isdefined( level.ac130.planemodel )
     )
     {
@@ -284,11 +286,138 @@ fireAutomatedAc130Round( owner, target, weapon, lifeId )
     }
 
     launchOrigin = level.ac130.planemodel.origin + ( 0, 0, -32 );
-    targetOrigin = target gettagorigin( "j_spineupper" );
+
+    if ( isplayer( target ) )
+    {
+        if ( !isalive( target ) )
+            return;
+
+        targetOrigin = target gettagorigin( "j_spineupper" );
+    }
+    else
+    {
+        if (
+            !isdefined( target.origin ) ||
+            ( isdefined( target.health ) && target.health <= 0 ) ||
+            ( isdefined( target.currentstate ) && target.currentstate != "ok" )
+        )
+        {
+            return;
+        }
+
+        targetOrigin = target.origin;
+    }
+
     projectile = magicbullet( weapon, launchOrigin, targetOrigin, owner );
 
     if ( isdefined( projectile ) )
         projectile.lifeid = lifeId;
+}
+
+getAutomatedAc13025mmTarget( owner )
+{
+    if ( getdvarint( "fun_mode_automated_ac130_25mm_air_priority_enable" ) )
+    {
+        airTarget = getAutomatedAc130AirTarget( owner );
+
+        if ( isdefined( airTarget ) )
+            return airTarget;
+    }
+
+    return getAutomatedAc130Target( owner );
+}
+
+getAutomatedAc130AirTarget( owner )
+{
+    if (
+        !isdefined( owner ) ||
+        !isdefined( level.ac130.planemodel )
+    )
+    {
+        return undefined;
+    }
+
+    aircraftCandidates = [];
+
+    if ( isdefined( level.helis ) )
+    {
+        foreach ( aircraft in level.helis )
+            aircraftCandidates[aircraftCandidates.size] = aircraft;
+    }
+
+    if ( isdefined( level.littlebirds ) )
+    {
+        foreach ( aircraft in level.littlebirds )
+            aircraftCandidates[aircraftCandidates.size] = aircraft;
+    }
+
+    if ( isdefined( level.harriers ) )
+    {
+        foreach ( aircraft in level.harriers )
+            aircraftCandidates[aircraftCandidates.size] = aircraft;
+    }
+
+    nearestTarget = undefined;
+    nearestDistanceSquared = 999999999;
+    planeOrigin = level.ac130.planemodel.origin;
+
+    foreach ( aircraft in aircraftCandidates )
+    {
+        if ( !isValidAutomatedAc130Aircraft( aircraft, owner, planeOrigin ) )
+            continue;
+
+        targetDistanceSquared = distancesquared( planeOrigin, aircraft.origin );
+
+        if ( targetDistanceSquared < nearestDistanceSquared )
+        {
+            nearestTarget = aircraft;
+            nearestDistanceSquared = targetDistanceSquared;
+        }
+    }
+
+    return nearestTarget;
+}
+
+isValidAutomatedAc130Aircraft( aircraft, owner, planeOrigin )
+{
+    if (
+        !isdefined( aircraft ) ||
+        aircraft == level.ac130.planemodel ||
+        !isdefined( aircraft.origin ) ||
+        ( isdefined( aircraft.health ) && aircraft.health <= 0 ) ||
+        ( isdefined( aircraft.currentstate ) && aircraft.currentstate != "ok" )
+    )
+    {
+        return false;
+    }
+
+    // The Reaper also uses the helicopter framework, but it is not one of the
+    // lower aircraft the AC-130's 25 mm cannon is intended to engage.
+    if (
+        isdefined( aircraft.heliType ) &&
+        aircraft.heliType == "remote_mortar"
+    )
+    {
+        return false;
+    }
+
+    if ( level.teambased )
+    {
+        if ( !isdefined( aircraft.team ) || aircraft.team == owner.team )
+            return false;
+    }
+    else if ( isdefined( aircraft.owner ) && aircraft.owner == owner )
+    {
+        return false;
+    }
+
+    return sighttracepassed(
+        planeOrigin,
+        aircraft.origin,
+        0,
+        level.ac130.planemodel,
+        aircraft
+    );
 }
 
 getAutomatedAc130Target( owner )
