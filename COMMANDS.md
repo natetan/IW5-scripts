@@ -36,7 +36,7 @@ GUIDs to this repository.
 | `!help <command>` | 0 | Displays the command's usage and required permission level. |
 | `!permission` | 0 | Displays the issuing player's current command permission. Alias: `!perm`. |
 | `!random` | 3 | Immediately loads a random map from the complete configured mapvote pool while retaining the current Domination, Drop Zone, or Kill Confirmed recipe. Alias: `!randommap`. The current map is excluded when alternatives exist. Unsafe Drop Zone combinations use the same fallback rules as normal map voting. |
-| `!killmode <chain\|virus\|aoe\|splash\|vamp\|off>` | 3 | Sets the issuing player's non-killstreak weapon effect for the current map. `chain` spreads final killing-hit damage to the nearest unvisited eligible player; `virus` lethally headshots targets within 1,000 units instead of copying the original damage; `aoe` repeats final damage against every eligible player in range; `splash` divides half of every hit's final damage among nearby eligible players; `vamp` converts hostile bullet damage into uncapped health; `off` restores normal weapon behavior. |
+| `!killmode <chain\|virus\|aoe\|splash\|vamp\|off>` | 3 | Sets the issuing player's non-killstreak weapon effect for the current map. `chain` spreads final killing-hit damage to the nearest unvisited eligible player; `virus` lethally headshots targets within 2,000 units instead of copying the original damage; `aoe` repeats final damage against every eligible player in range; `splash` divides half of every hit's final damage among nearby eligible players; `vamp` converts hostile bullet damage into uncapped health; `off` restores normal weapon behavior. |
 | `!possess` | 3 | Toggles the caller-only Possession prototype for the current map. A hostile kill moves the caller into the victim through a short first-person camera transition and grants a fresh copy of the victim's class loadout while preserving the caller's earned streak queue. |
 | `!reflect` | 3 | Toggles personal damage reflection for the current map. Hostile melee and direct SMAW/RPG impacts deal no damage to the caller and instead route a lethal hit of the same type back to that attacker with the caller credited for the kill. Authorized Fun Mode classes 13–15 receive reflection automatically. The directly struck player also ignores that impact's paired splash callback; friendly damage and ordinary nearby rocket splash are unchanged. |
 
@@ -49,7 +49,7 @@ weapons are excluded. Knife and Throwing Knife kills have no inherent area
 effect while the mode is `off`.
 
 The `chain`, `aoe`, and `splash` modes use a **382-unit** range. The sandbox
-`virus` mode uses a **1,000-unit** hop radius and lethally damages each selected
+`virus` mode uses a **2,000-unit** hop radius and lethally damages each selected
 target with headshot attribution instead of repeating the initiating weapon's
 damage. For weapon types that can normally trigger it, the headshot bypasses
 Final Stand through IW5's stock death logic. All modes ignore intervening
@@ -64,7 +64,7 @@ start another effect.
   confirmed death. It stops when a target survives, no target remains in
   range, or it reaches **17 secondary hops**.
 - `!killmode virus` follows the same nearest-target selection, delay, and hop
-  limit, but each hop is a lethal headshot and searches within **1,000 units**
+  limit, but each hop is a lethal headshot and searches within **2,000 units**
   for broad map testing. It does not inherit the initiating weapon's damage
   value.
 - `!killmode splash` leaves the directly hit target's damage unchanged and
@@ -164,7 +164,7 @@ case-insensitive, but they cannot contain spaces.
 | `fun_mode_chat_permission_2_guids` | Empty | Comma-delimited level 2 allowlist. |
 | `fun_mode_chat_permission_3_guids` | Empty | Comma-delimited level 3 allowlist. |
 | `fun_mode_kill_mode_radius` | `382` | Range used by `chain`, `aoe`, and `splash` modes. |
-| `fun_mode_kill_mode_virus_radius` | `1000` | Per-hop search radius used only by `virus` mode. |
+| `fun_mode_kill_mode_virus_radius` | `2000` | Per-hop search radius used only by `virus` mode. |
 | `fun_mode_kill_mode_splash_fraction` | `0.50` | Fraction of each direct hit's final damage divided among eligible secondary targets in `splash` mode. |
 | `fun_mode_kill_mode_vamp_fraction` | `1.00` | Fraction of actual hostile bullet damage restored as uncapped health in `vamp` mode. |
 | `fun_mode_kill_mode_chain_delay` | `0.15` | Seconds between chained kills. Values below `0.05` are clamped. |

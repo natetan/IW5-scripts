@@ -17,7 +17,7 @@ main()
 Configure()
 {
     SetDvarIfNotInitialized("fun_mode_kill_mode_radius", 382);
-    SetDvarIfNotInitialized("fun_mode_kill_mode_virus_radius", 1000);
+    SetDvarIfNotInitialized("fun_mode_kill_mode_virus_radius", 2000);
     SetDvarIfNotInitialized("fun_mode_kill_mode_splash_fraction", 0.50);
     SetDvarIfNotInitialized("fun_mode_kill_mode_vamp_fraction", 1.00);
     SetDvarIfNotInitialized("fun_mode_kill_mode_chain_delay", 0.15);
