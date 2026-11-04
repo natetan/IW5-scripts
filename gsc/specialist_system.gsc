@@ -32,6 +32,7 @@ Initialize()
 
 OnHumanPlayerConnected()
 {
+    self thread WatchCommandSuperModeSpawns();
     self thread WatchSurvivalFunModeSpawns();
     self thread WatchPostSpecialistRewards();
     self thread WatchPostSpecialistSpawns();
@@ -83,6 +84,16 @@ IsFunModeSuperClass()
 
 IsFunModeSuperClassOwner()
 {
+    if (self IsCommandSuperModeEnabled())
+    {
+        return true;
+    }
+
+    return self IsAuthorizedFunModeSuperClassOwner();
+}
+
+IsAuthorizedFunModeSuperClassOwner()
+{
     if (!self IsFunModeSuperClass())
     {
         return false;
@@ -107,6 +118,117 @@ IsFunModeSuperClassOwner()
     }
 
     return false;
+}
+
+IsCommandSuperModeEnabled()
+{
+    return (
+        IsDefined(self.fun_mode_command_super_enabled) &&
+        self.fun_mode_command_super_enabled
+    );
+}
+
+ToggleCommandSuperMode()
+{
+    if (self IsCommandSuperModeEnabled())
+    {
+        self.fun_mode_command_super_enabled = false;
+        self RemoveCommandSuperPerks();
+        self scripts\player_movement::RefreshFunModeMovementSpeed();
+
+        if (self IsAuthorizedFunModeSuperClassOwner())
+        {
+            self tell("^2Super mode disabled.^7 Your current class still provides the Fun Mode package.");
+        }
+        else
+        {
+            self tell("^1Super mode disabled.");
+        }
+
+        return;
+    }
+
+    self.fun_mode_command_super_enabled = true;
+
+    if (IsAlive(self))
+    {
+        self ApplyCommandSuperPackage();
+    }
+
+    self tell("^2Super mode enabled.^7 Fun Mode class 13-15 buffs will persist until toggled off.");
+}
+
+WatchCommandSuperModeSpawns()
+{
+    self endon("disconnect");
+
+    for (;;)
+    {
+        self waittill("spawned_player");
+        self.fun_mode_command_super_added_perks = undefined;
+
+        wait 0.25;
+
+        if (self IsCommandSuperModeEnabled() && IsAlive(self))
+        {
+            self ApplyCommandSuperPackage();
+        }
+    }
+}
+
+ApplyCommandSuperPackage()
+{
+    if (!self IsCommandSuperModeEnabled())
+    {
+        return;
+    }
+
+    perks = GetFullSpecialistPerks();
+    perks[perks.size] = "specialty_marathon";
+
+    if (!IsDefined(self.fun_mode_command_super_added_perks))
+    {
+        self.fun_mode_command_super_added_perks = [];
+
+        foreach (perk in perks)
+        {
+            if (!self maps\mp\_utility::_hasperk(perk))
+            {
+                self.fun_mode_command_super_added_perks[perk] = true;
+            }
+        }
+    }
+
+    self GiveFullSpecialistBonus();
+    self scripts\player_movement::ApplyExtremeConditioningMarathon();
+    self scripts\player_movement::RestoreJuicedMovementAfterSpecialist();
+    self scripts\player_movement::ApplyActiveKillMomentumSpeed();
+    self scripts\player_movement::RefreshFunModeMovementSpeed();
+    self thread RestoreFunModeBlindEyeAfterSpawnProtection();
+}
+
+RemoveCommandSuperPerks()
+{
+    if (!IsDefined(self.fun_mode_command_super_added_perks))
+    {
+        return;
+    }
+
+    perks = GetFullSpecialistPerks();
+    perks[perks.size] = "specialty_marathon";
+
+    foreach (perk in perks)
+    {
+        if (
+            IsDefined(self.fun_mode_command_super_added_perks[perk]) &&
+            self.fun_mode_command_super_added_perks[perk]
+        )
+        {
+            self unsetperk(perk, 1);
+        }
+    }
+
+    self.fun_mode_command_super_added_perks = undefined;
 }
 
 /*
@@ -138,10 +260,17 @@ WatchSurvivalFunModeSpawns()
             continue;
         }
 
-        self GiveFullSpecialistBonus();
-        self scripts\player_movement::RestoreJuicedMovementAfterSpecialist();
-        self scripts\player_movement::ApplyActiveKillMomentumSpeed();
-        self thread RestoreFunModeBlindEyeAfterSpawnProtection();
+        if (self IsCommandSuperModeEnabled())
+        {
+            self ApplyCommandSuperPackage();
+        }
+        else
+        {
+            self GiveFullSpecialistBonus();
+            self scripts\player_movement::RestoreJuicedMovementAfterSpecialist();
+            self scripts\player_movement::ApplyActiveKillMomentumSpeed();
+            self thread RestoreFunModeBlindEyeAfterSpawnProtection();
+        }
     }
 }
 
@@ -463,6 +592,17 @@ RestoreFunModeBlindEyeAfterSpawnProtection()
 // Custom function for just perks. The giveallperks() one gives full proficiencies too
 GiveFullSpecialistBonus()
 {
+    perks = GetFullSpecialistPerks();
+
+    foreach (perk in perks)
+    {
+        self GivePerk(perk, false);
+    }
+}
+
+GetFullSpecialistPerks()
+{
+    basePerks = [];
     perks = [];
 
     /*
@@ -472,29 +612,28 @@ GiveFullSpecialistBonus()
     */
 
     // Tier 1
-    perks[0]  = "specialty_fastreload";        // Sleight of Hand
-    perks[1]  = "specialty_scavenger";         // Scavenger
-    perks[2]  = "specialty_blindeye";          // Blind Eye
-    perks[3]  = "specialty_longersprint";      // Extreme Conditioning
-    perks[4]  = "specialty_paint";             // Recon
+    basePerks[0]  = "specialty_fastreload";        // Sleight of Hand
+    basePerks[1]  = "specialty_scavenger";         // Scavenger
+    basePerks[2]  = "specialty_blindeye";          // Blind Eye
+    basePerks[3]  = "specialty_longersprint";      // Extreme Conditioning
+    basePerks[4]  = "specialty_paint";             // Recon
 
     // Tier 2
-    perks[5]  = "specialty_quickdraw";         // Quickdraw
-    perks[6]  = "specialty_hardline";          // Hardline
-    perks[7]  = "specialty_coldblooded";       // Assassin
-    perks[8]  = "_specialty_blastshield";      // Blast Shield
+    basePerks[5]  = "specialty_quickdraw";         // Quickdraw
+    basePerks[6]  = "specialty_hardline";          // Hardline
+    basePerks[7]  = "specialty_coldblooded";       // Assassin
+    basePerks[8]  = "_specialty_blastshield";      // Blast Shield
 
     // Tier 3
-    perks[9]  = "specialty_stalker";           // Stalker
-    perks[10] = "specialty_bulletaccuracy";    // Steady Aim
-    perks[11] = "specialty_detectexplosive";   // SitRep
-    perks[12] = "specialty_autospot";          // Marksman
-    perks[13] = "specialty_quieter";           // Dead Silence
+    basePerks[9]  = "specialty_stalker";           // Stalker
+    basePerks[10] = "specialty_bulletaccuracy";    // Steady Aim
+    basePerks[11] = "specialty_detectexplosive";   // SitRep
+    basePerks[12] = "specialty_autospot";          // Marksman
+    basePerks[13] = "specialty_quieter";           // Dead Silence
 
-    foreach (perk in perks)
+    foreach (perk in basePerks)
     {
-        self GivePerk(perk, false);
-
+        perks[perks.size] = perk;
         proPerk = GetProPerkName(perk);
 
         if (
@@ -503,7 +642,7 @@ GiveFullSpecialistBonus()
             proPerk != "specialty_null"
         )
         {
-            self GivePerk(proPerk, false);
+            perks[perks.size] = proPerk;
         }
     }
 
@@ -512,15 +651,17 @@ GiveFullSpecialistBonus()
         These are not ordinary selectable perks.
     */
 
-    self GivePerk("specialty_marksman", false);
-    self GivePerk("specialty_sharp_focus", false);
-    self GivePerk("specialty_fastermelee", false);
-    self GivePerk("specialty_reducedsway", false);
-    self GivePerk("specialty_lightweight", false); // Movement-speed boost
+    perks[perks.size] = "specialty_marksman";
+    perks[perks.size] = "specialty_sharp_focus";
+    perks[perks.size] = "specialty_fastermelee";
+    perks[perks.size] = "specialty_reducedsway";
+    perks[perks.size] = "specialty_lightweight"; // Movement-speed boost
 
     // Fun-mode addition: stack Impact with the class's selected proficiency.
     // Unsupported weapon classes ignore this flag.
-    self GivePerk("specialty_bulletpenetration", false);
+    perks[perks.size] = "specialty_bulletpenetration";
+
+    return perks;
 }
 
 /*

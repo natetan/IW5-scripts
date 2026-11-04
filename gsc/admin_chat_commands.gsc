@@ -81,6 +81,12 @@ main()
         ::reflectAdminChatCommand,
         "!reflect"
     );
+    registerAdminChatCommand(
+        "super",
+        3,
+        ::superAdminChatCommand,
+        "!super"
+    );
 
     level.funModeChatAliases["commands"] = "commands";
     level.funModeChatAliases["cmds"] = "commands";
@@ -95,6 +101,7 @@ main()
     level.funModeChatAliases["killmode"] = "killmode";
     level.funModeChatAliases["possess"] = "possess";
     level.funModeChatAliases["reflect"] = "reflect";
+    level.funModeChatAliases["super"] = "super";
 
     level thread watchAdminChatCommands();
 }
@@ -277,6 +284,17 @@ reflectAdminChatCommand( args )
     }
 
     self scripts\damage_reflection::ToggleForPlayer();
+}
+
+superAdminChatCommand( args )
+{
+    if ( args.size )
+    {
+        self tell( "^3Usage:^7 !super" );
+        return;
+    }
+
+    self scripts\specialist_system::ToggleCommandSuperMode();
 }
 
 giveKillstreakAdminChatCommand( args )

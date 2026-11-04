@@ -68,10 +68,17 @@ WatchPlayerLoadout()
         {
             // this is the standard give all perks from the game itself
             // self maps\mp\killstreaks\_killstreaks::giveallperks();
-            self scripts\specialist_system::GiveFullSpecialistBonus();
-            self RestoreJuicedMovementAfterSpecialist();
-            self ApplyActiveKillMomentumSpeed();
-            self thread scripts\specialist_system::RestoreFunModeBlindEyeAfterSpawnProtection();
+            if (self scripts\specialist_system::IsCommandSuperModeEnabled())
+            {
+                self scripts\specialist_system::ApplyCommandSuperPackage();
+            }
+            else
+            {
+                self scripts\specialist_system::GiveFullSpecialistBonus();
+                self RestoreJuicedMovementAfterSpecialist();
+                self ApplyActiveKillMomentumSpeed();
+                self thread scripts\specialist_system::RestoreFunModeBlindEyeAfterSpawnProtection();
+            }
             // self ApplyFullSpecialistState();
         }
     }
