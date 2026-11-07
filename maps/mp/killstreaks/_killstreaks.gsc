@@ -642,6 +642,17 @@ killstreakusepressed()
     if ( !common_scripts\utility::isweaponenabled() )
         return 0;
 
+    // A permanently incompatible map cannot become valid later in the match.
+    // Consume these unusable rewards after preserving the stock feedback so
+    // they do not block the player's killstreak slot indefinitely.
+    if ( shouldconsumeunavailablekillstreak( var_0 ) )
+    {
+        self iprintlnbold( &"MP_UNAVAILABLE_IN_LEVEL" );
+        self.killstreakindexweapon = last_ks_slot;
+        thread updatekillstreaks();
+        return 1;
+    }
+
     var_6 = 0;
 
     if ( maps\mp\_utility::_hasperk( "specialty_explosivebullets" ) && !issubstr( var_0, "explosive_ammo" ) )
@@ -662,6 +673,21 @@ killstreakusepressed()
     thread updatekillstreaks();
     usedkillstreak( var_0, var_3 );
     return 1;
+}
+
+shouldconsumeunavailablekillstreak( streakName )
+{
+    if ( streakName == "littlebird_support" )
+    {
+        return !isdefined( level.air_node_mesh ) || !level.air_node_mesh.size;
+    }
+
+    if ( streakName == "remote_mortar" )
+    {
+        return maps\mp\_utility::maxvehiclesallowed() <= 0;
+    }
+
+    return 0;
 }
 
 usedkillstreak( var_0, var_1 )
