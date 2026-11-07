@@ -28,6 +28,129 @@ main()
         maps\mp\killstreaks\_airstrike::tryuseprecisionairstrike,
         ::tryuseprecisionairstrikeasHarrier
     );
+
+    replacefunc(
+        maps\mp\killstreaks\_harrier::callback_vehicledamage,
+        ::callbackHarrierVehicleDamage
+    );
+}
+
+callbackHarrierVehicleDamage( inflictor, attacker, damage, point, direction, weapon, meansOfDeath, flags, modelIndex, partName, timeOffset, surfaceType )
+{
+    /*
+        The dormant stock callback rejects every same-team attacker except the
+        Harrier's owner, regardless of the match's friendly-fire setting.
+        Preserve its self-damage guard while allowing ordinary friendly-fire
+        matches to damage the aircraft like other killstreaks.
+    */
+    if ( attacker == self && attacker != self.owner )
+        return;
+
+    if (
+        isdefined( attacker.pers ) &&
+        attacker.pers["team"] == self.team &&
+        level.teambased &&
+        ( !isdefined( level.friendlyFire ) || level.friendlyFire == 0 ) &&
+        attacker != self.owner
+    )
+    {
+        return;
+    }
+
+    if ( self.health <= 0 )
+        return;
+
+    switch ( weapon )
+    {
+        case "ac130_105mm_mp":
+        case "ac130_40mm_mp":
+        case "remotemissile_projectile_mp":
+        case "stinger_mp":
+        case "javelin_mp":
+            self.largeprojectiledamage = 1;
+            damage = self.maxhealth + 1;
+            break;
+
+        case "at4_mp":
+        case "rpg_mp":
+            self.largeprojectiledamage = 1;
+            damage = self.maxhealth - 900;
+            break;
+
+        default:
+            if ( weapon != "none" )
+                damage = int( damage / 2 );
+
+            self.largeprojectiledamage = 0;
+            break;
+    }
+
+    attacker maps\mp\gametypes\_damagefeedback::updatedamagefeedback( "" );
+
+    if (
+        isplayer( attacker ) &&
+        attacker maps\mp\_utility::_hasperk( "specialty_armorpiercing" )
+    )
+    {
+        armorPiercingDamage = int( damage * level.armorpiercingmod );
+        damage += armorPiercingDamage;
+    }
+
+    if ( self.health <= damage )
+    {
+        if (
+            isplayer( attacker ) &&
+            ( !isdefined( self.owner ) || attacker != self.owner )
+        )
+        {
+            thread maps\mp\_utility::teamplayercardsplash(
+                "callout_destroyed_harrier",
+                attacker
+            );
+            attacker thread maps\mp\gametypes\_rank::giverankxp(
+                "kill",
+                300,
+                weapon,
+                direction
+            );
+            thread maps\mp\gametypes\_missions::vehiclekilled(
+                self.owner,
+                self,
+                undefined,
+                attacker,
+                damage,
+                direction,
+                weapon
+            );
+            attacker notify( "destroyed_killstreak" );
+        }
+
+        self notify( "death" );
+    }
+
+    if (
+        self.health - damage <= 900 &&
+        ( !isdefined( self.smoking ) || !self.smoking )
+    )
+    {
+        self thread maps\mp\killstreaks\_harrier::playdamageefx();
+        self.smoking = 1;
+    }
+
+    self vehicle_finishdamage(
+        inflictor,
+        attacker,
+        damage,
+        point,
+        direction,
+        weapon,
+        meansOfDeath,
+        flags,
+        modelIndex,
+        partName,
+        timeOffset,
+        surfaceType
+    );
 }
 
 watchEmpUsers()
