@@ -24,13 +24,30 @@ main()
 
 setjuicedextended()
 {
+    duration = getdvarfloat( "fun_mode_juiced_duration" );
+    self runTimedJuiced( duration );
+}
+
+grantTimedJuiced( duration )
+{
+    if ( !isdefined( duration ) || duration < 1.0 || !isalive( self ) )
+        return;
+
+    // Clear the existing timer, HUD, and cleanup thread before refreshing.
+    // Juiced remains a single 1.25x effect rather than a stackable multiplier.
+    if ( isdefined( self.isjuiced ) && self.isjuiced )
+        self maps\mp\perks\_perkfunctions::unsetjuiced();
+
+    self thread runTimedJuiced( duration );
+}
+
+runTimedJuiced( duration )
+{
     self endon( "death" );
     self endon( "faux_spawn" );
     self endon( "disconnect" );
     self endon( "unset_juiced" );
     level endon( "end_game" );
-
-    duration = getdvarfloat( "fun_mode_juiced_duration" );
 
     if ( duration < 2.0 )
         duration = 2.0;

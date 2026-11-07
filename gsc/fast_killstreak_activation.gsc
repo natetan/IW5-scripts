@@ -15,6 +15,7 @@
         fun_mode_fast_advanced_uav_activation_enable
         fun_mode_fast_recon_pulse_activation_enable
         fun_mode_fast_ballistic_vest_pulse_activation_enable
+        fun_mode_fast_airdrop_trap_stim_activation_enable
         fun_mode_fast_emp_activation_enable
         fun_mode_fast_helicopter_activation_enable
         fun_mode_fast_strafe_run_activation_enable
@@ -36,6 +37,7 @@ main()
     setdvarifuninitialized( "fun_mode_fast_advanced_uav_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_recon_pulse_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_ballistic_vest_pulse_activation_enable", 1 );
+    setdvarifuninitialized( "fun_mode_fast_airdrop_trap_stim_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_emp_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_helicopter_activation_enable", 1 );
     setdvarifuninitialized( "fun_mode_fast_strafe_run_activation_enable", 1 );
@@ -52,6 +54,7 @@ main()
     level.fastAdvancedUavActivation = getdvarint( "fun_mode_fast_advanced_uav_activation_enable" );
     level.fastReconPulseActivation = getdvarint( "fun_mode_fast_recon_pulse_activation_enable" );
     level.fastBallisticVestPulseActivation = getdvarint( "fun_mode_fast_ballistic_vest_pulse_activation_enable" );
+    level.fastAirdropTrapStimActivation = getdvarint( "fun_mode_fast_airdrop_trap_stim_activation_enable" );
     level.fastEmpActivation = getdvarint( "fun_mode_fast_emp_activation_enable" );
     level.fastHelicopterActivation = getdvarint( "fun_mode_fast_helicopter_activation_enable" );
     level.fastStrafeRunActivation = getdvarint( "fun_mode_fast_strafe_run_activation_enable" );
@@ -68,6 +71,7 @@ main()
          !level.fastAdvancedUavActivation &&
          !level.fastReconPulseActivation &&
          !level.fastBallisticVestPulseActivation &&
+         !level.fastAirdropTrapStimActivation &&
          !level.fastEmpActivation &&
          !level.fastHelicopterActivation &&
          !level.fastStrafeRunActivation &&
@@ -118,6 +122,17 @@ getFastKillstreakWeapon( streakName )
     // other fast-activated Support reward.
     if ( streakName == "deployable_vest" && level.fastBallisticVestPulseActivation )
         return "airdrop_juggernaut_def_mp";
+
+    // Juiced Pulse completes immediately, so the trap's own known marker now
+    // behaves as a quick draw/cancel without borrowing another reward's item.
+    if (
+        streakName == "airdrop_trap" &&
+        getdvarint( "fun_mode_airdrop_trap_stim_enable" ) &&
+        level.fastAirdropTrapStimActivation
+    )
+    {
+        return "airdrop_trap_marker_mp";
+    }
 
     if ( streakName == "emp" && level.fastEmpActivation )
         return "airdrop_juggernaut_mp";
