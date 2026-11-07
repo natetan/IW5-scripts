@@ -511,7 +511,10 @@ GrantRandomPostSpecialistKillstreak()
     rewardPool[rewardPool.size] = "littlebird_support";
     rewardPool[rewardPool.size] = "remote_mortar";
     rewardPool[rewardPool.size] = "remote_uav";
-    rewardPool[rewardPool.size] = "remote_tank";
+    // Grant the class-selectable Assault Drone wrapper rather than the direct
+    // remote-control reward. Our A-10 replacement owns this wrapper path and
+    // therefore retains its normal fast package-marker activation and cleanup.
+    rewardPool[rewardPool.size] = "airdrop_remote_tank";
     rewardPool[rewardPool.size] = "triple_uav";
     rewardPool[rewardPool.size] = "remote_mg_turret";
     rewardPool[rewardPool.size] = "ac130";
