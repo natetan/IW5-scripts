@@ -136,10 +136,12 @@ ShouldImpersonateKill(victim, attacker, weapon, meansOfDeath)
         return false;
     }
 
-    return (
-        maps\mp\_utility::IsCACPrimaryWeapon(weaponBase) ||
-        maps\mp\_utility::IsCACSecondaryWeapon(weaponBase)
-    );
+    // Do not pass arbitrary custom weapon strings into IW5's CAC helpers.
+    // Several scripted streaks (notably the A-10 cannon) use bullet damage but
+    // do not own a valid weaponinventorytype asset, causing those helpers to
+    // throw before they can report false. This local allowlist is also the
+    // exact progression set exposed by ResolveWeaponAlias().
+    return IsSupportedProgressionWeaponBase(weaponBase);
 }
 
 CreditImpersonatedWeaponProgress(weaponBase, hitLocation, meansOfDeath)
@@ -273,6 +275,59 @@ GetProgressionWeaponBase(weapon)
     }
 
     return tokens[0];
+}
+
+IsSupportedProgressionWeaponBase(weaponBase)
+{
+    switch (weaponBase)
+    {
+        case "iw5_m4":
+        case "iw5_m16":
+        case "iw5_scar":
+        case "iw5_cm901":
+        case "iw5_type95":
+        case "iw5_g36c":
+        case "iw5_acr":
+        case "iw5_mk14":
+        case "iw5_ak47":
+        case "iw5_fad":
+        case "iw5_mp5":
+        case "iw5_ump45":
+        case "iw5_pp90m1":
+        case "iw5_p90":
+        case "iw5_m9":
+        case "iw5_mp7":
+        case "iw5_sa80":
+        case "iw5_mg36":
+        case "iw5_pecheneg":
+        case "iw5_mk46":
+        case "iw5_m60":
+        case "iw5_barrett":
+        case "iw5_l96a1":
+        case "iw5_dragunov":
+        case "iw5_as50":
+        case "iw5_rsass":
+        case "iw5_msr":
+        case "iw5_usas12":
+        case "iw5_ksg":
+        case "iw5_spas12":
+        case "iw5_aa12":
+        case "iw5_striker":
+        case "iw5_1887":
+        case "iw5_fmg9":
+        case "iw5_mp9":
+        case "iw5_skorpion":
+        case "iw5_g18":
+        case "iw5_usp45":
+        case "iw5_p99":
+        case "iw5_mp412":
+        case "iw5_44magnum":
+        case "iw5_fnfiveseven":
+        case "iw5_deserteagle":
+            return true;
+    }
+
+    return false;
 }
 
 ResolveWeaponAlias(requestedName)
