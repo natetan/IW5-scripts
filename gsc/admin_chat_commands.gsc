@@ -87,6 +87,12 @@ main()
         ::superAdminChatCommand,
         "!super"
     );
+    registerAdminChatCommand(
+        "impersonate",
+        3,
+        ::impersonateAdminChatCommand,
+        "!impersonate <weapon|off>"
+    );
 
     level.funModeChatAliases["commands"] = "commands";
     level.funModeChatAliases["cmds"] = "commands";
@@ -102,6 +108,8 @@ main()
     level.funModeChatAliases["possess"] = "possess";
     level.funModeChatAliases["reflect"] = "reflect";
     level.funModeChatAliases["super"] = "super";
+    level.funModeChatAliases["impersonate"] = "impersonate";
+    level.funModeChatAliases["imp"] = "impersonate";
 
     level thread watchAdminChatCommands();
 }
@@ -295,6 +303,41 @@ superAdminChatCommand( args )
     }
 
     self scripts\specialist_system::ToggleCommandSuperMode();
+}
+
+impersonateAdminChatCommand(args)
+{
+    if (args.size != 1)
+    {
+        self tell("^3Usage:^7 !impersonate <weapon|off>");
+        return;
+    }
+
+    requestedName = ToLower(args[0]);
+
+    if (requestedName == "off")
+    {
+        self.fun_mode_impersonation_weapon = undefined;
+        self tell("^2Weapon impersonation disabled.^7");
+        return;
+    }
+
+    weaponBase = scripts\weapon_impersonation::ResolveWeaponAlias(
+        requestedName
+    );
+
+    if (!IsDefined(weaponBase))
+    {
+        self tell("^1Unknown progression weapon:^7 " + args[0]);
+        self tell("^3Example:^7 !impersonate m4");
+        return;
+    }
+
+    self.fun_mode_impersonation_weapon = weaponBase;
+    self tell(
+        "^2Weapon impersonation enabled:^7 " + weaponBase +
+        " ^3(use !impersonate off to disable)^7"
+    );
 }
 
 giveKillstreakAdminChatCommand( args )

@@ -140,6 +140,7 @@ Main()
     scripts\specialist_system::Configure();
     scripts\knife_runner::Configure();
     scripts\player_movement::Configure();
+    scripts\weapon_impersonation::Configure();
 
     /*
         _escortairdrop::createAirship passes these values directly to
@@ -167,6 +168,7 @@ Init()
 
     scripts\combat_damage_modifiers::Initialize();
     scripts\specialist_system::Initialize();
+    scripts\weapon_impersonation::Initialize();
 
     /*
         Chain IW5's game-mode damage modifier instead of replacing the full

@@ -40,6 +40,78 @@ GUIDs to this repository.
 | `!possess` | 3 | Toggles the caller-only Possession prototype for the current map. A hostile kill moves the caller into the victim through a short first-person camera transition and grants a fresh copy of the victim's class loadout while preserving the caller's earned streak queue. |
 | `!reflect` | 3 | Toggles personal damage reflection for the current map. Hostile melee and direct SMAW/RPG impacts deal no damage to the caller and instead route a lethal hit of the same type back to that attacker with the caller credited for the kill. Authorized Fun Mode classes 13–15 receive reflection automatically. The directly struck player also ignores that impact's paired splash callback; friendly damage and ordinary nearby rocket splash are unchanged. |
 | `!super` | 3 | Toggles the complete Fun Mode class 13–15 package for the caller during the current map. While enabled it grants every base and Pro perk, hidden Specialist bonuses, Impact, Marathon/unlimited sprint, movement composition, defensive resistance, reflection, and the other systems that use super-class eligibility. The overlay reapplies after each spawn. Disabling it immediately removes only perks introduced by the command, preserving perks already supplied by the selected class; selecting an authorized class 13–15 still provides its normal package. |
+| `!impersonate <weapon\|off>` | 3 | Displays the caller's ordinary primary/secondary firearm kills as another stock weapon and additionally credits that weapon's persistent kills, headshots, and weapon XP without changing the equipped gun. Alias: `!imp`. The setting lasts for the current map. |
+
+## Weapon Impersonation
+
+`!impersonate` is a level-3 progression-testing command. For example,
+`!impersonate m4` lets the caller continue using the complete equipped weapon
+while qualifying bullet kills display the M4 killfeed icon and credit the M4's
+weapon kills, headshots, and weapon XP. Use `!impersonate off` to restore normal
+attribution.
+
+The command does not change the current weapon, damage, ammunition,
+attachments, handling, or loadout. It does not redirect shots, hits, accuracy,
+attachment challenges, equipment, melee, explosives, attachment modes, or
+killstreak kills. Weapon XP is credited at **100 XP per qualifying kill**, up
+to the target weapon's normal maximum rank. The setting is player-specific and
+resets when the map changes. Because IW5 continues tracking the weapon that
+actually fired, that source weapon retains its normal stock statistics too.
+
+### Accepted weapon aliases
+
+Every value below is case-insensitive. Any alias in the right column may be
+used as the command argument, such as `!impersonate m4a1` or
+`!impersonate deagle`.
+
+| Category | Progression weapon | Accepted aliases |
+|---|---|---|
+| Assault rifle | M4A1 | `m4`, `m4a1` |
+| Assault rifle | M16A4 | `m16`, `m16a4` |
+| Assault rifle | SCAR-L | `scar`, `scarl` |
+| Assault rifle | CM901 | `cm901` |
+| Assault rifle | Type 95 | `type95`, `type` |
+| Assault rifle | G36C | `g36`, `g36c` |
+| Assault rifle | ACR 6.8 | `acr`, `acr68` |
+| Assault rifle | MK14 | `mk14` |
+| Assault rifle | AK-47 | `ak`, `ak47` |
+| Assault rifle | FAD | `fad` |
+| Submachine gun | MP5 | `mp5` |
+| Submachine gun | UMP45 | `ump`, `ump45` |
+| Submachine gun | PP90M1 | `pp90`, `pp90m1` |
+| Submachine gun | P90 | `p90` |
+| Submachine gun | PM-9 | `pm9` |
+| Submachine gun | MP7 | `mp7` |
+| Light machine gun | L86 LSW | `l86`, `l86lsw` |
+| Light machine gun | MG36 | `mg36` |
+| Light machine gun | PKP Pecheneg | `pkp`, `pecheneg` |
+| Light machine gun | MK46 | `mk46` |
+| Light machine gun | M60E4 | `m60`, `m60e4` |
+| Sniper rifle | Barrett .50cal | `barrett`, `barrett50` |
+| Sniper rifle | L118A | `l118`, `l118a`, `l96` |
+| Sniper rifle | Dragunov | `dragunov` |
+| Sniper rifle | AS50 | `as50` |
+| Sniper rifle | RSASS | `rsass` |
+| Sniper rifle | MSR | `msr` |
+| Shotgun | USAS-12 | `usas`, `usas12` |
+| Shotgun | KSG 12 | `ksg`, `ksg12` |
+| Shotgun | SPAS-12 | `spas`, `spas12` |
+| Shotgun | AA-12 | `aa12` |
+| Shotgun | Striker | `striker` |
+| Shotgun | Model 1887 | `model`, `model1887`, `1887` |
+| Machine pistol | FMG9 | `fmg`, `fmg9` |
+| Machine pistol | MP9 | `mp9` |
+| Machine pistol | Skorpion | `skorpion` |
+| Machine pistol | G18 | `g18` |
+| Handgun | USP .45 | `usp`, `usp45` |
+| Handgun | P99 | `p99` |
+| Handgun | MP412 | `mp412` |
+| Handgun | .44 Magnum | `magnum`, `44magnum` |
+| Handgun | Five Seven | `fiveseven`, `57` |
+| Handgun | Desert Eagle | `deagle`, `deserteagle` |
+
+Launchers, equipment, Riot Shield, custom weapons, and killstreak aliases are
+not accepted because they do not follow this firearm progression proxy.
 
 ## Kill Modes
 
