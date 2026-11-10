@@ -133,6 +133,7 @@ Main()
     scripts\animated_models_fix::Configure();
     scripts\scavenger::Configure();
     scripts\kill_ammo_refills::Configure();
+    scripts\throwing_knife_modifications::Configure();
     scripts\weapon_damage_multipliers::Configure();
     scripts\kill_modes::Configure();
     scripts\possession_mode::Configure();
@@ -355,6 +356,15 @@ ModifyPlayerDamageForFunMode(
     );
 
     damage = scripts\deaths_dance::PreventFatalDamage(victim, damage);
+
+    // A physical Throwing Knife hit is intentionally absolute: apply this
+    // after armor, resistance, shields, and fatal-damage prevention so every
+    // valid player hit resolves lethally while preserving native attribution.
+    damage = scripts\throwing_knife_modifications::GetLethalPlayerDamage(
+        victim,
+        damage,
+        weapon
+    );
 
     scripts\striker_modifications::ProcessOutgoingDamage(
         victim,
