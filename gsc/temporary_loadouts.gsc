@@ -7,12 +7,12 @@
     package unless the preset explicitly replaces them.
 
     Commands:
-        !sniper  Barrett / MP9 long-range preset
-        !gunner  ACR / MP412 general-purpose preset
-        !smg     MP7 / MP9 mobile preset
-        !boom    ACR grenade-launcher / Javelin explosive preset
-        !knife   Knife Runner preset
-        !default Return to the selected saved class on the next spawn
+        !preset sniper   Barrett / MP9 long-range preset
+        !preset gunner   ACR / MP412 general-purpose preset
+        !preset smg      MP7 / MP9 mobile preset
+        !preset boom     ACR grenade-launcher / Javelin explosive preset
+        !preset knife    Knife Runner preset
+        !preset default  Return to the selected saved class on next spawn
 
     Presets intentionally pass through the stock giveLoadout path so the
     repository's automatic extended-mag and post-loadout systems still run.
@@ -29,48 +29,69 @@ main()
         return;
     }
 
-    level thread WatchTemporaryLoadoutCommands();
     level thread WatchTemporaryLoadoutConnections();
 }
 
-WatchTemporaryLoadoutCommands()
+temporaryLoadoutPresetCommand(args)
 {
-    level endon("game_ended");
-
-    for (;;)
+    if (
+        !getdvarint("fun_mode_temporary_loadouts_enable") ||
+        !IsEligibleTemporaryLoadoutPlayer(self)
+    )
     {
-        level waittill("say", message, player, isHidden);
-
-        if (!IsEligibleTemporaryLoadoutPlayer(player))
-        {
-            continue;
-        }
-
-        if (message == "!sniper")
-        {
-            player SetTemporaryLoadoutPreset("sniper", "Sniper");
-        }
-        else if (message == "!gunner")
-        {
-            player SetTemporaryLoadoutPreset("gunner", "Gunner");
-        }
-        else if (message == "!smg")
-        {
-            player SetTemporaryLoadoutPreset("smg", "SMG");
-        }
-        else if (message == "!boom")
-        {
-            player SetTemporaryLoadoutPreset("boom", "Boom");
-        }
-        else if (message == "!knife")
-        {
-            player SetTemporaryLoadoutPreset("knife", "Knife Runner");
-        }
-        else if (message == "!default")
-        {
-            player ClearTemporaryLoadoutPreset();
-        }
+        return;
     }
+
+    if (!args.size)
+    {
+        self tell(
+            "^3Usage:^7 !preset <sniper|gunner|smg|boom|knife|default>"
+        );
+        return;
+    }
+
+    preset = tolower(args[0]);
+
+    if (preset == "sniper")
+    {
+        self SetTemporaryLoadoutPreset("sniper", "Sniper");
+        return;
+    }
+
+    if (preset == "gunner")
+    {
+        self SetTemporaryLoadoutPreset("gunner", "Gunner");
+        return;
+    }
+
+    if (preset == "smg")
+    {
+        self SetTemporaryLoadoutPreset("smg", "SMG");
+        return;
+    }
+
+    if (preset == "boom")
+    {
+        self SetTemporaryLoadoutPreset("boom", "Boom");
+        return;
+    }
+
+    if (preset == "knife")
+    {
+        self SetTemporaryLoadoutPreset("knife", "Knife Runner");
+        return;
+    }
+
+    if (preset == "default")
+    {
+        self ClearTemporaryLoadoutPreset();
+        return;
+    }
+
+    self tell(
+        "^1Unknown preset:^7 " + args[0] +
+        ". ^3Options:^7 sniper, gunner, smg, boom, knife, default"
+    );
 }
 
 WatchTemporaryLoadoutConnections()

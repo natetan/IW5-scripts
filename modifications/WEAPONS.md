@@ -141,20 +141,20 @@ here.
 
 ## Temporary In-Match Presets
 
-Human players can queue a match-temporary loadout with chat commands. The
-choice reapplies on every spawn until `!default` is entered, which restores the
-selected saved class on the following spawn. Sniper, Gunner, SMG, and Boom
+Human players can queue a match-temporary loadout with `!preset <name>`. The
+choice reapplies on every spawn until `!preset default` is entered, which
+restores the selected saved class on the following spawn. Sniper, Gunner, SMG, and Boom
 preserve the saved class's lethal, tactical, deathstreak, and complete strike
 package. Knife preserves its strike package but explicitly selects Throwing
 Knife, Tactical Insertion, and Juiced so it qualifies for Knife Runner.
 
 | Command | Primary | Secondary | Perks | Other behavior |
 |---|---|---|---|---|
-| `!sniper` | Barrett .50cal with Impact and Heartbeat Sensor | MP9 with Silencer | Scavenger, Quickdraw, SitRep | Preserves equipment and streak configuration. |
-| `!gunner` | ACR 6.8 with Impact and Red Dot Sight | MP412 with Tactical Knife | Scavenger, Quickdraw, SitRep | Preserves equipment and streak configuration. |
-| `!smg` | MP7 with Focus and Silencer | MP9 with Silencer | Extreme Conditioning, Quickdraw, SitRep | Preserves equipment and streak configuration. |
-| `!boom` | ACR 6.8 with Focus and M320 Grenade Launcher | Javelin | Sleight of Hand, Quickdraw, SitRep | Preserves equipment and streak configuration. |
-| `!knife` | MSR, used to select the sniper character model before Knife Runner removes it | Randomized on every spawn between Tactical Knife variants of the USP .45, P99, MP412, .44 Magnum, Five Seven, and Desert Eagle, plus Akimbo USP .45s | Extreme Conditioning, Quickdraw, Dead Silence | Selects Throwing Knife, Tactical Insertion, and Juiced; Knife Runner then enforces its normal weapon and ammo restrictions. |
+| `!preset sniper` | Barrett .50cal with Impact and Heartbeat Sensor | MP9 with Silencer | Scavenger, Quickdraw, SitRep | Preserves equipment and streak configuration. |
+| `!preset gunner` | ACR 6.8 with Impact and Red Dot Sight | MP412 with Tactical Knife | Scavenger, Quickdraw, SitRep | Preserves equipment and streak configuration. |
+| `!preset smg` | MP7 with Focus and Silencer | MP9 with Silencer | Extreme Conditioning, Quickdraw, SitRep | Preserves equipment and streak configuration. |
+| `!preset boom` | ACR 6.8 with Focus and M320 Grenade Launcher | Javelin | Sleight of Hand, Quickdraw, SitRep | Preserves equipment and streak configuration. |
+| `!preset knife` | MSR, used to select the sniper character model before Knife Runner removes it | Randomized on every spawn between Tactical Knife variants of the USP .45, P99, MP412, .44 Magnum, Five Seven, and Desert Eagle, plus Akimbo USP .45s | Extreme Conditioning, Quickdraw, Dead Silence | Selects Throwing Knife, Tactical Insertion, and Juiced; Knife Runner then enforces its normal weapon and ammo restrictions. |
 
 The presets use the standard loadout pipeline, so their primaries receive the
 repository's applicable automatic attachment. Every preset primary uses Gold

@@ -93,6 +93,12 @@ main()
         ::impersonateAdminChatCommand,
         "!impersonate <weapon|off>"
     );
+    registerAdminChatCommand(
+        "preset",
+        0,
+        ::presetAdminChatCommand,
+        "!preset <sniper|gunner|smg|boom|knife|default>"
+    );
 
     level.funModeChatAliases["commands"] = "commands";
     level.funModeChatAliases["cmds"] = "commands";
@@ -110,6 +116,7 @@ main()
     level.funModeChatAliases["super"] = "super";
     level.funModeChatAliases["impersonate"] = "impersonate";
     level.funModeChatAliases["imp"] = "impersonate";
+    level.funModeChatAliases["preset"] = "preset";
 
     level thread watchAdminChatCommands();
 }
@@ -338,6 +345,11 @@ impersonateAdminChatCommand(args)
         "^2Weapon impersonation enabled:^7 " + weaponBase +
         " ^3(use !impersonate off to disable)^7"
     );
+}
+
+presetAdminChatCommand(args)
+{
+    self scripts\temporary_loadouts::temporaryLoadoutPresetCommand(args);
 }
 
 giveKillstreakAdminChatCommand( args )
