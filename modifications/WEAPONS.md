@@ -155,6 +155,7 @@ Knife, Tactical Insertion, and Juiced so it qualifies for Knife Runner.
 | `!preset smg` | MP7 with Focus and Silencer | MP9 with Silencer | Extreme Conditioning, Quickdraw, SitRep | Preserves equipment and streak configuration. |
 | `!preset boom` | ACR 6.8 with Focus and M320 Grenade Launcher | Javelin | Sleight of Hand, Quickdraw, SitRep | Preserves equipment and streak configuration. |
 | `!preset knife` | MSR, used to select the sniper character model before Knife Runner removes it | Randomized on every spawn between Tactical Knife variants of the USP .45, P99, MP412, .44 Magnum, Five Seven, and Desert Eagle, plus Akimbo USP .45s | Extreme Conditioning, Quickdraw, Dead Silence | Selects Throwing Knife, Tactical Insertion, and Juiced; Knife Runner then enforces its normal weapon and ammo restrictions. |
+| `!preset random` | Rerolls across the complete valid primary pool with a valid random proficiency and one weapon-supported random attachment | Rerolls across the complete valid secondary pool with one weapon-supported random attachment | Preserves all three perks from the selected saved class | Rerolls lethal and tactical equipment on every spawn. Preserves deathstreak and the complete strike package. The normal automatic Extended Mags/Thermal attachment logic still runs after the explicit attachment is selected. |
 
 The presets use the standard loadout pipeline, so their primaries receive the
 repository's applicable automatic attachment. Every preset primary uses Gold

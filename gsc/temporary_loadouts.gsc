@@ -12,6 +12,7 @@
         !preset smg      MP7 / MP9 mobile preset
         !preset boom     ACR grenade-launcher / Javelin explosive preset
         !preset knife    Knife Runner preset
+        !preset random   Reroll weapons and equipment on every spawn
         !preset default  Return to the selected saved class on next spawn
 
     Presets intentionally pass through the stock giveLoadout path so the
@@ -45,7 +46,7 @@ temporaryLoadoutPresetCommand(args)
     if (!args.size)
     {
         self tell(
-            "^3Usage:^7 !preset <sniper|gunner|smg|boom|knife|default>"
+            "^3Usage:^7 !preset <sniper|gunner|smg|boom|knife|random|default>"
         );
         return;
     }
@@ -82,6 +83,12 @@ temporaryLoadoutPresetCommand(args)
         return;
     }
 
+    if (preset == "random")
+    {
+        self SetTemporaryLoadoutPreset("random", "Random");
+        return;
+    }
+
     if (preset == "default")
     {
         self ClearTemporaryLoadoutPreset();
@@ -90,7 +97,7 @@ temporaryLoadoutPresetCommand(args)
 
     self tell(
         "^1Unknown preset:^7 " + args[0] +
-        ". ^3Options:^7 sniper, gunner, smg, boom, knife, default"
+        ". ^3Options:^7 sniper, gunner, smg, boom, knife, random, default"
     );
 }
 
@@ -276,7 +283,216 @@ ApplyTemporaryLoadoutPreset(loadout, preset)
         return loadout;
     }
 
+    if (preset == "random")
+    {
+        return ApplyRandomTemporaryLoadoutPreset(loadout);
+    }
+
     return undefined;
+}
+
+ApplyRandomTemporaryLoadoutPreset(loadout)
+{
+    primary = GetRandomPresetPrimary();
+    secondary = GetRandomPresetSecondary();
+
+    loadout["loadoutPrimary"] = primary;
+    loadout["loadoutPrimaryAttachment"] = GetRandomPresetAttachment(primary);
+    loadout["loadoutPrimaryAttachment2"] = "none";
+    loadout["loadoutPrimaryBuff"] = GetRandomPresetProficiency(primary);
+
+    loadout["loadoutSecondary"] = secondary;
+    loadout["loadoutSecondaryAttachment"] = GetRandomPresetAttachment(secondary);
+    loadout["loadoutSecondaryAttachment2"] = "none";
+    loadout["loadoutSecondaryBuff"] = "specialty_null";
+
+    lethals = [];
+    lethals[lethals.size] = "frag_grenade_mp";
+    lethals[lethals.size] = "throwingknife_mp";
+    lethals[lethals.size] = "claymore_mp";
+    lethals[lethals.size] = "semtex_mp";
+    lethals[lethals.size] = "c4_mp";
+    lethals[lethals.size] = "bouncingbetty_mp";
+    loadout["loadoutEquipment"] = GetRandomPresetValue(lethals);
+
+    tacticals = [];
+    tacticals[tacticals.size] = "trophy_mp";
+    tacticals[tacticals.size] = "smoke_grenade_mp";
+    tacticals[tacticals.size] = "specialty_portable_radar";
+    tacticals[tacticals.size] = "flash_grenade_mp";
+    tacticals[tacticals.size] = "concussion_grenade_mp";
+    tacticals[tacticals.size] = "specialty_scrambler";
+    tacticals[tacticals.size] = "specialty_tacticalinsertion";
+    tacticals[tacticals.size] = "emp_grenade_mp";
+    loadout["loadoutOffhand"] = GetRandomPresetValue(tacticals);
+
+    return loadout;
+}
+
+GetRandomPresetPrimary()
+{
+    weapons = [];
+
+    for (row = 0; row < 160; row++)
+    {
+        weapon = TableLookupByRow("mp/statStable.csv", row, 4);
+
+        if (
+            weapon == "" ||
+            IsSubStr(weapon, "jugg") ||
+            !maps\mp\gametypes\_class::isValidPrimary(weapon, false)
+        )
+        {
+            continue;
+        }
+
+        weapons[weapons.size] = weapon;
+    }
+
+    return GetRandomPresetValue(weapons);
+}
+
+GetRandomPresetSecondary()
+{
+    weapons = [];
+
+    for (row = 0; row < 160; row++)
+    {
+        weapon = TableLookupByRow("mp/statStable.csv", row, 4);
+
+        if (
+            weapon == "" ||
+            IsSubStr(weapon, "jugg") ||
+            !maps\mp\gametypes\_class::isValidSecondary(
+                weapon,
+                "specialty_quickdraw",
+                "specialty_null",
+                false
+            )
+        )
+        {
+            continue;
+        }
+
+        weapons[weapons.size] = weapon;
+    }
+
+    return GetRandomPresetValue(weapons);
+}
+
+GetRandomPresetAttachment(weapon)
+{
+    row = TableLookupRowNum("mp/statStable.csv", 4, weapon);
+    attachments = [];
+
+    if (row < 0)
+    {
+        return "none";
+    }
+
+    for (column = 11; column < 21; column++)
+    {
+        attachment = TableLookupByRow("mp/statStable.csv", row, column);
+
+        if (attachment == "")
+        {
+            break;
+        }
+
+        if (
+            attachment == "none" ||
+            !maps\mp\gametypes\_class::isValidAttachment(attachment, false) ||
+            !maps\mp\gametypes\_class::isValidCombination(weapon, attachment)
+        )
+        {
+            continue;
+        }
+
+        attachments[attachments.size] = attachment;
+    }
+
+    if (!attachments.size)
+    {
+        return "none";
+    }
+
+    return GetRandomPresetValue(attachments);
+}
+
+GetRandomPresetProficiency(weapon)
+{
+    proficiencies = [];
+    weaponRow = TableLookupRowNum("mp/statStable.csv", 4, weapon);
+
+    if (weaponRow < 0)
+    {
+        return "specialty_null";
+    }
+
+    weaponClass = TableLookupByRow(
+        "mp/statStable.csv",
+        weaponRow,
+        2
+    );
+
+    if (weaponClass == "weapon_assault")
+    {
+        proficiencies[proficiencies.size] = "specialty_bling";
+        proficiencies[proficiencies.size] = "specialty_bulletpenetration";
+        proficiencies[proficiencies.size] = "specialty_marksman";
+        proficiencies[proficiencies.size] = "specialty_sharp_focus";
+        proficiencies[proficiencies.size] = "specialty_holdbreathwhileads";
+        proficiencies[proficiencies.size] = "specialty_reducedsway";
+    }
+    else if (weaponClass == "weapon_smg")
+    {
+        proficiencies[proficiencies.size] = "specialty_bling";
+        proficiencies[proficiencies.size] = "specialty_marksman";
+        proficiencies[proficiencies.size] = "specialty_sharp_focus";
+        proficiencies[proficiencies.size] = "specialty_reducedsway";
+        proficiencies[proficiencies.size] = "specialty_longerrange";
+        proficiencies[proficiencies.size] = "specialty_fastermelee";
+    }
+    else if (weaponClass == "weapon_lmg" || weaponClass == "weapon_sniper")
+    {
+        proficiencies[proficiencies.size] = "specialty_bling";
+        proficiencies[proficiencies.size] = "specialty_bulletpenetration";
+        proficiencies[proficiencies.size] = "specialty_marksman";
+        proficiencies[proficiencies.size] = "specialty_sharp_focus";
+        proficiencies[proficiencies.size] = "specialty_reducedsway";
+        proficiencies[proficiencies.size] = "specialty_lightweight";
+    }
+    else if (weaponClass == "weapon_shotgun")
+    {
+        proficiencies[proficiencies.size] = "specialty_bling";
+        proficiencies[proficiencies.size] = "specialty_marksman";
+        proficiencies[proficiencies.size] = "specialty_sharp_focus";
+        proficiencies[proficiencies.size] = "specialty_longerrange";
+        proficiencies[proficiencies.size] = "specialty_fastermelee";
+        proficiencies[proficiencies.size] = "specialty_moredamage";
+    }
+    else if (weaponClass == "weapon_riot")
+    {
+        proficiencies[proficiencies.size] = "specialty_fastermelee";
+        proficiencies[proficiencies.size] = "specialty_lightweight";
+    }
+
+    if (!proficiencies.size)
+    {
+        return "specialty_null";
+    }
+
+    return GetRandomPresetValue(proficiencies);
+}
+
+GetRandomPresetValue(values)
+{
+    if (!IsDefined(values) || !values.size)
+    {
+        return undefined;
+    }
+
+    return values[RandomInt(values.size)];
 }
 
 SetRandomKnifeRunnerSecondary(loadout)

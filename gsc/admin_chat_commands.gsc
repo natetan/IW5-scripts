@@ -97,7 +97,7 @@ main()
         "preset",
         0,
         ::presetAdminChatCommand,
-        "!preset <sniper|gunner|smg|boom|knife|default>"
+        "!preset <sniper|gunner|smg|boom|knife|random|default>"
     );
 
     level.funModeChatAliases["commands"] = "commands";
