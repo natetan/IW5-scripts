@@ -134,6 +134,7 @@ Main()
     scripts\scavenger::Configure();
     scripts\kill_ammo_refills::Configure();
     scripts\throwing_knife_modifications::Configure();
+    scripts\underbarrel_shotgun_javelin::Configure();
     scripts\weapon_damage_multipliers::Configure();
     scripts\kill_modes::Configure();
     scripts\possession_mode::Configure();
@@ -217,6 +218,11 @@ ModifyPlayerDamageForFunMode(
             hitLocation
         );
     }
+
+    damage = scripts\underbarrel_shotgun_javelin::SuppressPelletDamage(
+        damage,
+        weapon
+    );
 
     damage = scripts\damage_reflection::ProcessIncomingDamage(
         victim,
@@ -440,6 +446,7 @@ OnPlayerConnect()
         player scripts\quick_fix::OnPlayerConnected();
         player scripts\player_movement::OnPlayerConnected();
         player scripts\kill_ammo_refills::OnPlayerConnected();
+        player scripts\underbarrel_shotgun_javelin::OnPlayerConnected();
         player scripts\knife_runner::OnPlayerConnected();
         player scripts\deaths_dance::OnPlayerConnected();
         player scripts\striker_modifications::OnPlayerConnected();
