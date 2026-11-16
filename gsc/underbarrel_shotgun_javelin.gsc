@@ -75,6 +75,14 @@ FireDirectUnderbarrelJavelin()
         return;
     }
 
+    if (IsDefined(self.primaryWeapon))
+    {
+        // Preserve the complete carried primary identity so the stock death,
+        // obituary, challenge, and progression paths treat missile kills like
+        // ordinary attachment kills from that weapon.
+        missile.fun_mode_underbarrel_source_weapon = self.primaryWeapon;
+    }
+
     missile missile_setflightmodedirect();
     missile thread CleanUpDirectUnderbarrelJavelin();
 }
@@ -103,6 +111,19 @@ SuppressPelletDamage(damage, weapon)
     }
 
     return damage;
+}
+
+GetKillAttributionWeapon(inflictor, reportedWeapon)
+{
+    if (
+        IsDefined(inflictor) &&
+        IsDefined(inflictor.fun_mode_underbarrel_source_weapon)
+    )
+    {
+        return inflictor.fun_mode_underbarrel_source_weapon;
+    }
+
+    return reportedWeapon;
 }
 
 IsUnderbarrelShotgunWeapon(weapon)

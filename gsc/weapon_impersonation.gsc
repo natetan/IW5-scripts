@@ -59,7 +59,10 @@ PlayerKilledWithImpersonation(
     deathAnimDuration
 )
 {
-    reportedWeapon = weapon;
+    reportedWeapon = scripts\underbarrel_shotgun_javelin::GetKillAttributionWeapon(
+        inflictor,
+        weapon
+    );
     shouldCredit = ShouldImpersonateKill(self, attacker, weapon, meansOfDeath);
 
     if (shouldCredit)
