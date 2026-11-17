@@ -106,12 +106,34 @@ percentages.
 | Weapon | Player damage multiplier | Other modifications |
 |---|---:|---|
 | SMAW | Stock (1×) | A hostile direct impact against a player with damage reflection is suppressed and lethally reflected to the shooter. The direct victim ignores that impact's paired splash callback; ordinary nearby splash is unchanged. |
-| Javelin | **10×** | A player kill restores one Javelin missile. |
+| Javelin | **10×** | A player kill restores one Javelin missile. Standalone targeting uses a **575 ms** nominal lock delay (stock **1,150 ms**) and **550-unit** ground minimum distance (stock **1,100**); see below. |
 | Stinger | Stock (1×) | None. |
 | XM25 | Stock (1×) | None. |
 | M320 GL | Stock (1×) | None. This is the standalone secondary, not an underbarrel tube. |
 | RPG-7 | Stock (1×) | A hostile direct impact against a player with damage reflection is suppressed and lethally reflected to the shooter. The direct victim ignores that impact's paired splash callback; ordinary nearby splash is unchanged. |
 | Underbarrel M320 / GP25 / grenade launcher | **3×** | A kill restores one loaded tube round. Supported alternate-mode variants inherit the rule. |
+
+Standalone Javelin targeting is tuned by
+[`gsc/javelin_targeting_tuning.gsc`](../gsc/javelin_targeting_tuning.gsc).
+`fun_mode_javelin_lock_time_ms` defaults to **575** for both ground and vehicle
+locks; the stock Faster Lock-On perk still halves vehicle lock time.
+`fun_mode_javelin_min_target_distance` defaults to **550 units** for ground
+targets, including Bot Warfare's existing ground-target validation. The distance
+test is strict: a target exactly 550 units away is allowed. This is not a new
+minimum-distance check for vehicle locks.
+
+The stock **12 ground samples**, **100 ms ADS gate**, **400-unit aim-point
+spread limit**, and **50 ms loop polling** remain unchanged. Consequently 575 ms
+is the final lock phase, not total time from pressing ADS; ground acquisition
+also needs stable samples, and lock completion is quantized to polling frames.
+Vehicle line-of-sight, reticle checks, EMP handling, and existing overhead /
+top-attack clearance checks are not bypassed. Native firing animation, missile
+launch/flight, Stinger targeting, and the direct-fire underbarrel Javelin are
+unchanged.
+
+Set `fun_mode_javelin_targeting_enable 0` **before loading a map** to keep stock
+targeting. Set the two tuning dvars before map load for a new lock duration and
+range; they do not require changes to weapon assets.
 
 ## Riot Shield
 
