@@ -138,6 +138,11 @@ WatchTemporaryLoadoutSpawns()
     {
         self waittill("spawned_player");
 
+        if (scripts\gun_game::IsEnabled())
+        {
+            continue;
+        }
+
         if (!IsDefined(self.pers["fun_mode_temporary_loadout_preset"]))
         {
             continue;
@@ -145,6 +150,11 @@ WatchTemporaryLoadoutSpawns()
 
         // Let the selected saved class finish loading before cloning it.
         wait 0.1;
+
+        if (scripts\gun_game::IsEnabled())
+        {
+            continue;
+        }
 
         if (
             !IsDefined(self.curClass) ||
@@ -293,13 +303,18 @@ ApplyTemporaryLoadoutPreset(loadout, preset)
 
 ApplyRandomTemporaryLoadoutPreset(loadout)
 {
-    primary = GetRandomPresetPrimary();
+    loadout = RandomizePrimaryLoadout(loadout);
+
+    if (!IsDefined(loadout))
+    {
+        return undefined;
+    }
+
     secondary = GetRandomPresetSecondary();
 
-    loadout["loadoutPrimary"] = primary;
-    loadout["loadoutPrimaryAttachment"] = GetRandomPresetAttachment(primary);
-    loadout["loadoutPrimaryAttachment2"] = "none";
-    loadout["loadoutPrimaryBuff"] = GetRandomPresetProficiency(primary);
+    loadout["loadoutPrimaryBuff"] = GetRandomPresetProficiency(
+        loadout["loadoutPrimary"]
+    );
 
     loadout["loadoutSecondary"] = secondary;
     loadout["loadoutSecondaryAttachment"] = GetRandomPresetAttachment(secondary);
@@ -329,7 +344,30 @@ ApplyRandomTemporaryLoadoutPreset(loadout)
     return loadout;
 }
 
-GetRandomPresetPrimary()
+RandomizePrimaryLoadout(loadout, previousPrimary, weaponPool)
+{
+    if (IsDefined(weaponPool))
+    {
+        primary = GetRandomPresetValue(weaponPool);
+    }
+    else
+    {
+        primary = GetRandomPresetPrimary(previousPrimary);
+    }
+    loadout["loadoutPrimary"] = primary;
+
+    if (!IsDefined(primary))
+    {
+        PrintLn("Random loadout: no eligible weapons were found.");
+        return undefined;
+    }
+
+    loadout["loadoutPrimaryAttachment"] = GetRandomPresetAttachment(primary);
+    loadout["loadoutPrimaryAttachment2"] = "none";
+    return loadout;
+}
+
+GetRandomPresetPrimary(previousPrimary)
 {
     weapons = [];
 
@@ -340,6 +378,7 @@ GetRandomPresetPrimary()
         if (
             weapon == "" ||
             IsSubStr(weapon, "jugg") ||
+            (IsDefined(previousPrimary) && weapon == previousPrimary) ||
             !maps\mp\gametypes\_class::isValidPrimary(weapon, false)
         )
         {
@@ -585,6 +624,13 @@ SetTemporaryLoadoutPreset(preset, displayName)
     // because this script did not observe the original connected event.
     self EnsureTemporaryLoadoutSpawnWatcher();
     self.pers["fun_mode_temporary_loadout_preset"] = preset;
+
+    if (scripts\gun_game::IsEnabled())
+    {
+        self IPrintLnBold(displayName + " preset queued until Gun Game is disabled");
+        return;
+    }
+
     self IPrintLnBold(displayName + " preset queued for next spawn");
 }
 
@@ -593,7 +639,14 @@ ClearTemporaryLoadoutPreset()
     self.pers["fun_mode_temporary_loadout_preset"] = undefined;
     self.pers["fun_mode_temporary_loadout_active"] = undefined;
     self.pers["gamemodeLoadout"] = undefined;
-    self IPrintLnBold("Saved class queued for next spawn");
+    if (scripts\gun_game::IsEnabled())
+    {
+        self IPrintLnBold("Saved class queued until Gun Game is disabled");
+    }
+    else
+    {
+        self IPrintLnBold("Saved class queued for next spawn");
+    }
 }
 
 IsEligibleTemporaryLoadoutPlayer(player)

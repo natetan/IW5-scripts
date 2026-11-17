@@ -165,6 +165,44 @@ reconciler restores activation weapons, action slots, queued extra rewards,
 selection state, and HUD data without re-awarding or consuming a reward. The
 presets do not rewrite saved custom classes and reset with the match.
 
+## Match-Wide Gun Game Overlay
+
+An administrator can toggle `!gungame` for all humans and bots without changing
+the current gametype, or use `!gungame on` / `!gungame off` for explicit control.
+Repeating the current state leaves assignments unchanged.
+Players carry only one randomized weapon. Gun Game supplies an expanded pool to
+the shared random-weapon/attachment helper; `!preset random` retains its existing
+separate primary/secondary pools and still rerolls both weapons, proficiency,
+and equipment on every spawn as before.
+
+The pool includes the normal primary firearms, all six pistols and four machine
+pistols, plus SMAW (`iw5_smaw`), RPG (`rpg`), Javelin (`javelin`), M320 GLM
+(`m320`), and XM25 (`xm25`). Riot Shield, Stinger, and Juggernaut weapons are
+excluded from both selection and assignment restoration.
+
+Only the killer advances after a hostile kill with the assigned weapon or its
+attachment mode. Each advancement selects a different weapon and supplies fresh
+weapon ammunition. Assigned launcher projectile, splash, and direct-impact kills
+qualify. Melee, equipment, killstreaks, suicides, teamkills, and synthetic
+kill-mode damage do not qualify.
+The assignment and random attachment survive death, respawn, and class changes.
+Secondary-class weapons use the sole primary slot with their normal attachment
+rules and no camo; no separate secondary or Overkill weapon is retained.
+Battlefield weapon pickup is disabled while the overlay is enabled.
+Live swaps follow stock IW5 Gun Game's native weapon-switch/raise path rather
+than instant spawn selection, so ADS transitions out before the new weapon is
+ready. Respawn/loadout rebuilds retain instant spawn weapon selection.
+Only the latest pending swap applies. Removal rechecks live weapon ownership
+for every snapshot entry and preserves killstreak activation items and offhands.
+
+The normal human-primary automatic attachment bonus still applies to eligible
+primary-class weapons, not the added secondary-class weapons. Gun Game
+does not reroll class perks or proficiencies, replenish equipment, rebuild
+health, or consume/re-award earned streaks. It waits out remote-control streak
+use before equipping the pending primary. Personal presets and Knife Runner
+restrictions pause, and resume on the next spawn after `!gungame` is toggled off.
+Disabling does not rebuild the current life; the overlay resets off on map change.
+
 ## Source of Truth
 
 Weapon-specific script damage multipliers are defined in
@@ -178,5 +216,7 @@ Blast Shield's outgoing Danger Close-style multiplier is defined in
 [`gsc/combat_damage_modifiers.gsc`](../gsc/combat_damage_modifiers.gsc).
 Expanded Scavenger classification and refill behavior are defined in
 [`gsc/scavenger.gsc`](../gsc/scavenger.gsc). Temporary presets are defined in
-[`gsc/temporary_loadouts.gsc`](../gsc/temporary_loadouts.gsc). When behavior
-changes, update this document in the same commit.
+[`gsc/temporary_loadouts.gsc`](../gsc/temporary_loadouts.gsc), including the shared
+random weapon/attachment construction. The Gun Game overlay and expanded pool
+are implemented in [`gsc/gun_game.gsc`](../gsc/gun_game.gsc). When behavior changes,
+update this document in the same commit.

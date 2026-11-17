@@ -36,12 +36,44 @@ GUIDs to this repository.
 | `!help <command>` | 0 | Displays the command's usage and required permission level. |
 | `!permission` | 0 | Displays the issuing player's current command permission. Alias: `!perm`. |
 | `!preset <sniper\|gunner\|smg\|boom\|knife\|random\|default>` | 0 | Queues a match-temporary class preset for the next spawn. `random` rerolls both weapons, one valid attachment per weapon, the primary proficiency, lethal, and tactical equipment on every spawn while preserving perks, deathstreak, and strike package. `default` restores the currently selected saved class. Preset details are documented in [`modifications/WEAPONS.md`](./modifications/WEAPONS.md). |
+| `!gungame [on\|off]` | 3 | Toggles a match-wide single-weapon overlay for all humans and bots, or explicitly enables/disables it. Everyone receives one random firearm or launcher with no backup weapon. Riot Shield and Stinger are excluded. A hostile kill with the assigned weapon rerolls only the killer. Death retains the assignment. Personal presets pause until disabled. |
 | `!random` | 3 | Immediately loads a random map from the complete configured mapvote pool while retaining the current Domination, Drop Zone, or Kill Confirmed recipe. Alias: `!randommap`. The current map is excluded when alternatives exist. Unsafe Drop Zone combinations use the same fallback rules as normal map voting. |
 | `!killmode <chain\|virus\|aoe\|splash\|vamp\|off>` | 3 | Sets the issuing player's non-killstreak weapon effect for the current map. `chain` spreads final killing-hit damage to the nearest unvisited eligible player; `virus` lethally headshots targets within 2,000 units instead of copying the original damage; `aoe` repeats final damage against every eligible player in range; `splash` divides half of every hit's final damage among nearby eligible players; `vamp` converts hostile bullet damage into uncapped health; `off` restores normal weapon behavior. |
 | `!possess` | 3 | Toggles the caller-only Possession prototype for the current map. A hostile kill moves the caller into the victim through a short first-person camera transition and grants a fresh copy of the victim's class loadout while preserving the caller's earned streak queue. |
 | `!reflect` | 3 | Toggles personal damage reflection for the current map. Hostile melee and direct SMAW/RPG impacts deal no damage to the caller and instead route a lethal hit of the same type back to that attacker with the caller credited for the kill. Authorized Fun Mode classes 13–15 receive reflection automatically. The directly struck player also ignores that impact's paired splash callback; friendly damage and ordinary nearby rocket splash are unchanged. |
 | `!super` | 3 | Toggles the complete Fun Mode class 13–15 package for the caller during the current map. While enabled it grants every base and Pro perk, hidden Specialist bonuses, Impact, Marathon/unlimited sprint, movement composition, defensive resistance, reflection, and the other systems that use super-class eligibility. The overlay reapplies after each spawn. Disabling it immediately removes only perks introduced by the command, preserving perks already supplied by the selected class; selecting an authorized class 13–15 still provides its normal package. |
 | `!impersonate <weapon\|off>` | 3 | Displays the caller's ordinary primary/secondary firearm kills as another stock weapon and additionally credits that weapon's persistent kills, headshots, and weapon XP without changing the equipped gun. Alias: `!imp`. The setting lasts for the current map. |
+
+## Gun Game Overlay
+
+`!gungame` requires level 3 and toggles the overlay for the current map without
+changing the underlying gametype. Use `!gungame off` to disable it explicitly or
+`!gungame on` to enable it. Repeating the current state does not reroll weapons.
+Enabling it replaces every living player's
+weapons; dead players and late joiners receive their assignment on spawn.
+Each qualifying kill grants the killer a different random weapon with a valid
+random attachment. Other players keep their weapons. The same assigned weapon
+and attachment return after death or a class change, with normal fresh spawn ammo.
+The pool includes ordinary primary firearms, pistols, machine pistols, and
+SMAW, RPG, Javelin, M320 GLM, and XM25. Riot Shield, Stinger, and Juggernaut
+weapons are excluded, including when restoring an assignment after a loadout rebuild.
+Secondary-class weapons occupy the sole weapon slot; no backup is granted.
+Live swaps use the native weapon-switch/raise animation, leaving ADS rather than
+instantly replacing the current sight picture; spawn loadouts retain instant selection.
+
+Kills from the assigned firearm, its attached weapon mode, or the assigned
+launcher's projectile, splash, or direct impact qualify. Equipment,
+ordinary knife melee, killstreaks, suicides, teamkills, and synthetic kill-mode
+damage do not advance the assignment. Qualification uses the real weapon even
+when `!impersonate` changes its displayed attribution.
+
+Perks, proficiencies, equipment, health, and earned streaks are not rerolled or
+refilled by a weapon swap. Battlefield weapon pickup is disabled so players
+cannot bypass the single-weapon restriction. Swaps wait for active remote-control
+streak use to finish. Personal `!preset` choices are remembered but paused,
+including Knife Runner restrictions; presets or the saved class resume on the
+next spawn after disabling Gun Game. Disabling restores weapon pickup immediately,
+but does not refill or rebuild the current life. A new map starts with the overlay off.
 
 ## Weapon Impersonation
 

@@ -94,6 +94,12 @@ main()
         "!impersonate <weapon|off>"
     );
     registerAdminChatCommand(
+        "gungame",
+        3,
+        ::gunGameAdminChatCommand,
+        "!gungame [on|off]"
+    );
+    registerAdminChatCommand(
         "preset",
         0,
         ::presetAdminChatCommand,
@@ -117,6 +123,7 @@ main()
     level.funModeChatAliases["impersonate"] = "impersonate";
     level.funModeChatAliases["imp"] = "impersonate";
     level.funModeChatAliases["preset"] = "preset";
+    level.funModeChatAliases["gungame"] = "gungame";
 
     level thread watchAdminChatCommands();
 }
@@ -345,6 +352,30 @@ impersonateAdminChatCommand(args)
         "^2Weapon impersonation enabled:^7 " + weaponBase +
         " ^3(use !impersonate off to disable)^7"
     );
+}
+
+gunGameAdminChatCommand(args)
+{
+    if (!args.size)
+    {
+        self scripts\gun_game::Toggle();
+        return;
+    }
+
+    if (args.size > 1)
+    {
+        self tell("^3Usage:^7 !gungame [on|off]");
+        return;
+    }
+
+    mode = ToLower(args[0]);
+    if (mode != "on" && mode != "off")
+    {
+        self tell("^3Usage:^7 !gungame [on|off]");
+        return;
+    }
+
+    self scripts\gun_game::Toggle(mode == "on");
 }
 
 presetAdminChatCommand(args)

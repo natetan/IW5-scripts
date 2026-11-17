@@ -25,6 +25,31 @@ operations are documented separately.
 | Fun Mode super-class damage resistance | Authorized classes 13–15 reflect hostile melee and direct SMAW/RPG impacts, while taking half damage from other direct projectile collisions. Same-team melee and rockets that can deal damage under the current friendly-fire rules retain the preexisting half-damage resistance. The rules reuse the existing super-class class/GUID eligibility check. | Qualifying hostile melee and SMAW/RPG `MOD_PROJECTILE` hits plus the direct victim's paired splash are suppressed and reflected; friendly `MOD_MELEE`, friendly SMAW/RPG direct impacts, and other `MOD_PROJECTILE` damage are **0.50×**. Unrelated projectile splash, bullets, explosives, and other damage types remain unchanged. The residual resistance values remain tunable with `fun_mode_super_class_melee_damage_multiplier` and `fun_mode_super_class_direct_projectile_damage_multiplier`. |
 | Permissioned non-killstreak weapon modes | A level-3 player can enable a map-scoped effect for primary and secondary weapons, attachment modes such as underbarrel grenade launchers, standalone launchers, carried equipment, melee, and Throwing Knives. `aoe` repeats final killing-hit damage against every eligible player near the victim; `chain` repeatedly selects the nearest unvisited player and repeats the initiating damage; `virus` instead applies a lethal headshot at every hop across a much wider sandbox-testing radius, bypassing Final Stand through stock IW5 headshot rules where applicable; `splash` leaves the direct hit unchanged and divides a shared secondary pool among other eligible players on every hit; `vamp` instead applies only to hostile non-killstreak bullet hits and converts actual damage into uncapped health. Area modes ignore cover and route synthetic damage through IW5's native callback. Stock and repository-registered killstreak weapons are excluded. | AoE, chain, and splash use a **382-unit** range; virus uses **2,000 units per hop**. Splash distributes **50%** of each final hit's damage across eligible secondary targets. Vamp restores **100%** of actual bullet damage, excludes overkill and teammate damage, and has no script-side health cap. A Ballistic Vest can raise a low Vamp pool to its normal armored minimum but never reduces a higher existing pool when granted or broken. Chain and virus wait **0.15 seconds** between kills. Chain stops after **17 secondary hops**, when no target is nearby, or when copied damage fails to kill; virus has no hop cap and stops only when no unvisited eligible target remains in range. The mode defaults to `off`, is controlled with `!killmode <chain\|virus\|aoe\|splash\|vamp\|off>`, and resets on map change. |
 
+`!gungame` is a level-3, match-wide single-weapon overlay for humans and bots.
+The bare command toggles it; `!gungame on` and `!gungame off` set it explicitly
+without changing weapons again if it is already in that state.
+Only the killer rerolls after a hostile kill with the assigned weapon; everyone
+else retains their assignment, and deaths do not reroll it. Primary firearms,
+pistols, machine pistols, and launchers can fill the single slot; Riot Shield,
+Stinger, and Juggernaut weapons cannot. Backup weapons and battlefield weapon
+pickup are disabled. The overlay reapplies after normal and
+Bot Warfare loadout rebuilds, covers late joins, and pauses personal presets and
+Knife Runner restrictions. Live weapon swaps use IW5's native switch/raise
+transition out of ADS instead of instant spawn selection.
+Existing class perks, proficiencies, equipment, health,
+and earned streak queues are not reset by weapon swaps. Disabling restores pickup
+immediately and normal loadouts on the next spawn; map changes reset it off.
+Weapon swaps preserve character attachments instead of calling the class-wide
+`_detachAll()` helper; IW5's existing shield tracker handles a shield removed
+from the saved loadout. This and the shield exclusion mitigate the reported
+`AimTarget_GetTagPos` / `j_helmet` crash trigger, but its engine-level cause
+has not been reproduced or confirmed.
+Pending Gun Game swap jobs replace earlier jobs, including those waiting for
+remote streaks to end. Inventory removal checks current ownership before each
+`TakeWeapon` call instead of trusting an inventory snapshot after earlier removals.
+See [`COMMANDS.md`](../COMMANDS.md#gun-game-overlay) for qualifying kills and
+[`WEAPONS.md`](./WEAPONS.md#match-wide-gun-game-overlay) for weapon behavior.
+
 Quick Fix and kill momentum are independent of the selected class, perk
 package, and strike package. Their values are controlled by the corresponding
 `fun_mode_quick_fix_*` and `fun_mode_kill_momentum_*` dvars. Quick Fix is

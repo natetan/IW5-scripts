@@ -62,6 +62,7 @@ UpdateKnifeRunnerLoadoutState()
     }
 
     self.fun_mode_knife_runner_loadout = (
+        !scripts\gun_game::IsEnabled() &&
         GetDvarInt("fun_mode_knife_runner_enable") &&
         IsDefined(self.loadoutPerk1) &&
         self.loadoutPerk1 == "specialty_longersprint" &&
@@ -90,7 +91,8 @@ ApplyKnifeRunnerLoadoutRestrictions()
     {
         if (
             IsDefined(self.fun_mode_knife_runner_pickup_disabled) &&
-            self.fun_mode_knife_runner_pickup_disabled
+            self.fun_mode_knife_runner_pickup_disabled &&
+            !scripts\gun_game::IsEnabled()
         )
         {
             self EnableWeaponPickup();
