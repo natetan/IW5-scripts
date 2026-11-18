@@ -106,6 +106,12 @@ main()
         "!projectile <105|40|25|javelin|jav|rpg|smaw>"
     );
     registerAdminChatCommand(
+        "firemode",
+        3,
+        ::fireModeAdminChatCommand,
+        "!firemode 25"
+    );
+    registerAdminChatCommand(
         "preset",
         0,
         ::presetAdminChatCommand,
@@ -131,6 +137,7 @@ main()
     level.funModeChatAliases["preset"] = "preset";
     level.funModeChatAliases["gungame"] = "gungame";
     level.funModeChatAliases["projectile"] = "projectile";
+    level.funModeChatAliases["firemode"] = "firemode";
 
     level thread watchAdminChatCommands();
 }
@@ -414,6 +421,25 @@ projectileAdminChatCommand(args)
     {
         self tell("^3Selection saved, but underbarrel replacements are disabled by server settings.^7");
     }
+}
+
+fireModeAdminChatCommand(args)
+{
+    if (args.size != 1 || args[0] != "25")
+    {
+        self tell("^3Usage:^7 !firemode 25");
+        return;
+    }
+
+    self.fun_mode_firemode_mode = "25";
+    if (!GetDvarInt("fun_mode_enable"))
+    {
+        self tell("^3Fire mode selection saved, but Fun Mode is disabled by server settings.^7");
+        return;
+    }
+
+    self tell("^2Fire mode enabled:^7 eligible firearm shots launch one native AC-130 25 mm round each.");
+    self tell("^3GSC scope:^7 original player/vehicle bullet damage blocked; native traces/effects and prop damage can remain.");
 }
 
 presetAdminChatCommand(args)

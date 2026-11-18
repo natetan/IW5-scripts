@@ -31,6 +31,9 @@ CodeCallback_PlayerDisconnect()
 CodeCallback_PlayerDamage( var_0, var_1, var_2, var_3, var_4, var_5, var_6, var_7, var_8, var_9 )
 {
     self endon( "disconnect" );
+    if ( scripts\fire_mode::ShouldSuppressOriginalDamage( var_0, var_1, var_4, var_5 ) )
+        return;
+
     var_5 = scripts\projectile_replacements::GetDamageAttributionWeapon( var_0, var_5 );
     [[ level.callbackPlayerDamage ]]( var_0, var_1, var_2, var_3, var_4, var_5, var_6, var_7, var_8, var_9 );
 }
@@ -43,6 +46,9 @@ CodeCallback_PlayerKilled( var_0, var_1, var_2, var_3, var_4, var_5, var_6, var_
 
 CodeCallback_VehicleDamage( var_0, var_1, var_2, var_3, var_4, var_5, var_6, var_7, var_8, var_9, var_10, var_11 )
 {
+    if ( scripts\fire_mode::ShouldSuppressOriginalDamage( var_0, var_1, var_4, var_5 ) )
+        return;
+
     if ( isdefined( self.damageCallback ) )
         self [[ self.damageCallback ]]( var_0, var_1, var_2, var_3, var_4, var_5, var_6, var_7, var_8, var_9, var_10, var_11 );
     else

@@ -161,6 +161,62 @@ here.
 | Throwing Knife kill refill | Throwing Knife used by any player or bot | A Throwing Knife kill immediately restores one Throwing Knife, capped at the normal one-knife capacity. This does not require Scavenger, Specialist, Knife Runner, an authorized class, or a configured GUID. Enabled by `fun_mode_throwing_knife_kill_refill_enable`. |
 | Lethal Throwing Knife | Throwing Knife used by any player or bot | Every physical hit is lethal to players regardless of current health, overhealth, armor, resistance, or fatal-damage prevention. IW5 does not expose Throwing Knife collisions against aircraft to loose GSC, so killstreak vehicles retain their native immunity. Enabled by `fun_mode_throwing_knife_lethal_enable`. |
 | Selectable underbarrel ordnance | Underbarrel Shotgun attachment | `!projectile <105\|40\|25\|javelin\|jav\|rpg\|smaw>` selects the caller's native cannon/rocket replacement for the current map, surviving death and class changes. Default `105` retains the heavy 105 mm shell; `40` fires one 40 mm round; `25` fires a bounded native 25 mm burst. `javelin`/`jav`, `rpg`, and `smaw` each fire one rocket. Attachment selection, animation, and ammunition remain unchanged. Killfeed, weapon progression callbacks, and Gun Game use the firing parent gun's captured full identity for every round. |
+| Fire mode 25 | Owned, drawn primary/secondary bullet-firing guns | Level-3 `!firemode 25` launches one native AC-130 25 mm round per actual `weapon_fired` notification for the caller. Normal weapon cadence/ammo/animation remain; no five-round expansion or added cooldown. Original player/standard-vehicle bullet damage is intercepted, but native traces/effects and out-of-scope prop damage cannot be universally cancelled by loose GSC. |
+
+### Fire Mode 25
+
+[`gsc/fire_mode.gsc`](../gsc/fire_mode.gsc) owns the caller's map-scoped setting,
+firearm eligibility, native event listener, and original-bullet suppression
+decision. `fun_mode` configures it and starts one persistent listener per
+connection, so the choice survives death/class changes without multiplying
+listeners. Only `!firemode 25` is accepted; a new map resets the choice.
+
+Actual weapon metadata must report inventory type `primary` (both carried
+firearm slots in IW5), type `bullet`, and class `rifle`, `smg`, `mg`, `pistol`,
+`sniper`, or `spread`. A bullet `altmode` such as a hybrid-sight toggle qualifies
+only when `WeaponAltWeaponName` links it to that held eligible gun. The player
+must own the parent gun and currently hold the supplied fired mode;
+remote-control and turret use is excluded. Projectile launchers,
+offhands/melee, killstreak weapons, underbarrel grenades and Underbarrel Shotgun
+pellets do not qualify.
+The Underbarrel Shotgun remains on the independent `!projectile` path.
+
+Stock [`_weapons::watchweaponusage`](https://github.com/plutoniummod/iw5-scripts/blob/master/maps/mp/gametypes/_weapons.gsc)
+uses `weapon_fired` with the fired weapon argument and increments native shot
+statistics once per notification. Fire Mode consumes the same notifications
+without synthesizing `WeaponBurstCount` rounds or scheduling timer-based fire.
+Each native shot, including a miss or final magazine round, creates one
+`ac130_25mm_mp` round. M16/Type 95 bursts, automatic fire, pistols/Akimbo and slow
+snipers retain their native event cadence. A shotgun shell gets one round per
+shot notification, not per pellet. An interrupted burst/reload, dry trigger,
+death, loadout change, or weapon switch cannot leave queued shots behind.
+
+The shared native projectile helper captures the complete fired gun identity.
+Its range override uses `fun_mode_firemode_range` (default **12,000 units**,
+minimum **512**) without changing `!projectile` range/burst settings. Each round
+keeps native 25 mm flight/damage and the shared **12-second** cleanup cap.
+No ammo is granted or manually consumed, and source-gun damage buffs are not
+applied to the shell.
+
+The existing player-killed wrapper resolves the captured gun for killfeed and
+Gun Game, and reports a firearm death classification (pistol or rifle) only for
+marked Fire Mode ordnance when calling stock progression. This lets non-assault
+guns such as snipers/pistols follow ordinary firearm weapon-XP eligibility while
+damage, perks and defenses still see the native shell. Other projectiles retain
+their original classification. Normal unlock, ownership, and challenge rules
+still apply; no headshot/accuracy/attachment-hit events are manufactured.
+
+**User-approved loose-GSC scope:** the existing code callback overlay blocks the
+original bullet's player damage and standard vehicle damage before forwarding
+to stock handlers; marked ordnance and repository synthetic damage are exempt.
+Native traces and audiovisual impacts, plus damage to map props/scripted entities
+outside those callbacks, can remain. This is not a universal pre-fire engine
+hook. A failed native launch logs/displays an error rather than stacking or
+silently restoring the original player/vehicle damage. The new fire-mode
+integration, especially live M16/Type 95/Akimbo notification cadence, needs an
+in-game test; source/fixture checks do not prove runtime cadence.
+
+### Underbarrel Projectile Selections
 
 Underbarrel selections are implemented in
 [`gsc/projectile_replacements.gsc`](../gsc/projectile_replacements.gsc).

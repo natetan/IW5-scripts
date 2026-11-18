@@ -63,6 +63,10 @@ PlayerKilledWithImpersonation(
         inflictor,
         weapon
     );
+    reportedMeansOfDeath = scripts\projectile_replacements::GetKillAttributionMeansOfDeath(
+        inflictor,
+        meansOfDeath
+    );
     shouldCredit = ShouldImpersonateKill(self, attacker, weapon, meansOfDeath);
 
     if (shouldCredit)
@@ -74,7 +78,7 @@ PlayerKilledWithImpersonation(
         inflictor,
         attacker,
         damage,
-        meansOfDeath,
+        reportedMeansOfDeath,
         reportedWeapon,
         direction,
         hitLocation,

@@ -135,6 +135,7 @@ Main()
     scripts\kill_ammo_refills::Configure();
     scripts\throwing_knife_modifications::Configure();
     scripts\projectile_replacements::Configure();
+    scripts\fire_mode::Configure();
     scripts\weapon_damage_multipliers::Configure();
     scripts\kill_modes::Configure();
     scripts\possession_mode::Configure();
@@ -447,6 +448,7 @@ OnPlayerConnect()
         player scripts\player_movement::OnPlayerConnected();
         player scripts\kill_ammo_refills::OnPlayerConnected();
         player scripts\projectile_replacements::OnPlayerConnected();
+        player scripts\fire_mode::OnPlayerConnected();
         player scripts\knife_runner::OnPlayerConnected();
         player scripts\deaths_dance::OnPlayerConnected();
         player scripts\striker_modifications::OnPlayerConnected();

@@ -38,12 +38,59 @@ GUIDs to this repository.
 | `!preset <sniper\|gunner\|smg\|boom\|knife\|random\|default>` | 0 | Queues a match-temporary class preset for the next spawn. `random` rerolls both weapons, one valid attachment per weapon, the primary proficiency, lethal, and tactical equipment on every spawn while preserving perks, deathstreak, and strike package. `default` restores the currently selected saved class. Preset details are documented in [`modifications/WEAPONS.md`](./modifications/WEAPONS.md). |
 | `!gungame [on\|off]` | 3 | Toggles a match-wide single-weapon overlay for all humans and bots, or explicitly enables/disables it. Everyone receives one random firearm or launcher with no backup weapon. Riot Shield and Stinger are excluded. A hostile kill with the assigned weapon rerolls only the killer. Death retains the assignment. Personal presets pause until disabled. |
 | `!projectile <105\|40\|25\|javelin\|jav\|rpg\|smaw>` | 3 | Selects the caller's native cannon/rocket Underbarrel Shotgun replacement for this map. Other players keep their selections. Death and class changes retain the choice. Without a selection, the attachment keeps firing the heavy 105 mm shell. `25` fires a short burst per attachment shot. |
+| `!firemode 25` | 3 | Enables caller-only native AC-130 25 mm rounds for eligible primary/secondary firearm shots during this map. One round per native fired-shot notification, at the gun's own cadence/ammo/animation; not the five-round underbarrel burst. Original player/vehicle bullet damage is suppressed, with the loose-GSC limitations below. |
 | `!random` | 3 | Immediately loads a random map from the complete configured mapvote pool while retaining the current Domination, Drop Zone, or Kill Confirmed recipe. Alias: `!randommap`. The current map is excluded when alternatives exist. Unsafe Drop Zone combinations use the same fallback rules as normal map voting. |
 | `!killmode <chain\|virus\|aoe\|splash\|vamp\|off>` | 3 | Sets the issuing player's non-killstreak weapon effect for the current map. `chain` spreads final killing-hit damage to the nearest unvisited eligible player; `virus` lethally headshots targets within 2,000 units instead of copying the original damage; `aoe` repeats final damage against every eligible player in range; `splash` divides half of every hit's final damage among nearby eligible players; `vamp` converts hostile bullet damage into uncapped health; `off` restores normal weapon behavior. |
 | `!possess` | 3 | Toggles the caller-only Possession prototype for the current map. A hostile kill moves the caller into the victim through a short first-person camera transition and grants a fresh copy of the victim's class loadout while preserving the caller's earned streak queue. |
 | `!reflect` | 3 | Toggles personal damage reflection for the current map. Hostile melee and direct SMAW/RPG impacts deal no damage to the caller and instead route a lethal hit of the same type back to that attacker with the caller credited for the kill. Authorized Fun Mode classes 13–15 receive reflection automatically. The directly struck player also ignores that impact's paired splash callback; friendly damage and ordinary nearby rocket splash are unchanged. |
 | `!super` | 3 | Toggles the complete Fun Mode class 13–15 package for the caller during the current map. While enabled it grants every base and Pro perk, hidden Specialist bonuses, Impact, Marathon/unlimited sprint, movement composition, defensive resistance, reflection, and the other systems that use super-class eligibility. The overlay reapplies after each spawn. Disabling it immediately removes only perks introduced by the command, preserving perks already supplied by the selected class; selecting an authorized class 13–15 still provides its normal package. |
 | `!impersonate <weapon\|off>` | 3 | Displays the caller's ordinary primary/secondary firearm kills as another stock weapon and additionally credits that weapon's persistent kills, headshots, and weapon XP without changing the equipped gun. Alias: `!imp`. The setting lasts for the current map. |
+
+## Fire Mode
+
+`!firemode 25` applies only to the caller, remains enabled through respawns and
+class changes, and resets on a new map. Only argument `25` is supported.
+Repeating the command does not grant ammo, refill a magazine, or fire a round.
+
+Eligible held guns must have native inventory type `primary` (IW5 uses this for
+both carried firearm slots), type `bullet`, and class rifle, SMG, MG, pistol,
+sniper, or spread. An `altmode` bullet mode such as a hybrid-sight toggle also
+qualifies when it belongs to that held primary/secondary gun. The shot must come
+from the owned, currently drawn gun; remote-control/turret use is excluded.
+Launchers, offhands, melee, killstreak weapons, underbarrel grenades, and
+Underbarrel Shotgun pellets are not converted. `!projectile` still
+independently controls the Underbarrel Shotgun attachment.
+
+The listener consumes the fired weapon supplied by `weapon_fired`, the same
+event stock IW5 uses to increment `totalShots`/weapon shots once per notification.
+It launches one actual `ac130_25mm_mp` round even on a miss, with no arbitrary
+cooldown, delayed burst expansion, ammo polling, or fire-button polling.
+M16/Type 95 rounds follow their individual native shot notifications; interrupted
+bursts generate no scheduled replacements. Automatic, semi-auto, bolt-action,
+and Akimbo fire follow the same rule. A shotgun shell produces one replacement
+per native shot event, not one per pellet. Reloading/dry-firing/death cannot
+create new rounds without an eligible native shot event.
+
+Native 25 mm damage is retained, not the source gun's damage or sniper buffs.
+Player death callbacks receive the captured firing gun and its firearm damage
+classification for normal weapon XP/kills/challenges, even if the player switches
+guns or dies before impact; Gun Game qualifies the original gun. Damage/defense
+processing still sees native 25 mm ordnance. No extra accuracy, headshot, or
+attachment-hit events are fabricated.
+
+**Approved GSC limitation:** this is not an engine-level bullet cancellation.
+Original bullet damage is blocked before the player damage callback and the
+standard vehicle damage callback, including on misses that later hit one of
+those targets. Native bullet traces, visuals/sound/impact effects and damage to
+map props or scripted entities outside those callbacks can remain. Replacement
+ordnance and synthetic damage are not re-converted. If the native projectile
+cannot spawn, an explicit error is shown; the original blocked player/vehicle
+damage is not silently restored.
+
+`fun_mode_firemode_range` controls the aim-point distance (default **12,000**,
+minimum **512** units), independently of the underbarrel setting. Rounds have
+the shared **12-second** cleanup cap. Live M16/Type 95/Akimbo cadence and the
+new fire-mode integration still require in-game testing.
 
 ## Underbarrel Projectile Selections
 

@@ -211,11 +211,14 @@ GetBurstInterval()
     return interval / 1000.0;
 }
 
-FireProjectileRound(weapon, sourceWeapon, mode)
+FireProjectileRound(weapon, sourceWeapon, mode, range, sourceMeansOfDeath)
 {
     direction = anglestoforward(self getplayerangles());
     launchOrigin = self geteye() + direction * 32;
-    range = GetDvarFloat("fun_mode_underbarrel_cannon_range");
+    if (!IsDefined(range))
+    {
+        range = GetDvarFloat("fun_mode_underbarrel_cannon_range");
+    }
 
     if (range < 512)
     {
@@ -239,6 +242,10 @@ FireProjectileRound(weapon, sourceWeapon, mode)
 
     // Capture the firing gun now, not whichever gun is held at impact.
     projectile.fun_mode_underbarrel_source_weapon = sourceWeapon;
+    if (IsDefined(sourceMeansOfDeath))
+    {
+        projectile.fun_mode_firemode_source_means = sourceMeansOfDeath;
+    }
     if (mode == "javelin")
     {
         // Restore the earlier working attachment's direct-flight setup.
@@ -297,6 +304,19 @@ GetDamageAttributionWeapon(inflictor, reportedWeapon)
     // The damage modifier has no inflictor parameter. Resolve only marked
     // Javelins before that callback, not by guessing from the attacker's gun.
     return GetKillAttributionWeapon(inflictor, reportedWeapon);
+}
+
+GetKillAttributionMeansOfDeath(inflictor, reportedMeansOfDeath)
+{
+    if (
+        IsDefined(inflictor) &&
+        IsDefined(inflictor.fun_mode_firemode_source_means)
+    )
+    {
+        return inflictor.fun_mode_firemode_source_means;
+    }
+
+    return reportedMeansOfDeath;
 }
 
 IsUnderbarrelShotgunWeapon(weapon)
