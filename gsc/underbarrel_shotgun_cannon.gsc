@@ -1,9 +1,9 @@
 /*
-    Underbarrel Shotgun Javelin - IW5 / Plutonium
+    Underbarrel Shotgun AC-130 Cannon - IW5 / Plutonium
 
-    Replaces the underbarrel shotgun attachment's pellet damage with a real
-    Javelin projectile forced into direct flight along the user's aim. The
-    attachment still owns selection, firing input, animation, and ammunition.
+    Replaces the underbarrel shotgun attachment's pellet damage with a native
+    AC-130 105 mm shell fired along the user's aim. The attachment still owns
+    selection, firing input, animation, and ammunition.
     Regular shotguns and the standalone Javelin are unaffected.
 */
 
@@ -14,8 +14,17 @@ main()
 
 Configure()
 {
+    // Existing server settings seed the renamed dvars unless explicitly set.
     SetDvarIfNotInitialized("fun_mode_underbarrel_javelin_enable", 1);
     SetDvarIfNotInitialized("fun_mode_underbarrel_javelin_range", 12000);
+    SetDvarIfNotInitialized(
+        "fun_mode_underbarrel_cannon_enable",
+        GetDvarInt("fun_mode_underbarrel_javelin_enable")
+    );
+    SetDvarIfNotInitialized(
+        "fun_mode_underbarrel_cannon_range",
+        GetDvarFloat("fun_mode_underbarrel_javelin_range")
+    );
 }
 
 OnPlayerConnected()
@@ -33,7 +42,7 @@ WatchUnderbarrelShotgunFire()
         self waittill("weapon_fired");
 
         if (
-            !GetDvarInt("fun_mode_underbarrel_javelin_enable") ||
+            !GetDvarInt("fun_mode_underbarrel_cannon_enable") ||
             !IsAlive(self)
         )
         {
@@ -47,15 +56,23 @@ WatchUnderbarrelShotgunFire()
             continue;
         }
 
-        self FireDirectUnderbarrelJavelin();
+        self FireUnderbarrelCannon();
     }
 }
 
-FireDirectUnderbarrelJavelin()
+FireUnderbarrelCannon()
 {
+    sourceWeapon = self GetCurrentPrimaryWeapon();
+
+    if (!IsDefined(sourceWeapon) || sourceWeapon == "" || sourceWeapon == "none")
+    {
+        PrintLn("Underbarrel cannon: firing weapon has no parent weapon.");
+        return;
+    }
+
     direction = anglestoforward(self getplayerangles());
     launchOrigin = self geteye() + direction * 32;
-    range = GetDvarFloat("fun_mode_underbarrel_javelin_range");
+    range = GetDvarFloat("fun_mode_underbarrel_cannon_range");
 
     if (range < 512)
     {
@@ -63,31 +80,25 @@ FireDirectUnderbarrelJavelin()
     }
 
     targetOrigin = launchOrigin + direction * range;
-    missile = magicbullet(
-        "javelin_mp",
+    projectile = magicbullet(
+        "ac130_105mm_mp",
         launchOrigin,
         targetOrigin,
         self
     );
 
-    if (!IsDefined(missile))
+    if (!IsDefined(projectile))
     {
+        PrintLn("Underbarrel cannon: AC-130 105 mm projectile was not created.");
         return;
     }
 
-    if (IsDefined(self.primaryWeapon))
-    {
-        // Preserve the complete carried primary identity so the stock death,
-        // obituary, challenge, and progression paths treat missile kills like
-        // ordinary attachment kills from that weapon.
-        missile.fun_mode_underbarrel_source_weapon = self.primaryWeapon;
-    }
-
-    missile missile_setflightmodedirect();
-    missile thread CleanUpDirectUnderbarrelJavelin();
+    // Capture the firing gun now, not whichever gun is held at impact.
+    projectile.fun_mode_underbarrel_source_weapon = sourceWeapon;
+    projectile thread CleanUpUnderbarrelCannon();
 }
 
-CleanUpDirectUnderbarrelJavelin()
+CleanUpUnderbarrelCannon()
 {
     self endon("death");
     level endon("game_ended");
@@ -103,7 +114,7 @@ CleanUpDirectUnderbarrelJavelin()
 SuppressPelletDamage(damage, weapon)
 {
     if (
-        GetDvarInt("fun_mode_underbarrel_javelin_enable") &&
+        GetDvarInt("fun_mode_underbarrel_cannon_enable") &&
         IsUnderbarrelShotgunWeapon(weapon)
     )
     {

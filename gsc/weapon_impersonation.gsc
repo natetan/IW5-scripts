@@ -59,7 +59,7 @@ PlayerKilledWithImpersonation(
     deathAnimDuration
 )
 {
-    reportedWeapon = scripts\underbarrel_shotgun_javelin::GetKillAttributionWeapon(
+    reportedWeapon = scripts\underbarrel_shotgun_cannon::GetKillAttributionWeapon(
         inflictor,
         weapon
     );

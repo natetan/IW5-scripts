@@ -128,7 +128,7 @@ is the final lock phase, not total time from pressing ADS; ground acquisition
 also needs stable samples, and lock completion is quantized to polling frames.
 Vehicle line-of-sight, reticle checks, EMP handling, and existing overhead /
 top-attack clearance checks are not bypassed. Native firing animation, missile
-launch/flight, Stinger targeting, and the direct-fire underbarrel Javelin are
+launch/flight, Stinger targeting, and the underbarrel AC-130 cannon are
 unchanged.
 
 Set `fun_mode_javelin_targeting_enable 0` **before loading a map** to keep stock
@@ -160,7 +160,18 @@ here.
 | Knife Runner | Handguns equipped with Tactical Knife, plus Akimbo USP .45s | Requires an original loadout containing Extreme Conditioning, Quickdraw, Dead Silence, Throwing Knife, Tactical Insertion, and the Juiced deathstreak. The primary is removed, the eligible sidearm's magazine and reserve are forced to zero, firearm ammo refills are suppressed, and battlefield weapon pickup interactions are disabled. The sidearm receives **1.50×** sprint speed while drawn, and a confirmed melee or Throwing Knife kill while active grants **2.00 seconds** of damage immunity with a visible tenths-of-a-second HUD countdown. Throwing the knife or placing the insertion does not disable future activation. Juiced only needs to be selected, not currently active. Juggernauts are excluded. |
 | Throwing Knife kill refill | Throwing Knife used by any player or bot | A Throwing Knife kill immediately restores one Throwing Knife, capped at the normal one-knife capacity. This does not require Scavenger, Specialist, Knife Runner, an authorized class, or a configured GUID. Enabled by `fun_mode_throwing_knife_kill_refill_enable`. |
 | Lethal Throwing Knife | Throwing Knife used by any player or bot | Every physical hit is lethal to players regardless of current health, overhealth, armor, resistance, or fatal-damage prevention. IW5 does not expose Throwing Knife collisions against aircraft to loose GSC, so killstreak vehicles retain their native immunity. Enabled by `fun_mode_throwing_knife_lethal_enable`. |
-| Direct-fire Javelin | Underbarrel Shotgun attachment | Replaces the attachment's pellet damage with a `javelin_mp` projectile launched straight along the user's aim rather than using the normal lock-on/top-attack path. The underbarrel attachment retains its own selection, animation, and ammunition. Missile kills inherit the carried primary's identity for the killfeed, weapon kills, XP, and challenges, matching normal attachment attribution; ordinary shotguns and the standalone Javelin are unchanged. Enabled by `fun_mode_underbarrel_javelin_enable`; direct-flight range defaults to **12,000 units**. |
+| AC-130 105 mm cannon | Underbarrel Shotgun attachment | Replaces the attachment's pellet damage with the native heavy AC-130 shell (`ac130_105mm_mp`), aimed along the player's view with the shell's native flight/explosion behavior. The attachment retains its selection, animation, and ammunition. Shells capture the firing parent gun's complete identity for the killfeed, weapon kills, XP, challenges, and Gun Game progression, even if the player switches guns before impact; ordinary shotguns, standalone Javelin, and the AC-130 streak are unchanged. Enabled by `fun_mode_underbarrel_cannon_enable`; aim-point range defaults to **12,000 units**, clamped to at least **512**. |
+
+The underbarrel cannon is implemented in
+[`gsc/underbarrel_shotgun_cannon.gsc`](../gsc/underbarrel_shotgun_cannon.gsc).
+`fun_mode_underbarrel_cannon_range` controls the aim-point distance, not a forced
+missile flight mode or explosion radius. The old
+`fun_mode_underbarrel_javelin_enable` / `fun_mode_underbarrel_javelin_range`
+settings seed the corresponding cannon dvars on startup only when the new dvar
+is unset; explicit cannon settings take precedence. Set
+`fun_mode_underbarrel_cannon_enable 0` to restore ordinary attachment pellets.
+The stock cannon shell supplies its own damage; it does not inherit the standalone
+Javelin's 10x multiplier. Native weapon progression/unlock rules still apply.
 
 ## Temporary In-Match Presets
 
