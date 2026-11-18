@@ -100,6 +100,12 @@ main()
         "!gungame [on|off]"
     );
     registerAdminChatCommand(
+        "projectile",
+        3,
+        ::projectileAdminChatCommand,
+        "!projectile <105|40|25>"
+    );
+    registerAdminChatCommand(
         "preset",
         0,
         ::presetAdminChatCommand,
@@ -124,6 +130,7 @@ main()
     level.funModeChatAliases["imp"] = "impersonate";
     level.funModeChatAliases["preset"] = "preset";
     level.funModeChatAliases["gungame"] = "gungame";
+    level.funModeChatAliases["projectile"] = "projectile";
 
     level thread watchAdminChatCommands();
 }
@@ -376,6 +383,37 @@ gunGameAdminChatCommand(args)
     }
 
     self scripts\gun_game::Toggle(mode == "on");
+}
+
+projectileAdminChatCommand(args)
+{
+    if (args.size != 1)
+    {
+        self tell("^3Usage:^7 !projectile <105|40|25>");
+        return;
+    }
+
+    mode = scripts\projectile_replacements::ResolveMode(args[0]);
+    if (!IsDefined(mode))
+    {
+        self tell("^1Unknown projectile:^7 " + args[0]);
+        self tell("^3Supported modes:^7 105, 40, 25. Knife, Predator, Reaper, and Osprey replacements are unavailable.");
+        return;
+    }
+
+    self notify("projectile_selection_changed");
+    self.fun_mode_projectile_mode = mode;
+    self tell("^2Underbarrel replacement selected:^7 " + mode);
+    if (mode == "25")
+    {
+        rounds = scripts\projectile_replacements::GetBurstRounds(mode);
+        interval = scripts\projectile_replacements::GetBurstInterval();
+        self tell("^325 mm burst:^7 " + rounds + " rounds, " + Int(interval * 1000) + " ms spacing per attachment shot.");
+    }
+    if (!GetDvarInt("fun_mode_underbarrel_cannon_enable"))
+    {
+        self tell("^3Selection saved, but underbarrel replacements are disabled by server settings.^7");
+    }
 }
 
 presetAdminChatCommand(args)

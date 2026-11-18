@@ -367,7 +367,7 @@ PlayerKilled(
     deathAnimDuration
 )
 {
-    sourceWeapon = scripts\underbarrel_shotgun_cannon::GetKillAttributionWeapon(
+    sourceWeapon = scripts\projectile_replacements::GetKillAttributionWeapon(
         inflictor,
         weapon
     );

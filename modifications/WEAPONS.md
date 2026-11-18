@@ -160,18 +160,51 @@ here.
 | Knife Runner | Handguns equipped with Tactical Knife, plus Akimbo USP .45s | Requires an original loadout containing Extreme Conditioning, Quickdraw, Dead Silence, Throwing Knife, Tactical Insertion, and the Juiced deathstreak. The primary is removed, the eligible sidearm's magazine and reserve are forced to zero, firearm ammo refills are suppressed, and battlefield weapon pickup interactions are disabled. The sidearm receives **1.50×** sprint speed while drawn, and a confirmed melee or Throwing Knife kill while active grants **2.00 seconds** of damage immunity with a visible tenths-of-a-second HUD countdown. Throwing the knife or placing the insertion does not disable future activation. Juiced only needs to be selected, not currently active. Juggernauts are excluded. |
 | Throwing Knife kill refill | Throwing Knife used by any player or bot | A Throwing Knife kill immediately restores one Throwing Knife, capped at the normal one-knife capacity. This does not require Scavenger, Specialist, Knife Runner, an authorized class, or a configured GUID. Enabled by `fun_mode_throwing_knife_kill_refill_enable`. |
 | Lethal Throwing Knife | Throwing Knife used by any player or bot | Every physical hit is lethal to players regardless of current health, overhealth, armor, resistance, or fatal-damage prevention. IW5 does not expose Throwing Knife collisions against aircraft to loose GSC, so killstreak vehicles retain their native immunity. Enabled by `fun_mode_throwing_knife_lethal_enable`. |
-| AC-130 105 mm cannon | Underbarrel Shotgun attachment | Replaces the attachment's pellet damage with the native heavy AC-130 shell (`ac130_105mm_mp`), aimed along the player's view with the shell's native flight/explosion behavior. The attachment retains its selection, animation, and ammunition. Shells capture the firing parent gun's complete identity for the killfeed, weapon kills, XP, challenges, and Gun Game progression, even if the player switches guns before impact; ordinary shotguns, standalone Javelin, and the AC-130 streak are unchanged. Enabled by `fun_mode_underbarrel_cannon_enable`; aim-point range defaults to **12,000 units**, clamped to at least **512**. |
+| Selectable underbarrel ordnance | Underbarrel Shotgun attachment | `!projectile <105\|40\|25>` selects the caller's native AC-130 replacement for the current map, surviving death and class changes. Default `105` retains the heavy 105 mm shell; `40` fires one 40 mm round; `25` fires a bounded native 25 mm burst. Attachment selection, animation, and ammunition remain unchanged. Killfeed, weapon progression callbacks, and Gun Game use the firing parent gun's captured full identity for every round. |
 
-The underbarrel cannon is implemented in
-[`gsc/underbarrel_shotgun_cannon.gsc`](../gsc/underbarrel_shotgun_cannon.gsc).
+Underbarrel selections are implemented in
+[`gsc/projectile_replacements.gsc`](../gsc/projectile_replacements.gsc).
+The command requires permission level 3 and does not change anyone else's
+selection or grant a weapon/attachment. Exact asset mappings are
+`ac130_105mm_mp`, `ac130_40mm_mp`, and `ac130_25mm_mp`, respectively.
+They retain native flight/explosion/damage behavior, with a **12-second** cleanup
+cap per round. There is no scripted hitscan/damage approximation.
+
+The 25 mm mode fires **5 rounds at 75 ms spacing** per original attachment shot,
+without consuming additional attachment ammunition. Each round tracks current
+aim but retains the original full parent-gun identity. Named tunables
+`fun_mode_projectile_25mm_burst_rounds` (default **5**, clamped **1–10**) and
+`fun_mode_projectile_25mm_burst_interval_ms` (default **75**, clamped **50–250**)
+bound the burst. Death, disconnect, team/spectator change, weapon switch, a new
+attachment shot, selection change, and map end cancel pending rounds. The next
+burst step also checks that replacements remain enabled and the original parent
+and attachment are still held, preventing a loadout rebuild from continuing an
+old burst. Already-fired native shells retain their normal independent lifetime.
+
+Throwing Knife, Predator/`predator`, Reaper, and Osprey underbarrel modes are
+removed from selection, precaching, and launch paths. The user reported a native
+knife launch error, hovering/arcing missiles, and an Osprey crash. Stock sources
+show native offhand knife handling and remote/designated-target missile
+lifecycles, but no reliable owner-correct standalone knife launch or forward-only
+missile fix was verified. This is not a claim that such behavior is impossible
+with engine/asset changes. Unsupported stored selections are rejected at firing,
+not silently mapped to a working cannon. The obsolete
+`fun_mode_projectile_hitscan_damage` dvar is no longer read.
+Regular shotguns, standalone Javelin targeting, actual Throwing Knives, and real
+killstreaks are unchanged.
+
+For compatibility, the existing dvar names remain supported.
 `fun_mode_underbarrel_cannon_range` controls the aim-point distance, not a forced
-missile flight mode or explosion radius. The old
+explosion radius; it defaults to **12,000 units**, clamped to at least **512**.
+The old
 `fun_mode_underbarrel_javelin_enable` / `fun_mode_underbarrel_javelin_range`
 settings seed the corresponding cannon dvars on startup only when the new dvar
 is unset; explicit cannon settings take precedence. Set
 `fun_mode_underbarrel_cannon_enable 0` to restore ordinary attachment pellets.
-The stock cannon shell supplies its own damage; it does not inherit the standalone
-Javelin's 10x multiplier. Native weapon progression/unlock rules still apply.
+Physical ordnance supplies its own stock damage and does not inherit the
+standalone Javelin's 10x multiplier. Native weapon progression/unlock rules still
+apply; parent-gun attribution does not synthesize native accuracy or
+attachment-hit events.
 
 ## Temporary In-Match Presets
 

@@ -37,12 +37,55 @@ GUIDs to this repository.
 | `!permission` | 0 | Displays the issuing player's current command permission. Alias: `!perm`. |
 | `!preset <sniper\|gunner\|smg\|boom\|knife\|random\|default>` | 0 | Queues a match-temporary class preset for the next spawn. `random` rerolls both weapons, one valid attachment per weapon, the primary proficiency, lethal, and tactical equipment on every spawn while preserving perks, deathstreak, and strike package. `default` restores the currently selected saved class. Preset details are documented in [`modifications/WEAPONS.md`](./modifications/WEAPONS.md). |
 | `!gungame [on\|off]` | 3 | Toggles a match-wide single-weapon overlay for all humans and bots, or explicitly enables/disables it. Everyone receives one random firearm or launcher with no backup weapon. Riot Shield and Stinger are excluded. A hostile kill with the assigned weapon rerolls only the killer. Death retains the assignment. Personal presets pause until disabled. |
+| `!projectile <105\|40\|25>` | 3 | Selects the caller's native AC-130 Underbarrel Shotgun replacement for this map. Other players keep their selections. Death and class changes retain the choice. Without a selection, the attachment keeps firing the heavy 105 mm shell. `25` fires a short burst per attachment shot. |
 | `!random` | 3 | Immediately loads a random map from the complete configured mapvote pool while retaining the current Domination, Drop Zone, or Kill Confirmed recipe. Alias: `!randommap`. The current map is excluded when alternatives exist. Unsafe Drop Zone combinations use the same fallback rules as normal map voting. |
 | `!killmode <chain\|virus\|aoe\|splash\|vamp\|off>` | 3 | Sets the issuing player's non-killstreak weapon effect for the current map. `chain` spreads final killing-hit damage to the nearest unvisited eligible player; `virus` lethally headshots targets within 2,000 units instead of copying the original damage; `aoe` repeats final damage against every eligible player in range; `splash` divides half of every hit's final damage among nearby eligible players; `vamp` converts hostile bullet damage into uncapped health; `off` restores normal weapon behavior. |
 | `!possess` | 3 | Toggles the caller-only Possession prototype for the current map. A hostile kill moves the caller into the victim through a short first-person camera transition and grants a fresh copy of the victim's class loadout while preserving the caller's earned streak queue. |
 | `!reflect` | 3 | Toggles personal damage reflection for the current map. Hostile melee and direct SMAW/RPG impacts deal no damage to the caller and instead route a lethal hit of the same type back to that attacker with the caller credited for the kill. Authorized Fun Mode classes 13–15 receive reflection automatically. The directly struck player also ignores that impact's paired splash callback; friendly damage and ordinary nearby rocket splash are unchanged. |
 | `!super` | 3 | Toggles the complete Fun Mode class 13–15 package for the caller during the current map. While enabled it grants every base and Pro perk, hidden Specialist bonuses, Impact, Marathon/unlimited sprint, movement composition, defensive resistance, reflection, and the other systems that use super-class eligibility. The overlay reapplies after each spawn. Disabling it immediately removes only perks introduced by the command, preserving perks already supplied by the selected class; selecting an authorized class 13–15 still provides its normal package. |
 | `!impersonate <weapon\|off>` | 3 | Displays the caller's ordinary primary/secondary firearm kills as another stock weapon and additionally credits that weapon's persistent kills, headshots, and weapon XP without changing the equipped gun. Alias: `!imp`. The setting lasts for the current map. |
+
+## Underbarrel Projectile Selections
+
+Equip a gun with the Underbarrel Shotgun attachment, enter (for example)
+`!projectile 25` or `!projectile 40`, and use the attachment normally. The command
+does not grant a gun, attachment, or ammunition. Arguments are case-insensitive.
+Invalid arguments leave the previous selection unchanged.
+
+| Argument | Replacement |
+|---|---|
+| `105` | Native AC-130 heavy **105 mm** shell; the default. |
+| `40` | Native AC-130 40 mm round. |
+| `25` | Native AC-130 25 mm rounds: **5 rounds**, **75 ms apart**, per attachment shot. |
+
+The 25 mm burst consumes only the original attachment shot and tracks current
+aim between rounds. Remaining rounds cancel on death, disconnect, team/spectator
+change, weapon switch, a new attachment shot, selection change, or map end.
+Disabling replacements or rebuilding the held loadout also stops the remaining
+rounds at the next burst step. Server tunables are
+`fun_mode_projectile_25mm_burst_rounds` (default **5**, clamped **1–10**) and
+`fun_mode_projectile_25mm_burst_interval_ms` (default **75**, clamped **50–250**).
+
+**Removed modes:** `tk`, `pred`/`predator`, `reaper`, and `osprey` are rejected.
+The knife failed the native launch call, the missiles did not behave as reliable
+forward-fired ordnance, and Osprey crashed during testing. No verified loose-GSC
+standalone fix was established; these modes and the scripted hitscan
+approximation have been removed rather than replaced with another asset or
+damage simulation. A stale unsupported stored selection reports an error and
+fires nothing until a supported mode is chosen.
+
+All replacements retain attachment input, animation, and ammunition. Their
+player kills report the captured parent gun to the normal killfeed/progression
+callbacks and to Gun Game, even after switching guns before impact. Native
+unlock/progression rules still apply. The new 25 mm burst and its cancellation
+behavior still require in-game testing; the three individual cannon modes were
+reported working by the user.
+
+The existing `fun_mode_underbarrel_cannon_enable` and
+`fun_mode_underbarrel_cannon_range` settings remain valid. Globally disabling
+replacements restores normal attachment pellets without forgetting selections.
+Standalone Javelin targeting, ordinary shotguns, and actual killstreaks are
+unchanged.
 
 ## Gun Game Overlay
 
