@@ -31,6 +31,7 @@ CodeCallback_PlayerDisconnect()
 CodeCallback_PlayerDamage( var_0, var_1, var_2, var_3, var_4, var_5, var_6, var_7, var_8, var_9 )
 {
     self endon( "disconnect" );
+    var_5 = scripts\projectile_replacements::GetDamageAttributionWeapon( var_0, var_5 );
     [[ level.callbackPlayerDamage ]]( var_0, var_1, var_2, var_3, var_4, var_5, var_6, var_7, var_8, var_9 );
 }
 

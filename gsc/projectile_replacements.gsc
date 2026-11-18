@@ -2,7 +2,7 @@
     Underbarrel Shotgun Projectile Selections - IW5 / Plutonium
 
     The attachment owns selection, firing input, animation, and ammunition.
-    Only the tested AC-130 ordnance assets are supported. The 25 mm mode
+    Native AC-130 rounds and launcher rockets are supported. The 25 mm mode
     fires a short native burst; no scripted damage or turret emulation.
     Regular shotguns and the standalone Javelin are unaffected.
 */
@@ -28,7 +28,7 @@ Configure()
     SetDvarIfNotInitialized("fun_mode_projectile_25mm_burst_rounds", 5);
     SetDvarIfNotInitialized("fun_mode_projectile_25mm_burst_interval_ms", 75);
 
-    modes = StrTok("105,40,25", ",");
+    modes = StrTok("105,40,25,javelin,rpg,smaw", ",");
     foreach (mode in modes)
     {
         PrecacheItem(GetModeWeapon(mode));
@@ -38,6 +38,11 @@ Configure()
 ResolveMode(requestedMode)
 {
     mode = ToLower(requestedMode);
+    if (mode == "jav")
+    {
+        mode = "javelin";
+    }
+
     if (GetModeWeapon(mode) == "")
     {
         return undefined;
@@ -53,6 +58,9 @@ GetModeWeapon(mode)
         case "105": return "ac130_105mm_mp";
         case "40": return "ac130_40mm_mp";
         case "25": return "ac130_25mm_mp";
+        case "javelin": return "javelin_mp";
+        case "rpg": return "rpg_mp";
+        case "smaw": return "iw5_smaw_mp";
     }
 
     return "";
@@ -127,7 +135,7 @@ FireUnderbarrelReplacement()
     mode = self GetPlayerMode();
     if (!IsDefined(mode))
     {
-        self IPrintLn("^1Unsupported stored projectile selection. Choose !projectile <105|40|25>.^7");
+        self IPrintLn("^1Unsupported stored projectile selection. Choose !projectile <105|40|25|javelin|jav|rpg|smaw>.^7");
         PrintLn("Projectile replacement: stored selection is no longer supported.");
         return;
     }
@@ -144,7 +152,7 @@ FireUnderbarrelReplacement()
             return;
         }
 
-        if (!self FireCannonRound(weapon, sourceWeapon, mode))
+        if (!self FireProjectileRound(weapon, sourceWeapon, mode))
         {
             return;
         }
@@ -203,7 +211,7 @@ GetBurstInterval()
     return interval / 1000.0;
 }
 
-FireCannonRound(weapon, sourceWeapon, mode)
+FireProjectileRound(weapon, sourceWeapon, mode)
 {
     direction = anglestoforward(self getplayerangles());
     launchOrigin = self geteye() + direction * 32;
@@ -231,6 +239,11 @@ FireCannonRound(weapon, sourceWeapon, mode)
 
     // Capture the firing gun now, not whichever gun is held at impact.
     projectile.fun_mode_underbarrel_source_weapon = sourceWeapon;
+    if (mode == "javelin")
+    {
+        // Restore the earlier working attachment's direct-flight setup.
+        projectile missile_setflightmodedirect();
+    }
     projectile thread CleanUpReplacement();
     return true;
 }
@@ -272,6 +285,18 @@ GetKillAttributionWeapon(inflictor, reportedWeapon)
     }
 
     return reportedWeapon;
+}
+
+GetDamageAttributionWeapon(inflictor, reportedWeapon)
+{
+    if (!GetDvarInt("fun_mode_enable") || reportedWeapon != "javelin_mp")
+    {
+        return reportedWeapon;
+    }
+
+    // The damage modifier has no inflictor parameter. Resolve only marked
+    // Javelins before that callback, not by guessing from the attacker's gun.
+    return GetKillAttributionWeapon(inflictor, reportedWeapon);
 }
 
 IsUnderbarrelShotgunWeapon(weapon)

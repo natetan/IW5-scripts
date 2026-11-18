@@ -37,7 +37,7 @@ GUIDs to this repository.
 | `!permission` | 0 | Displays the issuing player's current command permission. Alias: `!perm`. |
 | `!preset <sniper\|gunner\|smg\|boom\|knife\|random\|default>` | 0 | Queues a match-temporary class preset for the next spawn. `random` rerolls both weapons, one valid attachment per weapon, the primary proficiency, lethal, and tactical equipment on every spawn while preserving perks, deathstreak, and strike package. `default` restores the currently selected saved class. Preset details are documented in [`modifications/WEAPONS.md`](./modifications/WEAPONS.md). |
 | `!gungame [on\|off]` | 3 | Toggles a match-wide single-weapon overlay for all humans and bots, or explicitly enables/disables it. Everyone receives one random firearm or launcher with no backup weapon. Riot Shield and Stinger are excluded. A hostile kill with the assigned weapon rerolls only the killer. Death retains the assignment. Personal presets pause until disabled. |
-| `!projectile <105\|40\|25>` | 3 | Selects the caller's native AC-130 Underbarrel Shotgun replacement for this map. Other players keep their selections. Death and class changes retain the choice. Without a selection, the attachment keeps firing the heavy 105 mm shell. `25` fires a short burst per attachment shot. |
+| `!projectile <105\|40\|25\|javelin\|jav\|rpg\|smaw>` | 3 | Selects the caller's native cannon/rocket Underbarrel Shotgun replacement for this map. Other players keep their selections. Death and class changes retain the choice. Without a selection, the attachment keeps firing the heavy 105 mm shell. `25` fires a short burst per attachment shot. |
 | `!random` | 3 | Immediately loads a random map from the complete configured mapvote pool while retaining the current Domination, Drop Zone, or Kill Confirmed recipe. Alias: `!randommap`. The current map is excluded when alternatives exist. Unsafe Drop Zone combinations use the same fallback rules as normal map voting. |
 | `!killmode <chain\|virus\|aoe\|splash\|vamp\|off>` | 3 | Sets the issuing player's non-killstreak weapon effect for the current map. `chain` spreads final killing-hit damage to the nearest unvisited eligible player; `virus` lethally headshots targets within 2,000 units instead of copying the original damage; `aoe` repeats final damage against every eligible player in range; `splash` divides half of every hit's final damage among nearby eligible players; `vamp` converts hostile bullet damage into uncapped health; `off` restores normal weapon behavior. |
 | `!possess` | 3 | Toggles the caller-only Possession prototype for the current map. A hostile kill moves the caller into the victim through a short first-person camera transition and grants a fresh copy of the victim's class loadout while preserving the caller's earned streak queue. |
@@ -57,6 +57,15 @@ Invalid arguments leave the previous selection unchanged.
 | `105` | Native AC-130 heavy **105 mm** shell; the default. |
 | `40` | Native AC-130 40 mm round. |
 | `25` | Native AC-130 25 mm rounds: **5 rounds**, **75 ms apart**, per attachment shot. |
+| `javelin`, `jav` | One native Javelin missile with the earlier attachment's aimed direct-flight setup; no lock-on or top-attack targeting. |
+| `rpg` | One native RPG rocket, aimed forward. |
+| `smaw` | One native SMAW rocket, aimed forward without a lock-on requirement. |
+
+Rockets retain their native collision/explosion behavior. Underbarrel Javelin
+damage uses the captured parent gun's identity at the damage-callback entry,
+so it does **not** receive the standalone Javelin's 10x damage multiplier.
+Ordinary perk, match-rule, and defensive damage processing still applies.
+Standalone Javelin targeting and damage settings are unchanged.
 
 The 25 mm burst consumes only the original attachment shot and tracks current
 aim between rounds. Remaining rounds cancel on death, disconnect, team/spectator
@@ -78,8 +87,9 @@ All replacements retain attachment input, animation, and ammunition. Their
 player kills report the captured parent gun to the normal killfeed/progression
 callbacks and to Gun Game, even after switching guns before impact. Native
 unlock/progression rules still apply. The new 25 mm burst and its cancellation
-behavior still require in-game testing; the three individual cannon modes were
-reported working by the user.
+behavior, plus the newly added RPG/SMAW launches, still require in-game testing;
+the three individual cannon modes and earlier direct-fire attachment Javelin
+were reported working by the user.
 
 The existing `fun_mode_underbarrel_cannon_enable` and
 `fun_mode_underbarrel_cannon_range` settings remain valid. Globally disabling

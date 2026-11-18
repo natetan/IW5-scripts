@@ -160,15 +160,34 @@ here.
 | Knife Runner | Handguns equipped with Tactical Knife, plus Akimbo USP .45s | Requires an original loadout containing Extreme Conditioning, Quickdraw, Dead Silence, Throwing Knife, Tactical Insertion, and the Juiced deathstreak. The primary is removed, the eligible sidearm's magazine and reserve are forced to zero, firearm ammo refills are suppressed, and battlefield weapon pickup interactions are disabled. The sidearm receives **1.50×** sprint speed while drawn, and a confirmed melee or Throwing Knife kill while active grants **2.00 seconds** of damage immunity with a visible tenths-of-a-second HUD countdown. Throwing the knife or placing the insertion does not disable future activation. Juiced only needs to be selected, not currently active. Juggernauts are excluded. |
 | Throwing Knife kill refill | Throwing Knife used by any player or bot | A Throwing Knife kill immediately restores one Throwing Knife, capped at the normal one-knife capacity. This does not require Scavenger, Specialist, Knife Runner, an authorized class, or a configured GUID. Enabled by `fun_mode_throwing_knife_kill_refill_enable`. |
 | Lethal Throwing Knife | Throwing Knife used by any player or bot | Every physical hit is lethal to players regardless of current health, overhealth, armor, resistance, or fatal-damage prevention. IW5 does not expose Throwing Knife collisions against aircraft to loose GSC, so killstreak vehicles retain their native immunity. Enabled by `fun_mode_throwing_knife_lethal_enable`. |
-| Selectable underbarrel ordnance | Underbarrel Shotgun attachment | `!projectile <105\|40\|25>` selects the caller's native AC-130 replacement for the current map, surviving death and class changes. Default `105` retains the heavy 105 mm shell; `40` fires one 40 mm round; `25` fires a bounded native 25 mm burst. Attachment selection, animation, and ammunition remain unchanged. Killfeed, weapon progression callbacks, and Gun Game use the firing parent gun's captured full identity for every round. |
+| Selectable underbarrel ordnance | Underbarrel Shotgun attachment | `!projectile <105\|40\|25\|javelin\|jav\|rpg\|smaw>` selects the caller's native cannon/rocket replacement for the current map, surviving death and class changes. Default `105` retains the heavy 105 mm shell; `40` fires one 40 mm round; `25` fires a bounded native 25 mm burst. `javelin`/`jav`, `rpg`, and `smaw` each fire one rocket. Attachment selection, animation, and ammunition remain unchanged. Killfeed, weapon progression callbacks, and Gun Game use the firing parent gun's captured full identity for every round. |
 
 Underbarrel selections are implemented in
 [`gsc/projectile_replacements.gsc`](../gsc/projectile_replacements.gsc).
 The command requires permission level 3 and does not change anyone else's
 selection or grant a weapon/attachment. Exact asset mappings are
-`ac130_105mm_mp`, `ac130_40mm_mp`, and `ac130_25mm_mp`, respectively.
+`ac130_105mm_mp`, `ac130_40mm_mp`, `ac130_25mm_mp`, `javelin_mp`, `rpg_mp`,
+and `iw5_smaw_mp`, respectively. `jav` normalizes to `javelin`.
 They retain native flight/explosion/damage behavior, with a **12-second** cleanup
 cap per round. There is no scripted hitscan/damage approximation.
+
+Underbarrel Javelin restores the earlier direct-fire attachment setup:
+`MagicBullet` along current aim followed by `Missile_SetFlightModeDirect`,
+without stock launcher lock-on/top-attack acquisition. RPG and SMAW use their
+native aimed rocket launches without adding homing, camera control, or
+speculative velocity overrides. The new rocket integration still needs in-game
+testing, especially near-cover collisions and native launch behavior.
+
+The existing damage entry overlay
+[`maps/mp/gametypes/_callbacksetup.gsc`](../maps/mp/gametypes/_callbacksetup.gsc)
+resolves **only marked underbarrel Javelin** hits to the captured parent gun
+before forwarding to the normal player-damage callback. This preserves incoming
+native damage and all callback arguments other than weapon identity, prevents the
+standalone Javelin's **10x** script multiplier from applying, and needs no shared
+attacker/victim context or damage-division workaround. Unmarked standalone
+Javelin hits retain their original weapon identity and multiplier. Cannon,
+RPG, and SMAW damage identities remain native until the existing death-callback
+attribution step; ordinary perk/match/defensive damage handling remains active.
 
 The 25 mm mode fires **5 rounds at 75 ms spacing** per original attachment shot,
 without consuming additional attachment ammunition. Each round tracks current

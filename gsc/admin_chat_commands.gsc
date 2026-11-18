@@ -103,7 +103,7 @@ main()
         "projectile",
         3,
         ::projectileAdminChatCommand,
-        "!projectile <105|40|25>"
+        "!projectile <105|40|25|javelin|jav|rpg|smaw>"
     );
     registerAdminChatCommand(
         "preset",
@@ -389,7 +389,7 @@ projectileAdminChatCommand(args)
 {
     if (args.size != 1)
     {
-        self tell("^3Usage:^7 !projectile <105|40|25>");
+        self tell("^3Usage:^7 !projectile <105|40|25|javelin|jav|rpg|smaw>");
         return;
     }
 
@@ -397,7 +397,7 @@ projectileAdminChatCommand(args)
     if (!IsDefined(mode))
     {
         self tell("^1Unknown projectile:^7 " + args[0]);
-        self tell("^3Supported modes:^7 105, 40, 25. Knife, Predator, Reaper, and Osprey replacements are unavailable.");
+        self tell("^3Supported modes:^7 105, 40, 25, javelin/jav, rpg, smaw.");
         return;
     }
 
