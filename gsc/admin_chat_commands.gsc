@@ -109,7 +109,7 @@ main()
         "firemode",
         3,
         ::fireModeAdminChatCommand,
-        "!firemode 25"
+        "!firemode <25|off>"
     );
     registerAdminChatCommand(
         "preset",
@@ -425,9 +425,16 @@ projectileAdminChatCommand(args)
 
 fireModeAdminChatCommand(args)
 {
-    if (args.size != 1 || args[0] != "25")
+    if (args.size != 1 || (args[0] != "25" && args[0] != "off"))
     {
-        self tell("^3Usage:^7 !firemode 25");
+        self tell("^3Usage:^7 !firemode <25|off>");
+        return;
+    }
+
+    if (args[0] == "off")
+    {
+        self.fun_mode_firemode_mode = undefined;
+        self tell("^2Fire mode disabled:^7 ordinary firearm shots restored; already-fired rounds remain active.");
         return;
     }
 

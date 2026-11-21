@@ -169,7 +169,11 @@ here.
 firearm eligibility, native event listener, and original-bullet suppression
 decision. `fun_mode` configures it and starts one persistent listener per
 connection, so the choice survives death/class changes without multiplying
-listeners. Only `!firemode 25` is accepted; a new map resets the choice.
+listeners. `!firemode 25` enables the mode; `!firemode off` immediately disables
+future replacements and original-bullet suppression for the caller, without
+changing inventory or ammo. Repeated `off` is safe and also clears the selection
+when global Fun Mode is disabled. Already-fired ordnance retains its lifetime
+and captured attribution; `25` reenables the mode. A new map resets the choice.
 
 Actual weapon metadata must report inventory type `primary` (both carried
 firearm slots in IW5), type `bullet`, and class `rifle`, `smg`, `mg`, `pistol`,
