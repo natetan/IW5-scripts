@@ -211,10 +211,16 @@ GetBurstInterval()
     return interval / 1000.0;
 }
 
-FireProjectileRound(weapon, sourceWeapon, mode, range, sourceMeansOfDeath)
+FireProjectileRound(weapon, sourceWeapon, mode, range, sourceMeansOfDeath, direction, launchOrigin)
 {
-    direction = anglestoforward(self getplayerangles());
-    launchOrigin = self geteye() + direction * 32;
+    if (!IsDefined(direction))
+    {
+        direction = anglestoforward(self getplayerangles());
+    }
+    if (!IsDefined(launchOrigin))
+    {
+        launchOrigin = self geteye() + direction * 32;
+    }
     if (!IsDefined(range))
     {
         range = GetDvarFloat("fun_mode_underbarrel_cannon_range");

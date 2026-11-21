@@ -438,7 +438,7 @@ fireModeAdminChatCommand(args)
         return;
     }
 
-    self tell("^2Fire mode enabled:^7 eligible firearm shots launch one native AC-130 25 mm round each.");
+    self tell("^2Fire mode enabled:^7 firearm shots launch native AC-130 25 mm rounds; shotguns fire a spread volley.");
     self tell("^3GSC scope:^7 original player/vehicle bullet damage blocked; native traces/effects and prop damage can remain.");
 }
 

@@ -38,7 +38,7 @@ GUIDs to this repository.
 | `!preset <sniper\|gunner\|smg\|boom\|knife\|random\|default>` | 0 | Queues a match-temporary class preset for the next spawn. `random` rerolls both weapons, one valid attachment per weapon, the primary proficiency, lethal, and tactical equipment on every spawn while preserving perks, deathstreak, and strike package. `default` restores the currently selected saved class. Preset details are documented in [`modifications/WEAPONS.md`](./modifications/WEAPONS.md). |
 | `!gungame [on\|off]` | 3 | Toggles a match-wide single-weapon overlay for all humans and bots, or explicitly enables/disables it. Everyone receives one random firearm or launcher with no backup weapon. Riot Shield and Stinger are excluded. A hostile kill with the assigned weapon rerolls only the killer. Death retains the assignment. Personal presets pause until disabled. |
 | `!projectile <105\|40\|25\|javelin\|jav\|rpg\|smaw>` | 3 | Selects the caller's native cannon/rocket Underbarrel Shotgun replacement for this map. Other players keep their selections. Death and class changes retain the choice. Without a selection, the attachment keeps firing the heavy 105 mm shell. `25` fires a short burst per attachment shot. |
-| `!firemode 25` | 3 | Enables caller-only native AC-130 25 mm rounds for eligible primary/secondary firearm shots during this map. One round per native fired-shot notification, at the gun's own cadence/ammo/animation; not the five-round underbarrel burst. Original player/vehicle bullet damage is suppressed, with the loose-GSC limitations below. |
+| `!firemode 25` | 3 | Enables caller-only native AC-130 25 mm rounds for eligible primary/secondary firearm shots during this map. Shotguns fire a simultaneous six-round cone per shell; other guns fire one round per native fired-shot notification. Native cadence/ammo/animation remain; this is not the five-round underbarrel burst. Original player/vehicle bullet damage is suppressed, with the loose-GSC limitations below. |
 | `!random` | 3 | Immediately loads a random map from the complete configured mapvote pool while retaining the current Domination, Drop Zone, or Kill Confirmed recipe. Alias: `!randommap`. The current map is excluded when alternatives exist. Unsafe Drop Zone combinations use the same fallback rules as normal map voting. |
 | `!killmode <chain\|virus\|aoe\|splash\|vamp\|off>` | 3 | Sets the issuing player's non-killstreak weapon effect for the current map. `chain` spreads final killing-hit damage to the nearest unvisited eligible player; `virus` lethally headshots targets within 2,000 units instead of copying the original damage; `aoe` repeats final damage against every eligible player in range; `splash` divides half of every hit's final damage among nearby eligible players; `vamp` converts hostile bullet damage into uncapped health; `off` restores normal weapon behavior. |
 | `!possess` | 3 | Toggles the caller-only Possession prototype for the current map. A hostile kill moves the caller into the victim through a short first-person camera transition and grants a fresh copy of the victim's class loadout while preserving the caller's earned streak queue. |
@@ -63,13 +63,30 @@ independently controls the Underbarrel Shotgun attachment.
 
 The listener consumes the fired weapon supplied by `weapon_fired`, the same
 event stock IW5 uses to increment `totalShots`/weapon shots once per notification.
-It launches one actual `ac130_25mm_mp` round even on a miss, with no arbitrary
-cooldown, delayed burst expansion, ammo polling, or fire-button polling.
+For non-shotguns it launches one actual `ac130_25mm_mp` round even on a miss,
+with no arbitrary cooldown, delayed burst expansion, ammo polling, or
+fire-button polling.
 M16/Type 95 rounds follow their individual native shot notifications; interrupted
 bursts generate no scheduled replacements. Automatic, semi-auto, bolt-action,
-and Akimbo fire follow the same rule. A shotgun shell produces one replacement
-per native shot event, not one per pellet. Reloading/dry-firing/death cannot
+and Akimbo fire follow the same rule. A shotgun shell produces the simultaneous
+cone volley described below. Reloading/dry-firing/death cannot
 create new rounds without an eligible native shot event.
+
+Shotguns use a **GSC-generated approximation**, not the engine's actual pellet
+count or random pellet directions: all eligible shotguns default to **six**
+native 25 mm rounds per shell, sampled randomly inside a circular cone of
+**4 degrees radius** at hipfire, narrowing continuously to **2 degrees** at full
+ADS. This is not a fixed six-point pattern and does not reproduce per-weapon
+spread, movement bloom, or spread perks. The normal single shell pays for the
+entire volley; there are no delays or extra ammo deductions. Every round captures
+the same firing gun, position, and aim basis before any Gun Game weapon swap.
+
+Tunables: `fun_mode_firemode_shotgun_rounds` defaults to **6** (clamped **1-16**);
+`fun_mode_firemode_shotgun_hip_degrees` defaults to **4**, and
+`fun_mode_firemode_shotgun_ads_degrees` to **2** (each clamped **0-15**).
+These are cone half-angles; zero gives a straight volley. Native pellet metadata
+and trajectories were not available through the verified IW5 GSC API surface.
+The shotgun cone and its balance still require in-game testing.
 
 Native 25 mm damage is retained, not the source gun's damage or sniper buffs.
 Player death callbacks receive the captured firing gun and its firearm damage

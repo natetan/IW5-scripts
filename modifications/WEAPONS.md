@@ -161,7 +161,7 @@ here.
 | Throwing Knife kill refill | Throwing Knife used by any player or bot | A Throwing Knife kill immediately restores one Throwing Knife, capped at the normal one-knife capacity. This does not require Scavenger, Specialist, Knife Runner, an authorized class, or a configured GUID. Enabled by `fun_mode_throwing_knife_kill_refill_enable`. |
 | Lethal Throwing Knife | Throwing Knife used by any player or bot | Every physical hit is lethal to players regardless of current health, overhealth, armor, resistance, or fatal-damage prevention. IW5 does not expose Throwing Knife collisions against aircraft to loose GSC, so killstreak vehicles retain their native immunity. Enabled by `fun_mode_throwing_knife_lethal_enable`. |
 | Selectable underbarrel ordnance | Underbarrel Shotgun attachment | `!projectile <105\|40\|25\|javelin\|jav\|rpg\|smaw>` selects the caller's native cannon/rocket replacement for the current map, surviving death and class changes. Default `105` retains the heavy 105 mm shell; `40` fires one 40 mm round; `25` fires a bounded native 25 mm burst. `javelin`/`jav`, `rpg`, and `smaw` each fire one rocket. Attachment selection, animation, and ammunition remain unchanged. Killfeed, weapon progression callbacks, and Gun Game use the firing parent gun's captured full identity for every round. |
-| Fire mode 25 | Owned, drawn primary/secondary bullet-firing guns | Level-3 `!firemode 25` launches one native AC-130 25 mm round per actual `weapon_fired` notification for the caller. Normal weapon cadence/ammo/animation remain; no five-round expansion or added cooldown. Original player/standard-vehicle bullet damage is intercepted, but native traces/effects and out-of-scope prop damage cannot be universally cancelled by loose GSC. |
+| Fire mode 25 | Owned, drawn primary/secondary bullet-firing guns | Level-3 `!firemode 25` launches native AC-130 25 mm rounds for the caller: a simultaneous six-round cone per shotgun shell, otherwise one round per actual `weapon_fired` notification. Normal weapon cadence/ammo/animation remain; no delayed burst expansion or added cooldown. Original player/standard-vehicle bullet damage is intercepted, but native traces/effects and out-of-scope prop damage cannot be universally cancelled by loose GSC. |
 
 ### Fire Mode 25
 
@@ -185,11 +185,26 @@ Stock [`_weapons::watchweaponusage`](https://github.com/plutoniummod/iw5-scripts
 uses `weapon_fired` with the fired weapon argument and increments native shot
 statistics once per notification. Fire Mode consumes the same notifications
 without synthesizing `WeaponBurstCount` rounds or scheduling timer-based fire.
-Each native shot, including a miss or final magazine round, creates one
-`ac130_25mm_mp` round. M16/Type 95 bursts, automatic fire, pistols/Akimbo and slow
-snipers retain their native event cadence. A shotgun shell gets one round per
-shot notification, not per pellet. An interrupted burst/reload, dry trigger,
+Each non-shotgun native shot, including a miss or final magazine round, creates
+one `ac130_25mm_mp` round. M16/Type 95 bursts, automatic fire, pistols/Akimbo and slow
+snipers retain their native event cadence. Shotguns emit one simultaneous cone
+volley per shell notification. An interrupted burst/reload, dry trigger,
 death, loadout change, or weapon switch cannot leave queued shots behind.
+
+The shotgun volley is an explicitly approved **GSC approximation**, not native
+pellet replication. The verified IW5 builtin surface does not expose per-weapon
+pellet count or actual pellet vectors; no per-weapon table is invented.
+`fun_mode_firemode_shotgun_rounds` defaults to **6** (clamped **1-16**) for all
+eligible shotguns. `fun_mode_firemode_shotgun_hip_degrees` defaults to **4** and
+`fun_mode_firemode_shotgun_ads_degrees` to **2** (each clamped **0-15 degrees**).
+`PlayerADS()` continuously interpolates these cone half-angles.
+Random uniform-disk samples in the aim plane are normalized into a bounded
+circular cone, not a fixed six-cylinder pattern or the native spread RNG.
+Movement bloom, spread perks, and weapon-specific native spread are not mirrored.
+No extra ammo is consumed; one shell launches every round synchronously with
+captured source gun, common launch origin, and aim basis. Early kills or Gun Game
+swaps cannot change attribution/aim for the remaining rounds. Each round retains
+full native 25 mm damage, so volley balance/performance need in-game testing.
 
 The shared native projectile helper captures the complete fired gun identity.
 Its range override uses `fun_mode_firemode_range` (default **12,000 units**,
