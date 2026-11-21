@@ -73,7 +73,21 @@ GetPlayerMode()
         return ResolveMode(self.fun_mode_projectile_mode);
     }
 
-    return "105";
+    return undefined;
+}
+
+HasValidSelection(player)
+{
+    if (
+        !IsDefined(player) ||
+        !IsPlayer(player) ||
+        !IsDefined(player.fun_mode_projectile_mode)
+    )
+    {
+        return false;
+    }
+
+    return IsDefined(player GetPlayerMode());
 }
 
 OnPlayerConnected()
@@ -105,12 +119,20 @@ WatchUnderbarrelShotgunFire()
             continue;
         }
 
-        self thread FireUnderbarrelReplacement();
+        if (IsDefined(self.fun_mode_projectile_mode))
+        {
+            self thread FireUnderbarrelReplacement();
+        }
     }
 }
 
 FireUnderbarrelReplacement()
 {
+    if (!IsDefined(self.fun_mode_projectile_mode))
+    {
+        return;
+    }
+
     self notify("projectile_burst");
     self endon("projectile_burst");
     self endon("projectile_selection_changed");
@@ -274,10 +296,11 @@ CleanUpReplacement()
     }
 }
 
-SuppressPelletDamage(damage, weapon)
+SuppressPelletDamage(damage, weapon, attacker)
 {
     if (
         GetDvarInt("fun_mode_underbarrel_cannon_enable") &&
+        HasValidSelection(attacker) &&
         IsUnderbarrelShotgunWeapon(weapon)
     )
     {

@@ -160,7 +160,7 @@ here.
 | Knife Runner | Handguns equipped with Tactical Knife, plus Akimbo USP .45s | Requires an original loadout containing Extreme Conditioning, Quickdraw, Dead Silence, Throwing Knife, Tactical Insertion, and the Juiced deathstreak. The primary is removed, the eligible sidearm's magazine and reserve are forced to zero, firearm ammo refills are suppressed, and battlefield weapon pickup interactions are disabled. The sidearm receives **1.50×** sprint speed while drawn, and a confirmed melee or Throwing Knife kill while active grants **2.00 seconds** of damage immunity with a visible tenths-of-a-second HUD countdown. Throwing the knife or placing the insertion does not disable future activation. Juiced only needs to be selected, not currently active. Juggernauts are excluded. |
 | Throwing Knife kill refill | Throwing Knife used by any player or bot | A Throwing Knife kill immediately restores one Throwing Knife, capped at the normal one-knife capacity. This does not require Scavenger, Specialist, Knife Runner, an authorized class, or a configured GUID. Enabled by `fun_mode_throwing_knife_kill_refill_enable`. |
 | Lethal Throwing Knife | Throwing Knife used by any player or bot | Every physical hit is lethal to players regardless of current health, overhealth, armor, resistance, or fatal-damage prevention. IW5 does not expose Throwing Knife collisions against aircraft to loose GSC, so killstreak vehicles retain their native immunity. Enabled by `fun_mode_throwing_knife_lethal_enable`. |
-| Selectable underbarrel ordnance | Underbarrel Shotgun attachment | `!projectile <105\|40\|25\|javelin\|jav\|rpg\|smaw>` selects the caller's native cannon/rocket replacement for the current map, surviving death and class changes. Default `105` retains the heavy 105 mm shell; `40` fires one 40 mm round; `25` fires a bounded native 25 mm burst. `javelin`/`jav`, `rpg`, and `smaw` each fire one rocket. Attachment selection, animation, and ammunition remain unchanged. Killfeed, weapon progression callbacks, and Gun Game use the firing parent gun's captured full identity for every round. |
+| Selectable underbarrel ordnance | Underbarrel Shotgun attachment | `!projectile <105\|40\|25\|javelin\|jav\|rpg\|smaw>` selects the caller's native cannon/rocket replacement for the current map, surviving death and class changes. No selection means ordinary attachment pellets. Explicit `105` fires the heavy 105 mm shell; `40` fires one 40 mm round; `25` fires a bounded native 25 mm burst. `javelin`/`jav`, `rpg`, and `smaw` each fire one rocket. Attachment selection, animation, and ammunition remain unchanged. Killfeed, weapon progression callbacks, and Gun Game use the firing parent gun's captured full identity for every round. |
 | Fire mode 25 | Owned, drawn primary/secondary bullet-firing guns | Level-3 `!firemode 25` launches native AC-130 25 mm rounds for the caller: a simultaneous six-round cone per shotgun shell, otherwise one round per actual `weapon_fired` notification. Normal weapon cadence/ammo/animation remain; no delayed burst expansion or added cooldown. Original player/standard-vehicle bullet damage is intercepted, but native traces/effects and out-of-scope prop damage cannot be universally cancelled by loose GSC. |
 
 ### Fire Mode 25
@@ -243,7 +243,14 @@ The command requires permission level 3 and does not change anyone else's
 selection or grant a weapon/attachment. Exact asset mappings are
 `ac130_105mm_mp`, `ac130_40mm_mp`, `ac130_25mm_mp`, `javelin_mp`, `rpg_mp`,
 and `iw5_smaw_mp`, respectively. `jav` normalizes to `javelin`.
-They retain native flight/explosion/damage behavior, with a **12-second** cleanup
+Without an explicit selection, humans and bots retain ordinary attachment
+pellets, damage, and ammo use with no native replacement or warning. A new map
+resets to this unselected state; respawns retain an existing selection.
+Pellet suppression receives the actual attacker and applies only to a valid
+selected replacement while the server replacement setting is enabled.
+Invalid stored selections still report an error and launch no replacement,
+but do not suppress normal pellet damage.
+Selected projectiles retain native flight/explosion/damage behavior, with a **12-second** cleanup
 cap per round. There is no scripted hitscan/damage approximation.
 
 Underbarrel Javelin restores the earlier direct-fire attachment setup:

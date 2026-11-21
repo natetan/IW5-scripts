@@ -222,7 +222,8 @@ ModifyPlayerDamageForFunMode(
 
     damage = scripts\projectile_replacements::SuppressPelletDamage(
         damage,
-        weapon
+        weapon,
+        attacker
     );
 
     damage = scripts\damage_reflection::ProcessIncomingDamage(

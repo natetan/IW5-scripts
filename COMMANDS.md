@@ -37,7 +37,7 @@ GUIDs to this repository.
 | `!permission` | 0 | Displays the issuing player's current command permission. Alias: `!perm`. |
 | `!preset <sniper\|gunner\|smg\|boom\|knife\|random\|default>` | 0 | Queues a match-temporary class preset for the next spawn. `random` rerolls both weapons, one valid attachment per weapon, the primary proficiency, lethal, and tactical equipment on every spawn while preserving perks, deathstreak, and strike package. `default` restores the currently selected saved class. Preset details are documented in [`modifications/WEAPONS.md`](./modifications/WEAPONS.md). |
 | `!gungame [on\|off]` | 3 | Toggles a match-wide single-weapon overlay for all humans and bots, or explicitly enables/disables it. Everyone receives one random firearm or launcher with no backup weapon. Riot Shield and Stinger are excluded. A hostile kill with the assigned weapon rerolls only the killer. Death retains the assignment. Personal presets pause until disabled. |
-| `!projectile <105\|40\|25\|javelin\|jav\|rpg\|smaw>` | 3 | Selects the caller's native cannon/rocket Underbarrel Shotgun replacement for this map. Other players keep their selections. Death and class changes retain the choice. Without a selection, the attachment keeps firing the heavy 105 mm shell. `25` fires a short burst per attachment shot. |
+| `!projectile <105\|40\|25\|javelin\|jav\|rpg\|smaw>` | 3 | Selects the caller's native cannon/rocket Underbarrel Shotgun replacement for this map. Other players keep their selections. Death and class changes retain the choice. Without a selection, the attachment fires ordinary shotgun pellets. `25` fires a short burst per attachment shot. |
 | `!firemode <25\|off>` | 3 | Enables caller-only native AC-130 25 mm rounds for eligible primary/secondary firearm shots during this map, or restores ordinary fire with `off`. Shotguns fire a simultaneous six-round cone per shell; other guns fire one round per native fired-shot notification. Native cadence/ammo/animation remain; this is not the five-round underbarrel burst. Original player/vehicle bullet damage is suppressed while enabled, with the loose-GSC limitations below. |
 | `!random` | 3 | Immediately loads a random map from the complete configured mapvote pool while retaining the current Domination, Drop Zone, or Kill Confirmed recipe. Alias: `!randommap`. The current map is excluded when alternatives exist. Unsafe Drop Zone combinations use the same fallback rules as normal map voting. |
 | `!killmode <chain\|virus\|aoe\|splash\|vamp\|off>` | 3 | Sets the issuing player's non-killstreak weapon effect for the current map. `chain` spreads final killing-hit damage to the nearest unvisited eligible player; `virus` lethally headshots targets within 2,000 units instead of copying the original damage; `aoe` repeats final damage against every eligible player in range; `splash` divides half of every hit's final damage among nearby eligible players; `vamp` converts hostile bullet damage into uncapped health; `off` restores normal weapon behavior. |
@@ -121,9 +121,14 @@ Equip a gun with the Underbarrel Shotgun attachment, enter (for example)
 does not grant a gun, attachment, or ammunition. Arguments are case-insensitive.
 Invalid arguments leave the previous selection unchanged.
 
+Replacements are opt-in: without a selection, humans and bots fire normal
+attachment pellets with normal ammo use, no replacement ordnance, and no warning.
+A new map resets to this ordinary attachment behavior. Only a valid explicit
+selection suppresses that caller's original attachment pellet damage.
+
 | Argument | Replacement |
 |---|---|
-| `105` | Native AC-130 heavy **105 mm** shell; the default. |
+| `105` | Native AC-130 heavy **105 mm** shell. |
 | `40` | Native AC-130 40 mm round. |
 | `25` | Native AC-130 25 mm rounds: **5 rounds**, **75 ms apart**, per attachment shot. |
 | `javelin`, `jav` | One native Javelin missile with the earlier attachment's aimed direct-flight setup; no lock-on or top-attack targeting. |
@@ -150,7 +155,8 @@ forward-fired ordnance, and Osprey crashed during testing. No verified loose-GSC
 standalone fix was established; these modes and the scripted hitscan
 approximation have been removed rather than replaced with another asset or
 damage simulation. A stale unsupported stored selection reports an error and
-fires nothing until a supported mode is chosen.
+launches no replacement until a supported mode is chosen; ordinary pellet
+damage is not suppressed for an invalid selection.
 
 All replacements retain attachment input, animation, and ammunition. Their
 player kills report the captured parent gun to the normal killfeed/progression
